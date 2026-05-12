@@ -90,6 +90,14 @@ bool CougWaypointsPlugin::Initialize(QGLWidget* canvas) {
   node_->get_parameter("agent_namespaces", agent_namespaces_);
   for (const auto& ns : agent_namespaces_) {
     ui_.agent_selector->addItem(QString::fromStdString(ns));
+    publishers_[ns + "/waypoints"] = node_->create_publisher<coug_interfaces::msg::WayPointList>(
+        ns + "/waypoints", rclcpp::SystemDefaultsQoS());
+    map_publishers_[ns + "/waypoints_map"] = node_->create_publisher<geometry_msgs::msg::PoseArray>(
+        ns + "/waypoints_map", rclcpp::SystemDefaultsQoS());
+    for (const auto& cmd : {"start", "stop", "surface", "home"}) {
+      std::string service_name = ns + "/" + cmd;
+      clients_[service_name] = node_->create_client<std_srvs::srv::Trigger>(service_name);
+    }
   }
 
   initialized_ = true;
@@ -119,7 +127,8 @@ void CougWaypointsPlugin::AgentChanged(const QString& text) {
 
 void CougWaypointsPlugin::callTrigger(const std::string& service_name) {
   if (clients_.find(service_name) == clients_.end()) {
-    clients_[service_name] = node_->create_client<std_srvs::srv::Trigger>(service_name);
+    PrintError("Unknown service: " + service_name);
+    return;
   }
   auto& client = clients_[service_name];
   if (!client->service_is_ready()) {
@@ -177,11 +186,6 @@ void CougWaypointsPlugin::PublishAll() {
 void CougWaypointsPlugin::PublishAgent(const std::string& agent,
                                        const std::vector<geographic_msgs::msg::GeoPoint>& wps) {
   std::string topic = agent + "/waypoints";
-  if (publishers_.find(topic) == publishers_.end()) {
-    publishers_[topic] = node_->create_publisher<coug_interfaces::msg::WayPointList>(
-        topic, rclcpp::SystemDefaultsQoS());
-  }
-
   coug_interfaces::msg::WayPointList waypoint_list;
   waypoint_list.header.frame_id = swri_transform_util::_wgs84_frame;
   waypoint_list.header.stamp = node_->now();
@@ -192,6 +196,25 @@ void CougWaypointsPlugin::PublishAgent(const std::string& agent,
   }
 
   publishers_[topic]->publish(waypoint_list);
+
+  std::string map_topic = agent + "/waypoints_map";
+  swri_transform_util::Transform transform;
+  if (tf_manager_->GetTransform(target_frame_, swri_transform_util::_wgs84_frame, transform)) {
+    geometry_msgs::msg::PoseArray pose_array;
+    pose_array.header.frame_id = target_frame_;
+    pose_array.header.stamp = node_->now();
+    for (const auto& gp : wps) {
+      tf2::Vector3 point(gp.longitude, gp.latitude, 0.0);
+      point = transform * point;
+      geometry_msgs::msg::Pose pose;
+      pose.position.x = point.x();
+      pose.position.y = point.y();
+      pose.position.z = gp.altitude;
+      pose.orientation.w = 1.0;
+      pose_array.poses.push_back(pose);
+    }
+    map_publishers_[map_topic]->publish(pose_array);
+  }
 }
 
 bool CougWaypointsPlugin::IsAgentKnown(const std::string& agent) {

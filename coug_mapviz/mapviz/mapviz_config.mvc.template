@@ -38,7 +38,7 @@ displays:
     name: new display
     config:
       visible: true
-      collapsed: false
+      collapsed: true
   - type: mapviz_plugins/tf_frame
     name: new display
     config:

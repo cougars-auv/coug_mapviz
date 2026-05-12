@@ -34,6 +34,7 @@
 #include <coug_interfaces/msg/way_point_list.hpp>
 #include <coug_mapviz/coug_waypoint_manager.hpp>
 #include <geographic_msgs/msg/geo_point.hpp>
+#include <geometry_msgs/msg/pose_array.hpp>
 #include <map>
 #include <rclcpp/rclcpp.hpp>
 #include <std_srvs/srv/trigger.hpp>
@@ -238,6 +239,8 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   // --- ROS Interface ---
   std::map<std::string, rclcpp::Publisher<coug_interfaces::msg::WayPointList>::SharedPtr>
       publishers_;
+  std::map<std::string, rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr>
+      map_publishers_;
   std::map<std::string, rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr> clients_;
   CougWaypointManager manager_;
   std::string current_agent_;
