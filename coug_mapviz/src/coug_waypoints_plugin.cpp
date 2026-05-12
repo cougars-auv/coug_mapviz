@@ -131,31 +131,75 @@ void CougWaypointsPlugin::AgentChanged(const QString& text) {
   }
 }
 
-void CougWaypointsPlugin::callTrigger(const std::string& service_name) {
+void CougWaypointsPlugin::recordResult(std::shared_ptr<DispatchState> state, bool success,
+                                       const std::string& agent) {
+  std::lock_guard<std::mutex> lock(state->mutex);
+  if (success)
+    state->succeeded++;
+  else
+    state->failed.push_back(agent);
+  if (++state->responded < state->total) return;
+
+  int s = state->succeeded, t = state->total;
+  std::string prefix = "[" + state->cmd + "] ";
+  if (s == t) {
+    PrintInfo(prefix + "All " + std::to_string(t) + " agent(s) confirmed");
+  } else {
+    std::string failed_str;
+    for (const auto& f : state->failed) failed_str += " " + f;
+    std::string msg =
+        prefix + std::to_string(s) + "/" + std::to_string(t) + " confirmed; failed:" + failed_str;
+    if (s == 0)
+      PrintError(msg);
+    else
+      PrintWarning(msg);
+  }
+}
+
+void CougWaypointsPlugin::callTrigger(const std::string& service_name, const std::string& agent,
+                                      std::shared_ptr<DispatchState> state) {
   if (clients_.find(service_name) == clients_.end()) {
-    PrintError("Unknown service: " + service_name);
+    if (state)
+      recordResult(state, false, agent);
+    else
+      PrintError("Unknown service: " + service_name);
     return;
   }
   auto& client = clients_[service_name];
   if (!client->service_is_ready()) {
-    PrintError("Service not available: " + service_name);
+    if (state)
+      recordResult(state, false, agent);
+    else
+      PrintError("Service not available: " + service_name);
     return;
   }
   auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
   client->async_send_request(
-      request, [this, service_name](rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture future) {
+      request, [this, agent, state,
+                service_name](rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture future) {
         auto response = future.get();
-        if (response->success) {
-          PrintInfo(response->message);
+        if (state) {
+          recordResult(state, response->success, agent);
         } else {
-          PrintWarning(response->message);
+          std::string prefix = "[" + service_name.substr(service_name.rfind('/') + 1) + "] ";
+          if (response->success)
+            PrintInfo(prefix + response->message);
+          else
+            PrintWarning(prefix + response->message);
         }
       });
 }
 
 void CougWaypointsPlugin::dispatchCommand(const std::string& cmd) {
   if (ui_.apply_all->isChecked()) {
-    for (const auto& ns : agent_namespaces_) callTrigger(ns + "/" + cmd);
+    if (agent_namespaces_.empty()) {
+      PrintError("No agents configured");
+      return;
+    }
+    auto state = std::make_shared<DispatchState>();
+    state->total = static_cast<int>(agent_namespaces_.size());
+    state->cmd = cmd;
+    for (const auto& ns : agent_namespaces_) callTrigger(ns + "/" + cmd, ns, state);
   } else if (!current_agent_.empty()) {
     callTrigger(current_agent_ + "/" + cmd);
   } else {
@@ -182,11 +226,17 @@ void CougWaypointsPlugin::PublishWaypoints() {
 
 void CougWaypointsPlugin::PublishAll() {
   int count = 0;
+  bool any_waypoints = false;
   for (const auto& [agent, wps] : manager_.getAllWaypoints()) {
     PublishAgent(agent, wps);
+    if (!wps.empty()) any_waypoints = true;
     count++;
   }
-  PrintInfo("Published to " + std::to_string(count) + " agent(s)");
+  if (!any_waypoints) {
+    PrintWarning("Mission cleared");
+  } else {
+    PrintInfo("Published to " + std::to_string(count) + " agent(s)");
+  }
 }
 
 void CougWaypointsPlugin::PublishAgent(const std::string& agent,

@@ -36,6 +36,8 @@
 #include <geographic_msgs/msg/geo_point.hpp>
 #include <geometry_msgs/msg/pose_array.hpp>
 #include <map>
+#include <memory>
+#include <mutex>
 #include <rclcpp/rclcpp.hpp>
 #include <std_srvs/srv/trigger.hpp>
 #include <string>
@@ -231,6 +233,15 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   void DepthChanged(double value);
 
  private:
+  struct DispatchState {
+    int total = 0;
+    int responded = 0;
+    int succeeded = 0;
+    std::string cmd;
+    std::vector<std::string> failed;
+    std::mutex mutex;
+  };
+
   // --- Components ---
   Ui::coug_waypoints_config ui_;
   QWidget* config_widget_;
@@ -270,10 +281,15 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
                     const std::vector<geographic_msgs::msg::GeoPoint>& wps);
 
   /**
-   * @brief Calls a Trigger service, creating the client lazily on first use.
+   * @brief Calls a Trigger service. When state is provided, records the result
+   *        into the shared DispatchState and prints a summary once all agents respond.
    * @param service_name The fully-qualified service name.
+   * @param agent The agent namespace (used to label failures).
+   * @param state Shared state for multi-agent dispatch; nullptr for single-agent.
    */
-  void callTrigger(const std::string& service_name);
+  void callTrigger(const std::string& service_name, const std::string& agent = "",
+                   std::shared_ptr<DispatchState> state = nullptr);
+  void recordResult(std::shared_ptr<DispatchState> state, bool success, const std::string& agent);
 
   /**
    * @brief Calls cmd on the current agent, or all agents if apply_all is checked.
