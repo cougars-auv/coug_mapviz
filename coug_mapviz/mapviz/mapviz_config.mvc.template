@@ -239,7 +239,7 @@ displays:
   - type: mapviz_plugins/odometry
     name: DVL
     config:
-      visible: true
+      visible: false
       collapsed: true
       topic: /AUV_NS/odometry/dvl
       color: "#55ffff"
