@@ -245,6 +245,8 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   CougWaypointManager manager_;
   std::string current_agent_;
   std::vector<std::string> agent_namespaces_;
+  std::string waypoint_topic_;
+  std::string waypoints_map_topic_;
 
   // --- Interaction State ---
   int selected_point_;

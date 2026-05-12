@@ -93,6 +93,8 @@ def launch_setup(context, *args, **kwargs) -> list:
             executable="mapviz",
             name="mapviz",
             parameters=[
+                fleet_params,
+                auv_params,
                 {"config": mapviz_config_file},
                 {"use_sim_time": use_sim_time},
                 {"agent_namespaces": agent_namespaces},

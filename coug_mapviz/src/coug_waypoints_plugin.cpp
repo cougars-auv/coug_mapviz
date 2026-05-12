@@ -85,15 +85,21 @@ bool CougWaypointsPlugin::Initialize(QGLWidget* canvas) {
 
   try {
     node_->declare_parameter("agent_namespaces", std::vector<std::string>{});
+    node_->declare_parameter("waypoint_topic", std::string("waypoints"));
+    node_->declare_parameter("waypoints_map_topic", std::string("waypoints_map"));
   } catch (const rclcpp::exceptions::ParameterAlreadyDeclaredException&) {
   }
   node_->get_parameter("agent_namespaces", agent_namespaces_);
+  node_->get_parameter("waypoint_topic", waypoint_topic_);
+  node_->get_parameter("waypoints_map_topic", waypoints_map_topic_);
   for (const auto& ns : agent_namespaces_) {
     ui_.agent_selector->addItem(QString::fromStdString(ns));
-    publishers_[ns + "/waypoints"] = node_->create_publisher<coug_interfaces::msg::WayPointList>(
-        ns + "/waypoints", rclcpp::SystemDefaultsQoS());
-    map_publishers_[ns + "/waypoints_map"] = node_->create_publisher<geometry_msgs::msg::PoseArray>(
-        ns + "/waypoints_map", rclcpp::SystemDefaultsQoS());
+    publishers_[ns + "/" + waypoint_topic_] =
+        node_->create_publisher<coug_interfaces::msg::WayPointList>(ns + "/" + waypoint_topic_,
+                                                                    rclcpp::SystemDefaultsQoS());
+    map_publishers_[ns + "/" + waypoints_map_topic_] =
+        node_->create_publisher<geometry_msgs::msg::PoseArray>(ns + "/" + waypoints_map_topic_,
+                                                               rclcpp::SystemDefaultsQoS());
     for (const auto& cmd : {"start", "stop", "surface", "home"}) {
       std::string service_name = ns + "/" + cmd;
       clients_[service_name] = node_->create_client<std_srvs::srv::Trigger>(service_name);
@@ -185,7 +191,7 @@ void CougWaypointsPlugin::PublishAll() {
 
 void CougWaypointsPlugin::PublishAgent(const std::string& agent,
                                        const std::vector<geographic_msgs::msg::GeoPoint>& wps) {
-  std::string topic = agent + "/waypoints";
+  std::string topic = agent + "/" + waypoint_topic_;
   coug_interfaces::msg::WayPointList waypoint_list;
   waypoint_list.header.frame_id = swri_transform_util::_wgs84_frame;
   waypoint_list.header.stamp = node_->now();
@@ -197,7 +203,7 @@ void CougWaypointsPlugin::PublishAgent(const std::string& agent,
 
   publishers_[topic]->publish(waypoint_list);
 
-  std::string map_topic = agent + "/waypoints_map";
+  std::string map_topic = agent + "/" + waypoints_map_topic_;
   swri_transform_util::Transform transform;
   if (tf_manager_->GetTransform(target_frame_, swri_transform_util::_wgs84_frame, transform)) {
     geometry_msgs::msg::PoseArray pose_array;
