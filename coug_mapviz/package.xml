@@ -25,6 +25,7 @@
   <depend condition="$ROS_BUILD_ARCH == 'amd64'">tile_map</depend>
   <depend condition="$ROS_BUILD_ARCH == 'amd64'">swri_transform_util</depend>
   <depend>pluginlib</depend>
+  <depend>std_srvs</depend>
   <depend>tf2</depend>
 
   <test_depend>ament_cmake_gtest</test_depend>

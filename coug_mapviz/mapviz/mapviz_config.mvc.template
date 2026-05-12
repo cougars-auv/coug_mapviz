@@ -34,6 +34,11 @@ displays:
     config:
       visible: true
       collapsed: false
+  - type: coug_mapviz/coug_utils
+    name: new display
+    config:
+      visible: true
+      collapsed: false
   - type: mapviz_plugins/tf_frame
     name: new display
     config:

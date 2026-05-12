@@ -30,15 +30,13 @@
 #include <QMouseEvent>
 #include <QObject>
 #include <QPainter>
-#include <QTimer>
 #include <QWidget>
 #include <coug_interfaces/msg/way_point_list.hpp>
 #include <coug_mapviz/coug_waypoint_manager.hpp>
-#include <geographic_msgs/msg/way_point.hpp>
-#include <geometry_msgs/msg/pose.hpp>
-#include <geometry_msgs/msg/pose_array.hpp>
+#include <geographic_msgs/msg/geo_point.hpp>
 #include <map>
 #include <rclcpp/rclcpp.hpp>
+#include <std_srvs/srv/trigger.hpp>
 #include <string>
 #include <vector>
 
@@ -46,8 +44,7 @@ namespace coug_mapviz {
 
 /**
  * @class CougWaypointsPlugin
- * @brief A MapViz plugin that allows users to place, edit, and publish waypoints for multiple
- * agents.
+ * @brief A MapViz plugin for multi-agent waypoint mission planning.
  */
 class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   Q_OBJECT
@@ -78,7 +75,7 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   void Draw(double x, double y, double scale) override;
 
   /**
-   * @brief Paints 2D overlays (text, icons) using QPainter.
+   * @brief Paints 2D overlays.
    * @param painter The QPainter instance.
    * @param x Camera X position.
    * @param y Camera Y position.
@@ -172,17 +169,12 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
  protected Q_SLOTS:
   // --- UI Slots ---
   /**
-   * @brief Publishes waypoints for the current topic.
+   * @brief Publishes waypoints for the current agent (or all agents if apply_all is checked).
    */
   void PublishWaypoints();
 
   /**
-   * @brief Stops the current topic (publishes empty path).
-   */
-  void Stop();
-
-  /**
-   * @brief Clears waypoints for the current topic.
+   * @brief Clears waypoints for the current agent (or all agents if apply_all is checked).
    */
   void Clear();
 
@@ -197,29 +189,37 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   void LoadWaypoints();
 
   /**
-   * @brief Handles topic selection changes.
-   * @param text The new topic name.
+   * @brief Updates the active agent and resets interaction state when the selector changes.
+   * @param text The newly selected agent namespace.
    */
-  void TopicChanged(const QString& text);
+  void AgentChanged(const QString& text);
+
+  // --- Mission Control ---
+  /**
+   * @brief Starts mission execution on the current agent (or all agents if apply_all is checked).
+   */
+  void Start() { dispatchCommand("start"); }
 
   /**
-   * @brief Discovers available PoseArray topics.
+   * @brief Stops mission execution on the current agent (or all agents if apply_all is checked).
    */
-  void DiscoverTopics();
+  void Stop() { dispatchCommand("stop"); }
 
   /**
-   * @brief Publishes waypoints for all topics.
+   * @brief Commands the agent to surface at its current position (or all agents if apply_all is
+   * checked).
    */
-  void PublishAll();
+  void Surface() { dispatchCommand("surface"); }
 
   /**
-   * @brief Stops all topics.
+   * @brief Commands the agent to navigate to its home waypoint (or all agents if apply_all is
+   * checked).
    */
-  void StopAll();
+  void Home() { dispatchCommand("home"); }
 
   /**
-   * @brief Toggles plugin visibility.
-   * @param visible True if visible.
+   * @brief Shows or hides waypoints when the visibility checkbox changes.
+   * @param visible True to show, false to hide.
    */
   void VisibilityChanged(bool visible);
 
@@ -238,8 +238,10 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   // --- ROS Interface ---
   std::map<std::string, rclcpp::Publisher<coug_interfaces::msg::WayPointList>::SharedPtr>
       publishers_;
+  std::map<std::string, rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr> clients_;
   CougWaypointManager manager_;
-  std::string current_topic_;
+  std::string current_agent_;
+  std::vector<std::string> agent_namespaces_;
 
   // --- Interaction State ---
   int selected_point_;
@@ -248,60 +250,74 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   QPointF mouse_down_pos_;
   qint64 mouse_down_time_;
 
-  QTimer* discovery_timer_;
-
   // --- Helpers ---
   /**
-   * @brief Publishes the waypoint list for a specific topic.
-   * @param topic The topic to publish to.
+   * @brief Publishes waypoints for all agents currently in the manager.
+   */
+  void PublishAll();
+
+  /**
+   * @brief Publishes waypoints for one agent; derives the topic as agent + "/waypoints".
+   * @param agent The agent namespace.
    * @param wps The waypoints to publish.
    */
-  void PublishTopic(const std::string& topic, const std::vector<geometry_msgs::msg::Pose>& wps);
+  void PublishAgent(const std::string& agent,
+                    const std::vector<geographic_msgs::msg::GeoPoint>& wps);
 
   /**
-   * @brief Checks if a topic is currently available in the topic selector.
-   * @param topic The topic name to check.
-   * @return True if the topic is available.
+   * @brief Calls a Trigger service, creating the client lazily on first use.
+   * @param service_name The fully-qualified service name.
    */
-  bool IsTopicAvailable(const std::string& topic);
+  void callTrigger(const std::string& service_name);
 
   /**
-   * @brief Finds the closest waypoint to a point on the canvas.
-   * @param point The point to check against (in GL coordinates).
-   * @param distance Output parameter for the distance found.
-   * @return Index of the closest waypoint, or -1 if none found.
+   * @brief Calls cmd on the current agent, or all agents if apply_all is checked.
+   * @param cmd The command string to dispatch (e.g. "start", "stop", "surface", "home").
+   */
+  void dispatchCommand(const std::string& cmd);
+
+  /**
+   * @brief Returns true if agent is in the agent_namespaces_ list.
+   * @param agent The agent namespace to look up.
+   * @return True if the agent is known, false otherwise.
+   */
+  bool IsAgentKnown(const std::string& agent);
+
+  /**
+   * @brief Returns the index of the waypoint within 15px of point, or -1 if none.
+   * @param point The screen-space position to test.
+   * @param distance Output: distance in pixels to the closest waypoint.
+   * @return Index of the closest waypoint, or -1.
    */
   int GetClosestPoint(const QPointF& point, double& distance);
 
   /**
-   * @brief Draws the path lines and points for a topic (GL interface).
-   * @param wps The waypoints to draw.
-   * @param color The color to draw with.
-   * @param transform The current transform to map frame.
-   * @param selected_index Index of the selected point (-1 for none).
+   * @brief Draws non-current agent paths in white using OpenGL.
+   * @param wps The waypoint list to draw.
+   * @param transform Transform from the waypoint frame to the map frame.
    */
-  void DrawPath(const std::vector<geometry_msgs::msg::Pose>& wps, const QColor& color,
-                const swri_transform_util::Transform& transform, int selected_index = -1);
+  void DrawPath(const std::vector<geographic_msgs::msg::GeoPoint>& wps,
+                const swri_transform_util::Transform& transform);
 
   /**
-   * @brief Paints the numeric labels and depth text for a topic (QPainter interface).
+   * @brief Paints waypoint index numbers and depth labels using QPainter.
    * @param painter The QPainter instance.
-   * @param wps The waypoints to label.
-   * @param transform The current transform.
-   * @param color The text color.
+   * @param wps The waypoint list to label.
+   * @param transform Transform from the waypoint frame to screen space.
+   * @param color Label color.
    */
-  void PaintLabels(QPainter* painter, const std::vector<geometry_msgs::msg::Pose>& wps,
+  void PaintLabels(QPainter* painter, const std::vector<geographic_msgs::msg::GeoPoint>& wps,
                    const swri_transform_util::Transform& transform, const QColor& color);
 
   /**
-   * @brief Paints the path lines and points for a topic (QPainter interface).
+   * @brief Paints path lines and dots; highlights selected_index in yellow using QPainter.
    * @param painter The QPainter instance.
-   * @param wps The waypoints to paint.
-   * @param color The color to paint with.
-   * @param transform The current transform.
-   * @param selected_index Index of the selected point (-1 for none).
+   * @param wps The waypoint list to paint.
+   * @param color Base color for the path.
+   * @param transform Transform from the waypoint frame to screen space.
+   * @param selected_index Index of the selected waypoint to highlight, or -1 for none.
    */
-  void PaintPath(QPainter* painter, const std::vector<geometry_msgs::msg::Pose>& wps,
+  void PaintPath(QPainter* painter, const std::vector<geographic_msgs::msg::GeoPoint>& wps,
                  const QColor& color, const swri_transform_util::Transform& transform,
                  int selected_index = -1);
 };

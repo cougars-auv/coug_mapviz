@@ -30,6 +30,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(mapviz REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(std_srvs REQUIRED)
 find_package(swri_transform_util REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(Qt5 REQUIRED COMPONENTS Core Gui OpenGL Widgets)
@@ -39,9 +40,9 @@ find_package(OpenGL REQUIRED)
 add_definitions(-DWFlags=WindowFlags)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-set(UI_FILES ui/coug_waypoints_config.ui)
-set(SRC_FILES src/coug_waypoints_plugin.cpp src/coug_waypoint_manager.cpp)
-set(HEADER_FILES include/${PROJECT_NAME}/coug_waypoints_plugin.hpp)
+set(UI_FILES ui/coug_waypoints_config.ui ui/coug_utils_config.ui)
+set(SRC_FILES src/coug_waypoints_plugin.cpp src/coug_waypoint_manager.cpp src/coug_utils_plugin.cpp)
+set(HEADER_FILES include/${PROJECT_NAME}/coug_waypoints_plugin.hpp include/${PROJECT_NAME}/coug_utils_plugin.hpp)
 
 qt5_wrap_ui(UI_SRC_FILES ${UI_FILES})
 qt5_wrap_cpp(MOC_FILES ${HEADER_FILES})
@@ -67,6 +68,7 @@ ament_target_dependencies(${PROJECT_NAME}
   mapviz
   pluginlib
   rclcpp
+  std_srvs
   swri_transform_util
   tf2
 )

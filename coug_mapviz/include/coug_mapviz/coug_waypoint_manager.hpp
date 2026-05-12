@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include <geometry_msgs/msg/pose.hpp>
+#include <geographic_msgs/msg/geo_point.hpp>
 #include <map>
 #include <string>
 #include <vector>
@@ -38,68 +38,68 @@ class CougWaypointManager {
   ~CougWaypointManager() = default;
 
   /**
-   * @brief Adds a waypoint to the specified topic.
-   * @param topic The topic/agent name.
+   * @brief Adds a waypoint for the specified agent.
+   * @param agent The agent namespace.
    * @param pose The waypoint pose (in target/local frame).
    */
-  void addWaypoint(const std::string& topic, const geometry_msgs::msg::Pose& pose);
+  void addWaypoint(const std::string& agent, const geographic_msgs::msg::GeoPoint& pose);
 
   /**
-   * @brief Replaces the waypoint list for a specific topic.
-   * @param topic The topic/agent name.
+   * @brief Replaces the waypoint list for a specific agent.
+   * @param agent The agent namespace.
    * @param waypoints The new list of waypoints.
    */
-  void setWaypoints(const std::string& topic,
-                    const std::vector<geometry_msgs::msg::Pose>& waypoints);
+  void setWaypoints(const std::string& agent,
+                    const std::vector<geographic_msgs::msg::GeoPoint>& waypoints);
 
   /**
-   * @brief Gets the waypoints for a specific topic.
-   * @param topic The topic name.
+   * @brief Gets the waypoints for a specific agent.
+   * @param agent The agent namespace.
    * @return A vector of waypoints.
    */
-  std::vector<geometry_msgs::msg::Pose> getWaypoints(const std::string& topic) const;
+  std::vector<geographic_msgs::msg::GeoPoint> getWaypoints(const std::string& agent) const;
 
   /**
    * @brief Gets all managed waypoints as a map.
-   * @return Map of topic to waypoint list.
+   * @return Map of agent namespace to waypoint list.
    */
-  const std::map<std::string, std::vector<geometry_msgs::msg::Pose>>& getAllWaypoints() const;
+  const std::map<std::string, std::vector<geographic_msgs::msg::GeoPoint>>& getAllWaypoints() const;
 
   /**
-   * @brief Removes a topic and its waypoints from the manager.
-   * @param topic The topic to remove.
+   * @brief Removes an agent and its waypoints from the manager.
+   * @param agent The agent namespace.
    */
-  void removeTopic(const std::string& topic);
+  void removeAgent(const std::string& agent);
 
   /**
-   * @brief Clears waypoints for a specific topic.
-   * @param topic The topic name.
+   * @brief Clears waypoints for a specific agent.
+   * @param agent The agent namespace.
    */
-  void clearWaypoints(const std::string& topic);
+  void clearWaypoints(const std::string& agent);
 
   /**
-   * @brief Clears all waypoints for all topics.
+   * @brief Clears all waypoints for all agents.
    */
   void clearAllWaypoints();
 
   /**
-   * @brief Saves all waypoints to a JSON file.
+   * @brief Saves waypoints to a JSON file keyed by agent namespace.
    * @param filename The full path to the file.
-   * @param topic Optional: Only save this topic.
+   * @param agent Optional: only save this agent.
    * @return True if successful.
    */
-  bool saveToFile(const std::string& filename, const std::string& topic = "") const;
+  bool saveToFile(const std::string& filename, const std::string& agent = "") const;
 
   /**
-   * @brief Loads waypoints from a JSON file.
+   * @brief Loads waypoints from a JSON file keyed by agent namespace.
    * @param filename The full path to the file.
-   * @param topic Optional: Only load this topic.
+   * @param agent Optional: only load this agent.
    * @return True if successful.
    */
-  bool loadFromFile(const std::string& filename, const std::string& topic = "");
+  bool loadFromFile(const std::string& filename, const std::string& agent = "");
 
  private:
-  std::map<std::string, std::vector<geometry_msgs::msg::Pose>> waypoint_map_;
+  std::map<std::string, std::vector<geographic_msgs::msg::GeoPoint>> waypoints_;
 };
 
 }  // namespace coug_mapviz

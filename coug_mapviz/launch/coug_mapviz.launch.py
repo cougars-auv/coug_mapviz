@@ -55,7 +55,11 @@ def launch_setup(context, *args, **kwargs) -> list:
         with open(full_template_path, "r") as f:
             base = yaml.safe_load(f.read())
 
-        global_display_types = {"mapviz_plugins/tile_map", "coug_mapviz/coug_waypoints"}
+        global_display_types = {
+            "mapviz_plugins/tile_map",
+            "coug_mapviz/coug_waypoints",
+            "coug_mapviz/coug_utils",
+        }
         base["displays"] = [
             d for d in base["displays"] if d["type"] in global_display_types
         ]
@@ -91,6 +95,7 @@ def launch_setup(context, *args, **kwargs) -> list:
             parameters=[
                 {"config": mapviz_config_file},
                 {"use_sim_time": use_sim_time},
+                {"agent_namespaces": agent_namespaces},
             ],
         ),
         Node(

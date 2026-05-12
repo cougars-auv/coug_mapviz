@@ -25,64 +25,59 @@
 #include <QJsonObject>
 #include <QString>
 #include <coug_mapviz/coug_waypoint_manager.hpp>
-#include <map>
-#include <string>
-#include <vector>
 
 namespace coug_mapviz {
 
-void CougWaypointManager::addWaypoint(const std::string& topic,
-                                      const geometry_msgs::msg::Pose& pose) {
-  waypoint_map_[topic].push_back(pose);
+void CougWaypointManager::addWaypoint(const std::string& agent,
+                                      const geographic_msgs::msg::GeoPoint& pose) {
+  waypoints_[agent].push_back(pose);
 }
 
-void CougWaypointManager::setWaypoints(const std::string& topic,
-                                       const std::vector<geometry_msgs::msg::Pose>& waypoints) {
-  waypoint_map_[topic] = waypoints;
+void CougWaypointManager::setWaypoints(
+    const std::string& agent, const std::vector<geographic_msgs::msg::GeoPoint>& waypoints) {
+  waypoints_[agent] = waypoints;
 }
 
-std::vector<geometry_msgs::msg::Pose> CougWaypointManager::getWaypoints(
-    const std::string& topic) const {
-  if (waypoint_map_.find(topic) != waypoint_map_.end()) {
-    return waypoint_map_.at(topic);
+std::vector<geographic_msgs::msg::GeoPoint> CougWaypointManager::getWaypoints(
+    const std::string& agent) const {
+  if (waypoints_.find(agent) != waypoints_.end()) {
+    return waypoints_.at(agent);
   }
   return {};
 }
 
-const std::map<std::string, std::vector<geometry_msgs::msg::Pose>>&
+const std::map<std::string, std::vector<geographic_msgs::msg::GeoPoint>>&
 CougWaypointManager::getAllWaypoints() const {
-  return waypoint_map_;
+  return waypoints_;
 }
 
-void CougWaypointManager::clearWaypoints(const std::string& topic) { waypoint_map_[topic].clear(); }
+void CougWaypointManager::clearWaypoints(const std::string& agent) { waypoints_[agent].clear(); }
 
-void CougWaypointManager::clearAllWaypoints() { waypoint_map_.clear(); }
+void CougWaypointManager::clearAllWaypoints() { waypoints_.clear(); }
 
-void CougWaypointManager::removeTopic(const std::string& topic) { waypoint_map_.erase(topic); }
+void CougWaypointManager::removeAgent(const std::string& agent) { waypoints_.erase(agent); }
 
 bool CougWaypointManager::saveToFile(const std::string& filename,
-                                     const std::string& specific_topic) const {
-  QJsonObject multi_topic_obj;
+                                     const std::string& specific_agent) const {
+  QJsonObject root;
 
-  for (const auto& [topic, wps] : waypoint_map_) {
-    if (!specific_topic.empty() && topic != specific_topic) {
+  for (const auto& [agent, wps] : waypoints_) {
+    if (!specific_agent.empty() && agent != specific_agent) {
       continue;
     }
 
     QJsonArray waypoints_array;
     for (const auto& wp : wps) {
       QJsonObject wp_obj;
-
-      wp_obj["lon"] = wp.position.x;
-      wp_obj["lat"] = wp.position.y;
-      wp_obj["z"] = wp.position.z;
-
+      wp_obj["lon"] = wp.longitude;
+      wp_obj["lat"] = wp.latitude;
+      wp_obj["z"] = wp.altitude;
       waypoints_array.append(wp_obj);
     }
-    multi_topic_obj[QString::fromStdString(topic)] = waypoints_array;
+    root[QString::fromStdString(agent)] = waypoints_array;
   }
 
-  QJsonDocument doc(multi_topic_obj);
+  QJsonDocument doc(root);
   QFile file(QString::fromStdString(filename));
   if (file.open(QIODevice::WriteOnly)) {
     file.write(doc.toJson());
@@ -93,7 +88,7 @@ bool CougWaypointManager::saveToFile(const std::string& filename,
 }
 
 bool CougWaypointManager::loadFromFile(const std::string& filename,
-                                       const std::string& specific_topic) {
+                                       const std::string& specific_agent) {
   QFile file(QString::fromStdString(filename));
   if (!file.open(QIODevice::ReadOnly)) {
     return false;
@@ -109,28 +104,27 @@ bool CougWaypointManager::loadFromFile(const std::string& filename,
   QJsonObject obj = doc.object();
   int loaded_count = 0;
 
-  for (const QString& topic_key : obj.keys()) {
-    std::string topic_str = topic_key.toStdString();
+  for (const QString& agent_key : obj.keys()) {
+    std::string agent = agent_key.toStdString();
 
-    if (!specific_topic.empty() && topic_str != specific_topic) {
+    if (!specific_agent.empty() && agent != specific_agent) {
       continue;
     }
 
-    std::vector<geometry_msgs::msg::Pose> wps;
-    QJsonArray array = obj[topic_key].toArray();
+    std::vector<geographic_msgs::msg::GeoPoint> wps;
+    QJsonArray array = obj[agent_key].toArray();
 
     for (const auto& val : array) {
       QJsonObject wp_obj = val.toObject();
-      geometry_msgs::msg::Pose pose;
-
       if (wp_obj.contains("lat") && wp_obj.contains("lon")) {
-        pose.position.x = wp_obj["lon"].toDouble();
-        pose.position.y = wp_obj["lat"].toDouble();
-        pose.position.z = wp_obj["z"].toDouble();
-        wps.push_back(pose);
+        geographic_msgs::msg::GeoPoint gp;
+        gp.longitude = wp_obj["lon"].toDouble();
+        gp.latitude = wp_obj["lat"].toDouble();
+        gp.altitude = wp_obj["z"].toDouble();
+        wps.push_back(gp);
       }
     }
-    waypoint_map_[topic_str] = wps;
+    waypoints_[agent] = wps;
     loaded_count++;
   }
 
