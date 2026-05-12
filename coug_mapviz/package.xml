@@ -18,6 +18,8 @@
 
   <depend>rclcpp</depend>
   <depend>geometry_msgs</depend>
+  <depend>geographic_msgs</depend>
+  <depend>coug_interfaces</depend>
   <depend condition="$ROS_BUILD_ARCH == 'amd64'">mapviz</depend>
   <depend condition="$ROS_BUILD_ARCH == 'amd64'">mapviz_plugins</depend>
   <depend condition="$ROS_BUILD_ARCH == 'amd64'">tile_map</depend>

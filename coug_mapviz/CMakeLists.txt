@@ -24,6 +24,8 @@ endif()
 # --- Dependencies ---
 find_package(ament_cmake_auto REQUIRED)
 
+find_package(coug_interfaces REQUIRED)
+find_package(geographic_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(mapviz REQUIRED)
 find_package(pluginlib REQUIRED)
@@ -59,6 +61,8 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC
   "PLUGINLIB__DISABLE_BOOST_FUNCTIONS")
 
 ament_target_dependencies(${PROJECT_NAME}
+  coug_interfaces
+  geographic_msgs
   geometry_msgs
   mapviz
   pluginlib
@@ -79,6 +83,8 @@ target_link_libraries(${PROJECT_NAME}
 pluginlib_export_plugin_description_file(mapviz mapviz_plugins.xml)
 
 ament_export_dependencies(
+  coug_interfaces
+  geographic_msgs
   geometry_msgs
   mapviz
   Qt5

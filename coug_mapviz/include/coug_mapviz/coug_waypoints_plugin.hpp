@@ -32,7 +32,9 @@
 #include <QPainter>
 #include <QTimer>
 #include <QWidget>
+#include <coug_interfaces/msg/way_point_list.hpp>
 #include <coug_mapviz/coug_waypoint_manager.hpp>
+#include <geographic_msgs/msg/way_point.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/pose_array.hpp>
 #include <map>
@@ -234,7 +236,8 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   mapviz::MapCanvas* map_canvas_;
 
   // --- ROS Interface ---
-  std::map<std::string, rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr> publishers_;
+  std::map<std::string, rclcpp::Publisher<coug_interfaces::msg::WayPointList>::SharedPtr>
+      publishers_;
   CougWaypointManager manager_;
   std::string current_topic_;
 
@@ -301,16 +304,6 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   void PaintPath(QPainter* painter, const std::vector<geometry_msgs::msg::Pose>& wps,
                  const QColor& color, const swri_transform_util::Transform& transform,
                  int selected_index = -1);
-
-  /**
-   * @brief Transforms local waypoints to the target frame for publishing.
-   * @param in Input waypoints (local frame).
-   * @param out Output waypoints (target frame).
-   * @param transform The transform to apply.
-   */
-  void TransformWaypoints(const std::vector<geometry_msgs::msg::Pose>& in,
-                          std::vector<geometry_msgs::msg::Pose>& out,
-                          const swri_transform_util::Transform& transform);
 };
 
 }  // namespace coug_mapviz

@@ -100,7 +100,7 @@ void CougWaypointsPlugin::DiscoverTopics() {
   auto topics_and_types = node_->get_topic_names_and_types();
   for (const auto& [topic, types] : topics_and_types) {
     for (const auto& type : types) {
-      if (type == "geometry_msgs/msg/PoseArray") {
+      if (type == "coug_interfaces/msg/WayPointList") {
         if (ui_.topic_selector->findText(QString::fromStdString(topic)) == -1) {
           ui_.topic_selector->addItem(QString::fromStdString(topic));
         }
@@ -168,25 +168,22 @@ void CougWaypointsPlugin::StopAll() {
 void CougWaypointsPlugin::PublishTopic(const std::string& topic,
                                        const std::vector<geometry_msgs::msg::Pose>& wps) {
   if (publishers_.find(topic) == publishers_.end()) {
-    publishers_[topic] =
-        node_->create_publisher<geometry_msgs::msg::PoseArray>(topic, rclcpp::SystemDefaultsQoS());
+    publishers_[topic] = node_->create_publisher<coug_interfaces::msg::WayPointList>(
+        topic, rclcpp::SystemDefaultsQoS());
   }
 
-  swri_transform_util::Transform transform;
-  if (!tf_manager_->GetTransform(target_frame_, swri_transform_util::_wgs84_frame, transform)) {
-    PrintError("No transform for " + topic);
-    return;
+  coug_interfaces::msg::WayPointList waypoint_list;
+  waypoint_list.header.frame_id = swri_transform_util::_wgs84_frame;
+  waypoint_list.header.stamp = node_->now();
+  for (const auto& pose : wps) {
+    geographic_msgs::msg::WayPoint wp;
+    wp.position.latitude = pose.position.y;
+    wp.position.longitude = pose.position.x;
+    wp.position.altitude = pose.position.z;  // depth, z-up
+    waypoint_list.waypoints.push_back(wp);
   }
 
-  std::vector<geometry_msgs::msg::Pose> transformed_wps;
-  TransformWaypoints(wps, transformed_wps, transform);
-
-  auto pose_array = std::make_unique<geometry_msgs::msg::PoseArray>();
-  pose_array->header.frame_id = target_frame_;
-  pose_array->header.stamp = node_->now();
-  pose_array->poses = transformed_wps;
-
-  publishers_[topic]->publish(*pose_array);
+  publishers_[topic]->publish(waypoint_list);
 }
 
 bool CougWaypointsPlugin::IsTopicAvailable(const std::string& topic) {
@@ -209,7 +206,9 @@ void CougWaypointsPlugin::Clear() {
 
 void CougWaypointsPlugin::SaveWaypoints() {
   const char* overlay_ws = std::getenv("OVERLAY_WS");
-  QString path = QString::fromUtf8(overlay_ws) + "/src/coug_mapviz/coug_mapviz/missions";
+  QString path = overlay_ws
+                     ? QString::fromUtf8(overlay_ws) + "/src/coug_mapviz/coug_mapviz/missions"
+                     : QString::fromUtf8(std::getenv("HOME"));
   QDir dir(path);
   if (!dir.exists()) {
     dir.mkpath(".");
@@ -246,7 +245,9 @@ void CougWaypointsPlugin::SaveWaypoints() {
 
 void CougWaypointsPlugin::LoadWaypoints() {
   const char* overlay_ws = std::getenv("OVERLAY_WS");
-  QString path = QString::fromUtf8(overlay_ws) + "/src/coug_mapviz/coug_mapviz/missions";
+  QString path = overlay_ws
+                     ? QString::fromUtf8(overlay_ws) + "/src/coug_mapviz/coug_mapviz/missions"
+                     : QString::fromUtf8(std::getenv("HOME"));
   QString filename =
       QFileDialog::getOpenFileName(config_widget_, "Load Mission", path, "JSON Files (*.json)");
   if (filename.isEmpty()) {
@@ -430,19 +431,6 @@ void CougWaypointsPlugin::PaintLabels(QPainter* painter,
     QPointF num_corner(gl_point.x() - 20, gl_point.y() - 20);
     QRectF num_rect(num_corner, QSizeF(40, 40));
     painter->drawText(num_rect, Qt::AlignHCenter | Qt::AlignVCenter, QString::number(i + 1));
-  }
-}
-
-void CougWaypointsPlugin::TransformWaypoints(const std::vector<geometry_msgs::msg::Pose>& in,
-                                             std::vector<geometry_msgs::msg::Pose>& out,
-                                             const swri_transform_util::Transform& transform) {
-  out = in;
-  for (size_t i = 0; i < in.size(); i++) {
-    tf2::Vector3 position(in[i].position.x, in[i].position.y, 0.0);
-    position = transform * position;
-    out[i].position.x = position.x();
-    out[i].position.y = position.y();
-    out[i].position.z = in[i].position.z;
   }
 }
 
