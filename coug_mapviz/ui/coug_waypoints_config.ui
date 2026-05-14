@@ -98,8 +98,26 @@
         </widget>
       </item>
 
-      <!-- Row 2: Publish / Clear -->
+      <!-- Row 2: Altitude Control Checkbox -->
       <item row="2" column="1" colspan="3">
+        <widget class="QCheckBox" name="altitude_mode">
+          <property name="font">
+            <font>
+              <family>Sans Serif</family>
+              <pointsize>8</pointsize>
+            </font>
+          </property>
+          <property name="text">
+            <string>Altitude control (ALT)</string>
+          </property>
+          <property name="enabled">
+            <bool>false</bool>
+          </property>
+        </widget>
+      </item>
+
+      <!-- Row 3: Publish / Clear -->
+      <item row="3" column="1" colspan="3">
         <layout class="QHBoxLayout" name="horizontalLayout_pub_clear">
           <item>
             <widget class="QPushButton" name="publish">
@@ -118,8 +136,8 @@
         </layout>
       </item>
 
-      <!-- Row 3: Load / Save -->
-      <item row="3" column="1" colspan="3">
+      <!-- Row 4: Load / Save -->
+      <item row="4" column="1" colspan="3">
         <layout class="QHBoxLayout" name="horizontalLayout_file">
           <item>
             <widget class="QPushButton" name="load">
@@ -138,8 +156,8 @@
         </layout>
       </item>
 
-      <!-- Row 4: Separator -->
-      <item row="4" column="1" colspan="3">
+      <!-- Row 5: Separator -->
+      <item row="5" column="1" colspan="3">
         <widget class="QFrame" name="separator">
           <property name="frameShape">
             <enum>QFrame::HLine</enum>
@@ -150,8 +168,8 @@
         </widget>
       </item>
 
-      <!-- Row 5: Start / Stop -->
-      <item row="5" column="1" colspan="3">
+      <!-- Row 6: Start / Stop -->
+      <item row="6" column="1" colspan="3">
         <layout class="QHBoxLayout" name="horizontalLayout_start_stop">
           <item>
             <widget class="QPushButton" name="start">
@@ -170,8 +188,8 @@
         </layout>
       </item>
 
-      <!-- Row 6: Surface / Home -->
-      <item row="6" column="1" colspan="3">
+      <!-- Row 7: Surface / Home -->
+      <item row="7" column="1" colspan="3">
         <layout class="QHBoxLayout" name="horizontalLayout_surface_home">
           <item>
             <widget class="QPushButton" name="surface">
@@ -190,8 +208,8 @@
         </layout>
       </item>
 
-      <!-- Row 7: Checkbox -->
-      <item row="7" column="1" colspan="3">
+      <!-- Row 8: Checkbox -->
+      <item row="8" column="1" colspan="3">
         <widget class="QCheckBox" name="apply_all">
           <property name="font">
             <font>
@@ -208,8 +226,8 @@
         </widget>
       </item>
 
-      <!-- Row 8: Status -->
-      <item row="8" column="0">
+      <!-- Row 9: Status -->
+      <item row="9" column="0">
         <widget class="QLabel" name="label_2">
           <property name="font">
             <font>
@@ -222,7 +240,7 @@
           </property>
         </widget>
       </item>
-      <item row="8" column="1" colspan="3">
+      <item row="9" column="1" colspan="3">
         <widget class="QLabel" name="status">
           <property name="font">
             <font>

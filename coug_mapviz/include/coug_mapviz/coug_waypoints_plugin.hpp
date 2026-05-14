@@ -232,6 +232,12 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
    */
   void DepthChanged(double value);
 
+  /**
+   * @brief Toggles altitude (ALT) mode for the selected waypoint, flipping the spinbox range.
+   * @param checked True for altitude (ALT) mode, false for depth mode.
+   */
+  void AltitudeModeChanged(bool checked);
+
  private:
   struct DispatchState {
     int total = 0;
