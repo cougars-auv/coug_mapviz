@@ -3,8 +3,4 @@
     base_class_type="mapviz::MapvizPlugin">
     <description>CougUV fleet waypoint dashboard</description>
   </class>
-  <class name="coug_mapviz/coug_utils" type="coug_mapviz::CougUtilsPlugin"
-    base_class_type="mapviz::MapvizPlugin">
-    <description>CougUV fleet utils dashboard</description>
-  </class>
 </library>

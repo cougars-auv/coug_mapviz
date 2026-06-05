@@ -58,7 +58,6 @@ def launch_setup(context, *args, **kwargs) -> list:
         global_display_types = {
             "mapviz_plugins/tile_map",
             "coug_mapviz/coug_waypoints",
-            "coug_mapviz/coug_utils",
         }
         base["displays"] = [
             d for d in base["displays"] if d["type"] in global_display_types
