@@ -36,14 +36,14 @@ def launch_setup(context, *args, **kwargs) -> list:
 
     fleet_params = PathJoinSubstitution(
         [
-            EnvironmentVariable("CONFIG_FOLDER"),
+            EnvironmentVariable("CONFIG_DIR"),
             "fleet",
             "coug_mapviz_params.yaml",
         ]
     )
     auv_params = PathJoinSubstitution(
         [
-            EnvironmentVariable("CONFIG_FOLDER"),
+            EnvironmentVariable("CONFIG_DIR"),
             f"{agent_namespaces[0]}_params.yaml",
         ]
     )
