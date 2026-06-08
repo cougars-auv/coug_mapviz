@@ -258,7 +258,8 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
       publishers_;
   std::map<std::string, rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr>
       map_publishers_;
-  std::map<std::string, rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr> clients_;
+  std::map<std::string, std::map<std::string, rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr>>
+      clients_;
   CougWaypointManager manager_;
   std::string current_agent_;
   std::vector<std::string> agent_namespaces_;
@@ -289,11 +290,11 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   /**
    * @brief Calls a Trigger service. When state is provided, records the result
    *        into the shared DispatchState and prints a summary once all agents respond.
-   * @param service_name The fully-qualified service name.
-   * @param agent The agent namespace (used to label failures).
+   * @param ns The agent namespace to call.
+   * @param cmd The command string (e.g. "start", "stop").
    * @param state Shared state for multi-agent dispatch; nullptr for single-agent.
    */
-  void callTrigger(const std::string& service_name, const std::string& agent = "",
+  void callTrigger(const std::string& ns, const std::string& cmd,
                    std::shared_ptr<DispatchState> state = nullptr);
   void recordResult(std::shared_ptr<DispatchState> state, bool success, const std::string& agent);
 

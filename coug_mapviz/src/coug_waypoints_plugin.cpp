@@ -102,8 +102,7 @@ bool CougWaypointsPlugin::Initialize(QGLWidget* canvas) {
         node_->create_publisher<geometry_msgs::msg::PoseArray>(ns + "/" + waypoints_map_topic_,
                                                                rclcpp::SystemDefaultsQoS());
     for (const auto& cmd : {"start", "stop", "surface", "home"}) {
-      std::string service_name = ns + "/" + cmd;
-      clients_[service_name] = node_->create_client<std_srvs::srv::Trigger>(service_name);
+      clients_[ns][cmd] = node_->create_client<std_srvs::srv::Trigger>(ns + "/" + cmd);
     }
   }
 
@@ -163,32 +162,32 @@ void CougWaypointsPlugin::recordResult(std::shared_ptr<DispatchState> state, boo
   }
 }
 
-void CougWaypointsPlugin::callTrigger(const std::string& service_name, const std::string& agent,
+void CougWaypointsPlugin::callTrigger(const std::string& ns, const std::string& cmd,
                                       std::shared_ptr<DispatchState> state) {
-  if (clients_.find(service_name) == clients_.end()) {
+  auto ns_it = clients_.find(ns);
+  if (ns_it == clients_.end() || ns_it->second.find(cmd) == ns_it->second.end()) {
     if (state)
-      recordResult(state, false, agent);
+      recordResult(state, false, ns);
     else
-      PrintError("Unknown service: " + service_name);
+      PrintError("Unknown service: " + ns + "/" + cmd);
     return;
   }
-  auto& client = clients_[service_name];
+  auto& client = clients_[ns][cmd];
   if (!client->service_is_ready()) {
     if (state)
-      recordResult(state, false, agent);
+      recordResult(state, false, ns);
     else
-      PrintError("Service not available: " + service_name);
+      PrintError("Service not available: " + ns + "/" + cmd);
     return;
   }
   auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
   client->async_send_request(
-      request, [this, agent, state,
-                service_name](rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture future) {
+      request, [this, ns, cmd, state](rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture future) {
         auto response = future.get();
         if (state) {
-          recordResult(state, response->success, agent);
+          recordResult(state, response->success, ns);
         } else {
-          std::string prefix = "[" + service_name.substr(service_name.rfind('/') + 1) + "] ";
+          std::string prefix = "[" + cmd + "] ";
           if (response->success)
             PrintInfo(prefix + response->message);
           else
@@ -203,12 +202,14 @@ void CougWaypointsPlugin::dispatchCommand(const std::string& cmd) {
       PrintError("No agents configured");
       return;
     }
+    PrintInfo("[" + cmd + "] calling...");
     auto state = std::make_shared<DispatchState>();
     state->total = static_cast<int>(agent_namespaces_.size());
     state->cmd = cmd;
-    for (const auto& ns : agent_namespaces_) callTrigger(ns + "/" + cmd, ns, state);
+    for (const auto& ns : agent_namespaces_) callTrigger(ns, cmd, state);
   } else if (!current_agent_.empty()) {
-    callTrigger(current_agent_ + "/" + cmd);
+    PrintInfo("[" + cmd + "] calling...");
+    callTrigger(current_agent_, cmd);
   } else {
     PrintError("No agent selected");
   }
