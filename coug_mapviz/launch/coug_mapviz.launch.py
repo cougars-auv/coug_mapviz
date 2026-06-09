@@ -41,13 +41,6 @@ def launch_setup(context, *args, **kwargs) -> list:
             "coug_mapviz_params.yaml",
         ]
     )
-    auv_params = PathJoinSubstitution(
-        [
-            EnvironmentVariable("CONFIG_DIR"),
-            f"{agent_namespaces[0]}_params.yaml",
-        ]
-    )
-
     pkg_share = get_package_share_directory("coug_mapviz")
     full_template_path = os.path.join(pkg_share, "mapviz", "mapviz_config.mvc.template")
 
@@ -93,10 +86,11 @@ def launch_setup(context, *args, **kwargs) -> list:
             name="mapviz",
             parameters=[
                 fleet_params,
-                auv_params,
-                {"config": mapviz_config_file},
-                {"use_sim_time": use_sim_time},
-                {"agent_namespaces": agent_namespaces},
+                {
+                    "config": mapviz_config_file,
+                    "use_sim_time": use_sim_time,
+                    "agent_namespaces": agent_namespaces,
+                },
             ],
         ),
         Node(
@@ -108,7 +102,6 @@ def launch_setup(context, *args, **kwargs) -> list:
             ],
             parameters=[
                 fleet_params,
-                auv_params,
                 {"use_sim_time": use_sim_time},
             ],
         ),
