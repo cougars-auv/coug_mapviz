@@ -149,7 +149,7 @@ void CougWaypointsPlugin::recordResult(std::shared_ptr<DispatchState> state, boo
   int s = state->succeeded, t = state->total;
   std::string prefix = "[" + state->cmd + "] ";
   if (s == t) {
-    PrintInfo(prefix + "All " + std::to_string(t) + " agent(s) confirmed");
+    PrintInfo(prefix + "All " + std::to_string(t) + " agent(s) sent");
   } else {
     std::string failed_str;
     for (const auto& f : state->failed) failed_str += " " + f;
