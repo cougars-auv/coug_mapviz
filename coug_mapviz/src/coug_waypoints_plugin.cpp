@@ -88,11 +88,25 @@ bool CougWaypointsPlugin::Initialize(QGLWidget* canvas) {
     node_->declare_parameter("agent_namespaces", std::vector<std::string>{});
     node_->declare_parameter("waypoint_topic", std::string("waypoints"));
     node_->declare_parameter("waypoints_map_topic", std::string("waypoints_map"));
+    node_->declare_parameter("start_service", std::string("base/start"));
+    node_->declare_parameter("stop_service", std::string("base/stop"));
+    node_->declare_parameter("surface_service", std::string("base/surface"));
+    node_->declare_parameter("home_service", std::string("base/home"));
   } catch (const rclcpp::exceptions::ParameterAlreadyDeclaredException&) {
   }
   node_->get_parameter("agent_namespaces", agent_namespaces_);
   node_->get_parameter("waypoint_topic", waypoint_topic_);
   node_->get_parameter("waypoints_map_topic", waypoints_map_topic_);
+  node_->get_parameter("start_service", start_service_);
+  node_->get_parameter("stop_service", stop_service_);
+  node_->get_parameter("surface_service", surface_service_);
+  node_->get_parameter("home_service", home_service_);
+  const std::map<std::string, std::string> cmds = {
+      {"start", start_service_},
+      {"stop", stop_service_},
+      {"surface", surface_service_},
+      {"home", home_service_},
+  };
   for (const auto& ns : agent_namespaces_) {
     ui_.agent_selector->addItem(QString::fromStdString(ns));
     publishers_[ns + "/" + waypoint_topic_] =
@@ -101,8 +115,8 @@ bool CougWaypointsPlugin::Initialize(QGLWidget* canvas) {
     map_publishers_[ns + "/" + waypoints_map_topic_] =
         node_->create_publisher<geometry_msgs::msg::PoseArray>(ns + "/" + waypoints_map_topic_,
                                                                rclcpp::SystemDefaultsQoS());
-    for (const auto& cmd : {"start", "stop", "surface", "home"}) {
-      clients_[ns][cmd] = node_->create_client<std_srvs::srv::Trigger>(ns + "/" + cmd);
+    for (const auto& [cmd, svc] : cmds) {
+      clients_[ns][cmd] = node_->create_client<std_srvs::srv::Trigger>(ns + "/" + svc);
     }
   }
 

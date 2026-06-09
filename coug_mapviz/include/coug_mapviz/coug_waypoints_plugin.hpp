@@ -265,6 +265,10 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   std::vector<std::string> agent_namespaces_;
   std::string waypoint_topic_;
   std::string waypoints_map_topic_;
+  std::string start_service_;
+  std::string stop_service_;
+  std::string surface_service_;
+  std::string home_service_;
 
   // --- Interaction State ---
   int selected_point_;
