@@ -30,6 +30,10 @@ namespace coug_mapviz {
 
 static constexpr double kDefaultSpeedRpm = 1500.0;
 
+/**
+ * @struct CougWaypoint
+ * @brief C++ container for waypoint data.
+ */
 struct CougWaypoint {
   geographic_msgs::msg::GeoPoint position;
   double speed_rpm = kDefaultSpeedRpm;
