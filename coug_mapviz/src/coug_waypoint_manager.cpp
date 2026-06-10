@@ -28,26 +28,24 @@
 
 namespace coug_mapviz {
 
-void CougWaypointManager::addWaypoint(const std::string& agent,
-                                      const geographic_msgs::msg::GeoPoint& pose) {
-  waypoints_[agent].push_back(pose);
+void CougWaypointManager::addWaypoint(const std::string& agent, const CougWaypoint& wp) {
+  waypoints_[agent].push_back(wp);
 }
 
-void CougWaypointManager::setWaypoints(
-    const std::string& agent, const std::vector<geographic_msgs::msg::GeoPoint>& waypoints) {
+void CougWaypointManager::setWaypoints(const std::string& agent,
+                                       const std::vector<CougWaypoint>& waypoints) {
   waypoints_[agent] = waypoints;
 }
 
-std::vector<geographic_msgs::msg::GeoPoint> CougWaypointManager::getWaypoints(
-    const std::string& agent) const {
+std::vector<CougWaypoint> CougWaypointManager::getWaypoints(const std::string& agent) const {
   if (waypoints_.find(agent) != waypoints_.end()) {
     return waypoints_.at(agent);
   }
   return {};
 }
 
-const std::map<std::string, std::vector<geographic_msgs::msg::GeoPoint>>&
-CougWaypointManager::getAllWaypoints() const {
+const std::map<std::string, std::vector<CougWaypoint>>& CougWaypointManager::getAllWaypoints()
+    const {
   return waypoints_;
 }
 
@@ -69,9 +67,10 @@ bool CougWaypointManager::saveToFile(const std::string& filename,
     QJsonArray waypoints_array;
     for (const auto& wp : wps) {
       QJsonObject wp_obj;
-      wp_obj["lon"] = wp.longitude;
-      wp_obj["lat"] = wp.latitude;
-      wp_obj["z"] = wp.altitude;
+      wp_obj["lon"] = wp.position.longitude;
+      wp_obj["lat"] = wp.position.latitude;
+      wp_obj["z"] = wp.position.altitude;
+      wp_obj["speed_rpm"] = wp.speed_rpm;
       waypoints_array.append(wp_obj);
     }
     root[QString::fromStdString(agent)] = waypoints_array;
@@ -111,17 +110,19 @@ bool CougWaypointManager::loadFromFile(const std::string& filename,
       continue;
     }
 
-    std::vector<geographic_msgs::msg::GeoPoint> wps;
+    std::vector<CougWaypoint> wps;
     QJsonArray array = obj[agent_key].toArray();
 
     for (const auto& val : array) {
       QJsonObject wp_obj = val.toObject();
       if (wp_obj.contains("lat") && wp_obj.contains("lon")) {
-        geographic_msgs::msg::GeoPoint gp;
-        gp.longitude = wp_obj["lon"].toDouble();
-        gp.latitude = wp_obj["lat"].toDouble();
-        gp.altitude = wp_obj["z"].toDouble();
-        wps.push_back(gp);
+        CougWaypoint cwp;
+        cwp.position.longitude = wp_obj["lon"].toDouble();
+        cwp.position.latitude = wp_obj["lat"].toDouble();
+        cwp.position.altitude = wp_obj["z"].toDouble();
+        cwp.speed_rpm =
+            wp_obj.contains("speed_rpm") ? wp_obj["speed_rpm"].toDouble() : kDefaultSpeedRpm;
+        wps.push_back(cwp);
       }
     }
     waypoints_[agent] = wps;

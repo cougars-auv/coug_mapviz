@@ -34,6 +34,7 @@
 #include <coug_interfaces/msg/way_point_list.hpp>
 #include <coug_mapviz/coug_waypoint_manager.hpp>
 #include <geographic_msgs/msg/geo_point.hpp>
+#include <geographic_msgs/msg/key_value.hpp>
 #include <geometry_msgs/msg/pose_array.hpp>
 #include <map>
 #include <memory>
@@ -233,6 +234,12 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   void DepthChanged(double value);
 
   /**
+   * @brief Updates the thruster speed of the selected waypoint.
+   * @param value New speed in RPM.
+   */
+  void SpeedChanged(double value);
+
+  /**
    * @brief Toggles altitude (ALT) mode for the selected waypoint, flipping the spinbox range.
    * @param checked True for altitude (ALT) mode, false for depth mode.
    */
@@ -288,8 +295,7 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
    * @param agent The agent namespace.
    * @param wps The waypoints to publish.
    */
-  void PublishAgent(const std::string& agent,
-                    const std::vector<geographic_msgs::msg::GeoPoint>& wps);
+  void PublishAgent(const std::string& agent, const std::vector<CougWaypoint>& wps);
 
   /**
    * @brief Calls a Trigger service. When state is provided, records the result
@@ -300,6 +306,14 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
    */
   void callTrigger(const std::string& ns, const std::string& cmd,
                    std::shared_ptr<DispatchState> state = nullptr);
+
+  /**
+   * @brief Records one agent's service response into the shared DispatchState and prints a
+   *        summary once all agents have responded.
+   * @param state Shared dispatch state.
+   * @param success Whether the service call succeeded.
+   * @param agent The agent namespace that responded.
+   */
   void recordResult(std::shared_ptr<DispatchState> state, bool success, const std::string& agent);
 
   /**
@@ -328,17 +342,17 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
    * @param wps The waypoint list to draw.
    * @param transform Transform from the waypoint frame to the map frame.
    */
-  void DrawPath(const std::vector<geographic_msgs::msg::GeoPoint>& wps,
+  void DrawPath(const std::vector<CougWaypoint>& wps,
                 const swri_transform_util::Transform& transform);
 
   /**
-   * @brief Paints waypoint index numbers and depth labels using QPainter.
+   * @brief Paints waypoint index numbers, depth, and speed labels using QPainter.
    * @param painter The QPainter instance.
    * @param wps The waypoint list to label.
    * @param transform Transform from the waypoint frame to screen space.
    * @param color Label color.
    */
-  void PaintLabels(QPainter* painter, const std::vector<geographic_msgs::msg::GeoPoint>& wps,
+  void PaintLabels(QPainter* painter, const std::vector<CougWaypoint>& wps,
                    const swri_transform_util::Transform& transform, const QColor& color);
 
   /**
@@ -349,9 +363,8 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
    * @param transform Transform from the waypoint frame to screen space.
    * @param selected_index Index of the selected waypoint to highlight, or -1 for none.
    */
-  void PaintPath(QPainter* painter, const std::vector<geographic_msgs::msg::GeoPoint>& wps,
-                 const QColor& color, const swri_transform_util::Transform& transform,
-                 int selected_index = -1);
+  void PaintPath(QPainter* painter, const std::vector<CougWaypoint>& wps, const QColor& color,
+                 const swri_transform_util::Transform& transform, int selected_index = -1);
 };
 
 }  // namespace coug_mapviz

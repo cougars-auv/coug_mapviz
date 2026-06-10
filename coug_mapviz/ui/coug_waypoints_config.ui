@@ -98,8 +98,45 @@
         </widget>
       </item>
 
-      <!-- Row 2: Altitude Control Checkbox -->
+      <!-- Row 2: Selected Speed -->
+      <item row="2" column="0">
+        <widget class="QLabel" name="label_speed">
+          <property name="font">
+            <font>
+              <family>Sans Serif</family>
+              <pointsize>8</pointsize>
+            </font>
+          </property>
+          <property name="text">
+            <string>Speed (RPM):</string>
+          </property>
+        </widget>
+      </item>
       <item row="2" column="1" colspan="3">
+        <widget class="QDoubleSpinBox" name="speed_editor">
+          <property name="enabled">
+            <bool>false</bool>
+          </property>
+          <property name="decimals">
+            <number>1</number>
+          </property>
+          <property name="minimum">
+            <double>0.0</double>
+          </property>
+          <property name="maximum">
+            <double>1525.0</double>
+          </property>
+          <property name="value">
+            <double>1500.0</double>
+          </property>
+          <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::PlusMinus</enum>
+          </property>
+        </widget>
+      </item>
+
+      <!-- Row 3: Altitude Control Checkbox -->
+      <item row="3" column="1" colspan="3">
         <widget class="QCheckBox" name="altitude_mode">
           <property name="font">
             <font>
@@ -116,8 +153,8 @@
         </widget>
       </item>
 
-      <!-- Row 3: Publish / Clear -->
-      <item row="3" column="1" colspan="3">
+      <!-- Row 4: Publish / Clear -->
+      <item row="4" column="1" colspan="3">
         <layout class="QHBoxLayout" name="horizontalLayout_pub_clear">
           <item>
             <widget class="QPushButton" name="publish">
@@ -136,8 +173,8 @@
         </layout>
       </item>
 
-      <!-- Row 4: Load / Save -->
-      <item row="4" column="1" colspan="3">
+      <!-- Row 5: Load / Save -->
+      <item row="5" column="1" colspan="3">
         <layout class="QHBoxLayout" name="horizontalLayout_file">
           <item>
             <widget class="QPushButton" name="load">
@@ -156,8 +193,8 @@
         </layout>
       </item>
 
-      <!-- Row 5: Separator -->
-      <item row="5" column="1" colspan="3">
+      <!-- Row 6: Separator -->
+      <item row="6" column="1" colspan="3">
         <widget class="QFrame" name="separator">
           <property name="frameShape">
             <enum>QFrame::HLine</enum>
@@ -168,8 +205,8 @@
         </widget>
       </item>
 
-      <!-- Row 6: Start / Stop -->
-      <item row="6" column="1" colspan="3">
+      <!-- Row 7: Start / Stop -->
+      <item row="7" column="1" colspan="3">
         <layout class="QHBoxLayout" name="horizontalLayout_start_stop">
           <item>
             <widget class="QPushButton" name="start">
@@ -188,8 +225,8 @@
         </layout>
       </item>
 
-      <!-- Row 7: Surface / Home -->
-      <item row="7" column="1" colspan="3">
+      <!-- Row 8: Surface / Home -->
+      <item row="8" column="1" colspan="3">
         <layout class="QHBoxLayout" name="horizontalLayout_surface_home">
           <item>
             <widget class="QPushButton" name="home">
@@ -208,8 +245,8 @@
         </layout>
       </item>
 
-      <!-- Row 8: Checkbox -->
-      <item row="8" column="1" colspan="3">
+      <!-- Row 9: Checkbox -->
+      <item row="9" column="1" colspan="3">
         <widget class="QCheckBox" name="apply_all">
           <property name="font">
             <font>
@@ -226,8 +263,8 @@
         </widget>
       </item>
 
-      <!-- Row 9: Status -->
-      <item row="9" column="0">
+      <!-- Row 10: Status -->
+      <item row="10" column="0">
         <widget class="QLabel" name="label_2">
           <property name="font">
             <font>
@@ -240,7 +277,7 @@
           </property>
         </widget>
       </item>
-      <item row="9" column="1" colspan="3">
+      <item row="10" column="1" colspan="3">
         <widget class="QLabel" name="status">
           <property name="font">
             <font>

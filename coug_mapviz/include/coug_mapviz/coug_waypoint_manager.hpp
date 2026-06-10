@@ -28,6 +28,13 @@
 
 namespace coug_mapviz {
 
+static constexpr double kDefaultSpeedRpm = 1500.0;
+
+struct CougWaypoint {
+  geographic_msgs::msg::GeoPoint position;
+  double speed_rpm = kDefaultSpeedRpm;
+};
+
 /**
  * @class CougWaypointManager
  * @brief Handles storage, retrieval, and serialization of waypoints.
@@ -40,30 +47,29 @@ class CougWaypointManager {
   /**
    * @brief Adds a waypoint for the specified agent.
    * @param agent The agent namespace.
-   * @param pose The waypoint pose (in target/local frame).
+   * @param wp The waypoint to add.
    */
-  void addWaypoint(const std::string& agent, const geographic_msgs::msg::GeoPoint& pose);
+  void addWaypoint(const std::string& agent, const CougWaypoint& wp);
 
   /**
    * @brief Replaces the waypoint list for a specific agent.
    * @param agent The agent namespace.
    * @param waypoints The new list of waypoints.
    */
-  void setWaypoints(const std::string& agent,
-                    const std::vector<geographic_msgs::msg::GeoPoint>& waypoints);
+  void setWaypoints(const std::string& agent, const std::vector<CougWaypoint>& waypoints);
 
   /**
    * @brief Gets the waypoints for a specific agent.
    * @param agent The agent namespace.
    * @return A vector of waypoints.
    */
-  std::vector<geographic_msgs::msg::GeoPoint> getWaypoints(const std::string& agent) const;
+  std::vector<CougWaypoint> getWaypoints(const std::string& agent) const;
 
   /**
    * @brief Gets all managed waypoints as a map.
    * @return Map of agent namespace to waypoint list.
    */
-  const std::map<std::string, std::vector<geographic_msgs::msg::GeoPoint>>& getAllWaypoints() const;
+  const std::map<std::string, std::vector<CougWaypoint>>& getAllWaypoints() const;
 
   /**
    * @brief Removes an agent and its waypoints from the manager.
@@ -99,7 +105,7 @@ class CougWaypointManager {
   bool loadFromFile(const std::string& filename, const std::string& agent = "");
 
  private:
-  std::map<std::string, std::vector<geographic_msgs::msg::GeoPoint>> waypoints_;
+  std::map<std::string, std::vector<CougWaypoint>> waypoints_;
 };
 
 }  // namespace coug_mapviz
