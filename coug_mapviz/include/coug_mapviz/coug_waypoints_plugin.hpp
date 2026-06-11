@@ -228,6 +228,18 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   void VisibilityChanged(bool visible);
 
   /**
+   * @brief Updates the latitude of the selected waypoint.
+   * @param value New latitude in degrees.
+   */
+  void LatChanged(double value);
+
+  /**
+   * @brief Updates the longitude of the selected waypoint.
+   * @param value New longitude in degrees.
+   */
+  void LonChanged(double value);
+
+  /**
    * @brief Updates the depth of the selected waypoint.
    * @param value New depth value.
    */

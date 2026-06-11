@@ -69,6 +69,8 @@ CougWaypointsPlugin::CougWaypointsPlugin()
   QObject::connect(ui_.load, SIGNAL(clicked()), this, SLOT(LoadWaypoints()));
 
   QObject::connect(this, SIGNAL(VisibleChanged(bool)), this, SLOT(VisibilityChanged(bool)));
+  QObject::connect(ui_.lat_editor, SIGNAL(valueChanged(double)), this, SLOT(LatChanged(double)));
+  QObject::connect(ui_.lon_editor, SIGNAL(valueChanged(double)), this, SLOT(LonChanged(double)));
   QObject::connect(ui_.depth_editor, SIGNAL(valueChanged(double)), this,
                    SLOT(DepthChanged(double)));
   QObject::connect(ui_.speed_editor, SIGNAL(valueChanged(double)), this,
@@ -137,6 +139,8 @@ void CougWaypointsPlugin::VisibilityChanged(bool visible) {
 void CougWaypointsPlugin::AgentChanged(const QString& text) {
   current_agent_ = text.toStdString();
   selected_point_ = -1;
+  ui_.lat_editor->setEnabled(false);
+  ui_.lon_editor->setEnabled(false);
   ui_.depth_editor->setEnabled(false);
   ui_.speed_editor->setEnabled(false);
   ui_.altitude_mode->blockSignals(true);
@@ -314,6 +318,14 @@ void CougWaypointsPlugin::Clear() {
     manager_.clearWaypoints(current_agent_);
   }
 
+  ui_.lat_editor->blockSignals(true);
+  ui_.lat_editor->setValue(0.0);
+  ui_.lat_editor->blockSignals(false);
+  ui_.lat_editor->setEnabled(false);
+  ui_.lon_editor->blockSignals(true);
+  ui_.lon_editor->setValue(0.0);
+  ui_.lon_editor->blockSignals(false);
+  ui_.lon_editor->setEnabled(false);
   ui_.depth_editor->setValue(0.0);
   selected_point_ = -1;
   dragged_point_ = -1;
@@ -540,6 +552,26 @@ void CougWaypointsPlugin::PaintLabels(QPainter* painter, const std::vector<CougW
   }
 }
 
+void CougWaypointsPlugin::LatChanged(double value) {
+  if (current_agent_.empty()) return;
+  auto wps = manager_.getWaypoints(current_agent_);
+  if (selected_point_ >= 0 && static_cast<size_t>(selected_point_) < wps.size()) {
+    wps[selected_point_].position.latitude = value;
+    manager_.setWaypoints(current_agent_, wps);
+    map_canvas_->update();
+  }
+}
+
+void CougWaypointsPlugin::LonChanged(double value) {
+  if (current_agent_.empty()) return;
+  auto wps = manager_.getWaypoints(current_agent_);
+  if (selected_point_ >= 0 && static_cast<size_t>(selected_point_) < wps.size()) {
+    wps[selected_point_].position.longitude = value;
+    manager_.setWaypoints(current_agent_, wps);
+    map_canvas_->update();
+  }
+}
+
 void CougWaypointsPlugin::DepthChanged(double value) {
   if (current_agent_.empty()) {
     return;
@@ -660,6 +692,8 @@ bool CougWaypointsPlugin::handleMousePress(QMouseEvent* event) {
 
       if (selected_point_ == closest_point) {
         selected_point_ = -1;
+        ui_.lat_editor->setEnabled(false);
+        ui_.lon_editor->setEnabled(false);
         ui_.depth_editor->setEnabled(false);
         ui_.speed_editor->setEnabled(false);
         ui_.altitude_mode->blockSignals(true);
@@ -688,6 +722,16 @@ bool CougWaypointsPlugin::handleMouseRelease(QMouseEvent* event) {
       selected_point_ = dragged_point_;
       auto wps = manager_.getWaypoints(current_agent_);
       bool is_altitude = wps[selected_point_].position.altitude > 0.0;
+
+      ui_.lat_editor->setEnabled(true);
+      ui_.lat_editor->blockSignals(true);
+      ui_.lat_editor->setValue(wps[selected_point_].position.latitude);
+      ui_.lat_editor->blockSignals(false);
+
+      ui_.lon_editor->setEnabled(true);
+      ui_.lon_editor->blockSignals(true);
+      ui_.lon_editor->setValue(wps[selected_point_].position.longitude);
+      ui_.lon_editor->blockSignals(false);
 
       ui_.altitude_mode->blockSignals(true);
       ui_.altitude_mode->setChecked(is_altitude);
@@ -748,6 +792,8 @@ bool CougWaypointsPlugin::handleMouseMove(QMouseEvent* event) {
   if (dragged_point_ >= 0) {
     if (selected_point_ != -1) {
       selected_point_ = -1;
+      ui_.lat_editor->setEnabled(false);
+      ui_.lon_editor->setEnabled(false);
       ui_.depth_editor->setEnabled(false);
       ui_.speed_editor->setEnabled(false);
       ui_.altitude_mode->blockSignals(true);
