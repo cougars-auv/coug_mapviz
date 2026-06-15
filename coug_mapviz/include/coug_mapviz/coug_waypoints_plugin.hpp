@@ -31,16 +31,10 @@
 #include <QObject>
 #include <QPainter>
 #include <QWidget>
-#include <coug_interfaces/msg/way_point_list.hpp>
+#include <coug_mapviz/coug_comms_client.hpp>
 #include <coug_mapviz/coug_waypoint_manager.hpp>
-#include <geographic_msgs/msg/geo_point.hpp>
-#include <geographic_msgs/msg/key_value.hpp>
-#include <geometry_msgs/msg/pose_array.hpp>
-#include <map>
 #include <memory>
-#include <mutex>
 #include <rclcpp/rclcpp.hpp>
-#include <std_srvs/srv/trigger.hpp>
 #include <string>
 #include <vector>
 
@@ -94,18 +88,24 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
 
   // --- Configuration ---
   /**
-   * @brief Loads plugin configuration from YAML.
+   * @brief Loads plugin configuration from YAML (unused).
    * @param node The YAML node containing configuration.
    * @param path Path to the configuration file.
    */
-  void LoadConfig(const YAML::Node& node, const std::string& path) override;
+  void LoadConfig(const YAML::Node& node, const std::string& path) override {
+    (void)node;
+    (void)path;
+  }
 
   /**
-   * @brief Saves plugin configuration to YAML.
+   * @brief Saves plugin configuration to YAML (unused).
    * @param emitter The YAML emitter.
    * @param path Path to the configuration file.
    */
-  void SaveConfig(YAML::Emitter& emitter, const std::string& path) override;
+  void SaveConfig(YAML::Emitter& emitter, const std::string& path) override {
+    (void)emitter;
+    (void)path;
+  }
 
   /**
    * @brief Creates and returns the configuration widget.
@@ -173,12 +173,12 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
  protected Q_SLOTS:
   // --- UI Slots ---
   /**
-   * @brief Publishes waypoints for the current agent (or all agents if apply_all is checked).
+   * @brief Publishes the selected agent's waypoints, or all if apply_all is set.
    */
   void PublishWaypoints();
 
   /**
-   * @brief Clears waypoints for the current agent (or all agents if apply_all is checked).
+   * @brief Clears the selected agent's waypoints, or all if apply_all is set.
    */
   void Clear();
 
@@ -193,33 +193,31 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   void LoadWaypoints();
 
   /**
-   * @brief Updates the active agent and resets interaction state when the selector changes.
+   * @brief Updates the active agent and resets interaction state.
    * @param text The newly selected agent namespace.
    */
   void AgentChanged(const QString& text);
 
   // --- Mission Control ---
   /**
-   * @brief Starts mission execution on the current agent (or all agents if apply_all is checked).
+   * @brief Starts the mission on the selected agent, or all if apply_all is set.
    */
-  void Start() { dispatchCommand("start"); }
+  void Start() { callService("start"); }
 
   /**
-   * @brief Stops mission execution on the current agent (or all agents if apply_all is checked).
+   * @brief Stops the mission on the selected agent, or all if apply_all is set.
    */
-  void Stop() { dispatchCommand("stop"); }
+  void Stop() { callService("stop"); }
 
   /**
-   * @brief Commands the agent to surface at its current position (or all agents if apply_all is
-   * checked).
+   * @brief Surfaces the selected agent, or all if apply_all is set.
    */
-  void Surface() { dispatchCommand("surface"); }
+  void Surface() { callService("surface"); }
 
   /**
-   * @brief Commands the agent to navigate to its home waypoint (or all agents if apply_all is
-   * checked).
+   * @brief Sends the selected agent home, or all if apply_all is set.
    */
-  void Home() { dispatchCommand("home"); }
+  void Home() { callService("home"); }
 
   /**
    * @brief Shows or hides waypoints when the visibility checkbox changes.
@@ -252,94 +250,83 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   void SpeedChanged(double value);
 
   /**
-   * @brief Toggles altitude (ALT) mode for the selected waypoint, flipping the spinbox range.
+   * @brief Toggles altitude (ALT) mode and flips the depth spinbox range.
    * @param checked True for altitude (ALT) mode, false for depth mode.
    */
   void AltitudeModeChanged(bool checked);
 
  private:
-  struct DispatchState {
-    int total = 0;
-    int responded = 0;
-    int succeeded = 0;
-    std::string cmd;
-    std::vector<std::string> failed;
-    std::mutex mutex;
-  };
-
   // --- Components ---
   Ui::coug_waypoints_config ui_;
   QWidget* config_widget_;
   mapviz::MapCanvas* map_canvas_;
 
   // --- ROS Interface ---
-  std::map<std::string, rclcpp::Publisher<coug_interfaces::msg::WayPointList>::SharedPtr>
-      publishers_;
-  std::map<std::string, rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr>
-      map_publishers_;
-  std::map<std::string, std::map<std::string, rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr>>
-      clients_;
+  CougCommsClient comms_;
   CougWaypointManager manager_;
   std::string current_agent_;
   std::vector<std::string> agent_namespaces_;
-  std::string waypoint_topic_;
-  std::string waypoints_map_topic_;
-  std::string start_service_;
-  std::string stop_service_;
-  std::string surface_service_;
-  std::string home_service_;
 
   // --- Interaction State ---
   int selected_point_;
   int dragged_point_;
-  bool is_mouse_down_;
   QPointF mouse_down_pos_;
   qint64 mouse_down_time_;
 
   // --- Helpers ---
   /**
+   * @brief Clears the selection and disables the lat/lon/depth/speed editors.
+   */
+  void deselectWaypoint();
+
+  /**
+   * @brief Enables and populates the lat/lon/depth/speed editors from a waypoint.
+   * @param wp The waypoint whose values should fill the editors.
+   */
+  void populateEditors(const CougWaypoint& wp);
+
+  /**
    * @brief Publishes waypoints for all agents currently in the manager.
    */
-  void PublishAll();
-
-  /**
-   * @brief Publishes waypoints for one agent; derives the topic as agent + "/waypoints".
-   * @param agent The agent namespace.
-   * @param wps The waypoints to publish.
-   */
-  void PublishAgent(const std::string& agent, const std::vector<CougWaypoint>& wps);
-
-  /**
-   * @brief Calls a Trigger service. When state is provided, records the result
-   *        into the shared DispatchState and prints a summary once all agents respond.
-   * @param ns The agent namespace to call.
-   * @param cmd The command string (e.g. "start", "stop").
-   * @param state Shared state for multi-agent dispatch; nullptr for single-agent.
-   */
-  void callTrigger(const std::string& ns, const std::string& cmd,
-                   std::shared_ptr<DispatchState> state = nullptr);
-
-  /**
-   * @brief Records one agent's service response into the shared DispatchState and prints a
-   *        summary once all agents have responded.
-   * @param state Shared dispatch state.
-   * @param success Whether the service call succeeded.
-   * @param agent The agent namespace that responded.
-   */
-  void recordResult(std::shared_ptr<DispatchState> state, bool success, const std::string& agent);
+  void publishAll();
 
   /**
    * @brief Calls cmd on the current agent, or all agents if apply_all is checked.
-   * @param cmd The command string to dispatch (e.g. "start", "stop", "surface", "home").
+   * @param cmd The command string to call (e.g. "start", "stop", "surface", "home").
    */
-  void dispatchCommand(const std::string& cmd);
+  void callService(const std::string& cmd);
 
   /**
    * @brief Returns true if agent is in the agent_namespaces_ list.
    * @param agent The agent namespace to look up.
    * @return True if the agent is known, false otherwise.
    */
-  bool IsAgentKnown(const std::string& agent);
+  bool isAgentKnown(const std::string& agent);
+
+  /**
+   * @brief Projects a waypoint's geographic position into the map's fixed frame.
+   * @param wp The waypoint to project.
+   * @param transform Transform from the WGS84 frame to the fixed frame.
+   * @return The point in fixed-frame coordinates.
+   */
+  QPointF waypointToFixedFrame(const CougWaypoint& wp,
+                               const swri_transform_util::Transform& transform);
+
+  /**
+   * @brief Projects a waypoint's geographic position into screen (map GL) coordinates.
+   * @param wp The waypoint to project.
+   * @param transform Transform from the WGS84 frame to the fixed frame.
+   * @return The point in screen-space coordinates.
+   */
+  QPointF waypointToMapGl(const CougWaypoint& wp, const swri_transform_util::Transform& transform);
+
+  /**
+   * @brief Converts a screen-space point to a geographic position.
+   * @param screen_point The point in screen (map GL) coordinates.
+   * @param geo Output: the corresponding geographic position.
+   * @return True if the transform was available, false otherwise.
+   */
+  bool screenToGeo(const QPointF& screen_point, geographic_msgs::msg::GeoPoint& geo);
 
   /**
    * @brief Returns the index of the waypoint within 15px of point, or -1 if none.
@@ -347,14 +334,14 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
    * @param distance Output: distance in pixels to the closest waypoint.
    * @return Index of the closest waypoint, or -1.
    */
-  int GetClosestPoint(const QPointF& point, double& distance);
+  int getClosestPoint(const QPointF& point, double& distance);
 
   /**
    * @brief Draws non-current agent paths in white using OpenGL.
    * @param wps The waypoint list to draw.
    * @param transform Transform from the waypoint frame to the map frame.
    */
-  void DrawPath(const std::vector<CougWaypoint>& wps,
+  void drawPath(const std::vector<CougWaypoint>& wps,
                 const swri_transform_util::Transform& transform);
 
   /**
@@ -364,18 +351,18 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
    * @param transform Transform from the waypoint frame to screen space.
    * @param color Label color.
    */
-  void PaintLabels(QPainter* painter, const std::vector<CougWaypoint>& wps,
+  void paintLabels(QPainter* painter, const std::vector<CougWaypoint>& wps,
                    const swri_transform_util::Transform& transform, const QColor& color);
 
   /**
-   * @brief Paints path lines and dots; highlights selected_index in yellow using QPainter.
+   * @brief Paints path lines and dots; highlights the selected waypoint in yellow.
    * @param painter The QPainter instance.
    * @param wps The waypoint list to paint.
    * @param color Base color for the path.
    * @param transform Transform from the waypoint frame to screen space.
    * @param selected_index Index of the selected waypoint to highlight, or -1 for none.
    */
-  void PaintPath(QPainter* painter, const std::vector<CougWaypoint>& wps, const QColor& color,
+  void paintPath(QPainter* painter, const std::vector<CougWaypoint>& wps, const QColor& color,
                  const swri_transform_util::Transform& transform, int selected_index = -1);
 };
 

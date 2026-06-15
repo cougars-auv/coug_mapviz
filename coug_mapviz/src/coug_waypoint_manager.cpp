@@ -44,6 +44,21 @@ std::vector<CougWaypoint> CougWaypointManager::getWaypoints(const std::string& a
   return {};
 }
 
+CougWaypoint* CougWaypointManager::getWaypointMutable(const std::string& agent, size_t index) {
+  auto it = waypoints_.find(agent);
+  if (it == waypoints_.end() || index >= it->second.size()) {
+    return nullptr;
+  }
+  return &it->second[index];
+}
+
+void CougWaypointManager::removeWaypoint(const std::string& agent, size_t index) {
+  auto it = waypoints_.find(agent);
+  if (it != waypoints_.end() && index < it->second.size()) {
+    it->second.erase(it->second.begin() + index);
+  }
+}
+
 const std::map<std::string, std::vector<CougWaypoint>>& CougWaypointManager::getAllWaypoints()
     const {
   return waypoints_;

@@ -70,6 +70,21 @@ class CougWaypointManager {
   std::vector<CougWaypoint> getWaypoints(const std::string& agent) const;
 
   /**
+   * @brief Returns a mutable pointer to a single waypoint for in-place edits.
+   * @param agent The agent namespace.
+   * @param index The waypoint index.
+   * @return Pointer to the waypoint, or nullptr if the agent or index is invalid.
+   */
+  CougWaypoint* getWaypointMutable(const std::string& agent, size_t index);
+
+  /**
+   * @brief Removes a single waypoint from an agent.
+   * @param agent The agent namespace.
+   * @param index The waypoint index; out-of-range indices are ignored.
+   */
+  void removeWaypoint(const std::string& agent, size_t index);
+
+  /**
    * @brief Gets all managed waypoints as a map.
    * @return Map of agent namespace to waypoint list.
    */
