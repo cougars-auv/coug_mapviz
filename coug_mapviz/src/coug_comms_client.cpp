@@ -115,7 +115,7 @@ void CougCommsClient::dispatch(const std::string& ns, const std::string& cmd,
     if (state)
       recordResult(state, false, ns);
     else
-      status_(Status::kError, "Unknown service: " + ns + "/" + cmd);
+      status_(Status::kError, "Service not available: " + ns + "/" + cmd);
     return;
   }
   auto& client = clients_[ns][cmd];
@@ -123,13 +123,20 @@ void CougCommsClient::dispatch(const std::string& ns, const std::string& cmd,
     if (state)
       recordResult(state, false, ns);
     else
-      status_(Status::kError, "Unavailable service: " + ns + "/" + cmd);
+      status_(Status::kError, "Service not available: " + ns + "/" + cmd);
     return;
   }
   auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
   client->async_send_request(
       request, [this, ns, cmd, state](rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture future) {
         auto response = future.get();
+        if (!response) {
+          if (state)
+            recordResult(state, false, ns);
+          else
+            status_(Status::kError, "Service call failed (no response)");
+          return;
+        }
         if (state) {
           recordResult(state, response->success, ns);
         } else {
