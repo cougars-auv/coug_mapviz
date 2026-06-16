@@ -162,7 +162,7 @@ void CougCommsClient::recordResult(std::shared_ptr<DispatchState> state, bool su
   int s = state->succeeded, t = state->total;
   std::string prefix = "[" + state->cmd + "] ";
   if (s == t) {
-    status_(Status::kInfo, prefix + "All " + std::to_string(t) + " agent(s) sent");
+    status_(Status::kInfo, prefix + "All " + std::to_string(t) + " agent(s) confirmed");
   } else {
     std::string failed_str;
     for (const auto& f : state->failed) failed_str += " " + f;
