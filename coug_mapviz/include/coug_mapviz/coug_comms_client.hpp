@@ -91,6 +91,7 @@ class CougCommsClient {
 
  private:
   /**
+   * @struct DispatchState
    * @brief Shared tally for an aggregated multi-agent service call.
    */
   struct DispatchState {
