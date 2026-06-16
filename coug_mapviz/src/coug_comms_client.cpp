@@ -97,7 +97,7 @@ void CougCommsClient::publishWaypoints(const std::string& agent,
 
 void CougCommsClient::callService(const std::string& cmd, const std::vector<std::string>& agents,
                                   bool aggregate) {
-  status_(Status::kInfo, "[" + cmd + "] calling...");
+  status_(Status::kInfo, "[" + cmd + "] Calling service...");
   if (aggregate) {
     auto state = std::make_shared<DispatchState>();
     state->total = static_cast<int>(agents.size());
@@ -123,7 +123,7 @@ void CougCommsClient::dispatch(const std::string& ns, const std::string& cmd,
     if (state)
       recordResult(state, false, ns);
     else
-      status_(Status::kError, "Service not available: " + ns + "/" + cmd);
+      status_(Status::kError, "Unavailable service: " + ns + "/" + cmd);
     return;
   }
   auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
