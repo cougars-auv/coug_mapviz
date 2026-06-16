@@ -239,12 +239,7 @@ void CougWaypointsPlugin::PublishWaypoints() {
   } else if (!current_agent_.empty()) {
     auto wps = manager_.getWaypoints(current_agent_);
     comms_.publishWaypoints(current_agent_, wps, target_frame_);
-
-    if (wps.empty()) {
-      PrintWarning("Mission cleared");
-    } else {
-      PrintInfo("Published " + std::to_string(wps.size()) + " waypoint(s)");
-    }
+    PrintInfo("Published 1 agent(s)");
   } else {
     PrintError("No agent selected");
   }
@@ -252,17 +247,11 @@ void CougWaypointsPlugin::PublishWaypoints() {
 
 void CougWaypointsPlugin::publishAll() {
   int count = 0;
-  bool any_waypoints = false;
   for (const auto& [agent, wps] : manager_.getAllWaypoints()) {
     comms_.publishWaypoints(agent, wps, target_frame_);
-    if (!wps.empty()) any_waypoints = true;
     count++;
   }
-  if (!any_waypoints) {
-    PrintWarning("Mission cleared");
-  } else {
-    PrintInfo("Published to " + std::to_string(count) + " agent(s)");
-  }
+  PrintInfo("Published " + std::to_string(count) + " agent(s)");
 }
 
 bool CougWaypointsPlugin::isAgentKnown(const std::string& agent) {
@@ -271,10 +260,16 @@ bool CougWaypointsPlugin::isAgentKnown(const std::string& agent) {
 }
 
 void CougWaypointsPlugin::Clear() {
+  int count = 0;
   if (ui_.apply_all->isChecked()) {
+    count = static_cast<int>(manager_.getAllWaypoints().size());
     manager_.clearAllWaypoints();
   } else if (!current_agent_.empty()) {
     manager_.clearWaypoints(current_agent_);
+    count = 1;
+  } else {
+    PrintError("No agent selected");
+    return;
   }
 
   ui_.lat_editor->blockSignals(true);
@@ -286,7 +281,7 @@ void CougWaypointsPlugin::Clear() {
   ui_.depth_editor->setValue(0.0);
   dragged_point_ = -1;
   deselectWaypoint();
-  PrintInfo("Waypoints cleared");
+  PrintInfo("Cleared " + std::to_string(count) + " agent(s)");
 }
 
 void CougWaypointsPlugin::SaveWaypoints() {
@@ -318,11 +313,8 @@ void CougWaypointsPlugin::SaveWaypoints() {
   }
 
   if (manager_.saveToFile(filename.toStdString(), agent_to_save)) {
-    if (agent_to_save.empty()) {
-      PrintInfo("Saved " + std::to_string(manager_.getAllWaypoints().size()) + " agent(s)");
-    } else {
-      PrintInfo("Saved: " + agent_to_save);
-    }
+    int count = agent_to_save.empty() ? static_cast<int>(manager_.getAllWaypoints().size()) : 1;
+    PrintInfo("Saved " + std::to_string(count) + " agent(s)");
   } else {
     PrintError("Failed to save");
   }
@@ -362,12 +354,8 @@ void CougWaypointsPlugin::LoadWaypoints() {
     }
 
     AgentChanged(QString::fromStdString(current_agent_));
-    if (agent_to_load.empty()) {
-      PrintInfo("Loaded " + std::to_string(manager_.getAllWaypoints().size()) + " agent(s)");
-    } else {
-      auto wps = manager_.getWaypoints(agent_to_load);
-      PrintInfo("Loaded " + agent_to_load + " (" + std::to_string(wps.size()) + " waypoint(s))");
-    }
+    int count = agent_to_load.empty() ? static_cast<int>(manager_.getAllWaypoints().size()) : 1;
+    PrintInfo("Loaded " + std::to_string(count) + " agent(s)");
   } else {
     PrintError("Failed to load");
   }
