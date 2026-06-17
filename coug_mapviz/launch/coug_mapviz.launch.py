@@ -41,7 +41,7 @@ def launch_setup(context, *args, **kwargs) -> list:
         ]
     )
     pkg_share = get_package_share_directory("coug_mapviz")
-    full_template_path = os.path.join(pkg_share, "mapviz", "mapviz_config.mvc.template")
+    full_template_path = os.path.join(pkg_share, "config", "mapviz_config.mvc.template")
 
     if is_multiagent:
         with open(full_template_path, "r") as f:
@@ -56,7 +56,7 @@ def launch_setup(context, *args, **kwargs) -> list:
         ]
 
         per_agent_template_path = os.path.join(
-            pkg_share, "mapviz", "multi_mapviz_config.mvc.template"
+            pkg_share, "config", "multi_mapviz_config.mvc.template"
         )
         with open(per_agent_template_path, "r") as f:
             per_agent_template = f.read()
