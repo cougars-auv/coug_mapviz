@@ -99,17 +99,17 @@ void CougCommsClient::callService(const std::string& cmd, const std::vector<std:
                                   bool aggregate) {
   status_(Status::kInfo, "[" + cmd + "] Calling service...");
   if (aggregate) {
-    auto state = std::make_shared<DispatchState>();
+    auto state = std::make_shared<CallState>();
     state->total = static_cast<int>(agents.size());
     state->cmd = cmd;
-    for (const auto& ns : agents) dispatch(ns, cmd, state);
+    for (const auto& ns : agents) callAgentService(ns, cmd, state);
   } else {
-    for (const auto& ns : agents) dispatch(ns, cmd);
+    for (const auto& ns : agents) callAgentService(ns, cmd);
   }
 }
 
-void CougCommsClient::dispatch(const std::string& ns, const std::string& cmd,
-                               std::shared_ptr<DispatchState> state) {
+void CougCommsClient::callAgentService(const std::string& ns, const std::string& cmd,
+                                       std::shared_ptr<CallState> state) {
   auto ns_it = clients_.find(ns);
   if (ns_it == clients_.end() || ns_it->second.find(cmd) == ns_it->second.end()) {
     if (state)
@@ -149,7 +149,7 @@ void CougCommsClient::dispatch(const std::string& ns, const std::string& cmd,
       });
 }
 
-void CougCommsClient::recordResult(std::shared_ptr<DispatchState> state, bool success,
+void CougCommsClient::recordResult(std::shared_ptr<CallState> state, bool success,
                                    const std::string& agent) {
   std::lock_guard<std::mutex> lock(state->mutex);
   if (success)

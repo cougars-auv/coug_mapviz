@@ -14,7 +14,7 @@
 
 /**
  * @file coug_comms_client.hpp
- * @brief MapViz plugin helper, owns the ROS publishers and Trigger-service dispatch.
+ * @brief MapViz plugin helper, owns the ROS publishers and Trigger-service calls.
  * @author Nelson Durrant
  * @date June 2026
  */
@@ -91,10 +91,10 @@ class CougCommsClient {
 
  private:
   /**
-   * @struct DispatchState
+   * @struct CallState
    * @brief Shared tally for an aggregated multi-agent service call.
    */
-  struct DispatchState {
+  struct CallState {
     int total = 0;
     int responded = 0;
     int succeeded = 0;
@@ -104,21 +104,21 @@ class CougCommsClient {
   };
 
   /**
-   * @brief Dispatches a Trigger call to one agent, tallying into state if provided.
+   * @brief Calls a Trigger service on one agent, tallying into state if provided.
    * @param ns The agent namespace to call.
    * @param cmd The command name.
-   * @param state Shared tally for aggregated dispatch; nullptr for a single call.
+   * @param state Shared tally for an aggregated call; nullptr for a single call.
    */
-  void dispatch(const std::string& ns, const std::string& cmd,
-                std::shared_ptr<DispatchState> state = nullptr);
+  void callAgentService(const std::string& ns, const std::string& cmd,
+                        std::shared_ptr<CallState> state = nullptr);
 
   /**
    * @brief Records one agent's response and reports a summary once all have responded.
-   * @param state The shared dispatch tally.
+   * @param state The shared call tally.
    * @param success Whether the agent's call succeeded.
    * @param agent The agent namespace that responded.
    */
-  void recordResult(std::shared_ptr<DispatchState> state, bool success, const std::string& agent);
+  void recordResult(std::shared_ptr<CallState> state, bool success, const std::string& agent);
 
   std::shared_ptr<rclcpp::Node> node_;
   swri_transform_util::TransformManagerPtr tf_manager_;
