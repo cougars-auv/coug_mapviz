@@ -250,6 +250,18 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   void SpeedChanged(double value);
 
   /**
+   * @brief Updates the capture radius of the selected waypoint.
+   * @param value New capture radius in meters.
+   */
+  void CaptureRadiusChanged(double value);
+
+  /**
+   * @brief Updates the slip radius of the selected waypoint.
+   * @param value New slip radius in meters.
+   */
+  void SlipRadiusChanged(double value);
+
+  /**
    * @brief Toggles altitude (ALT) mode and flips the depth spinbox range.
    * @param checked True for altitude (ALT) mode, false for depth mode.
    */
@@ -309,8 +321,8 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
    * @param transform Transform from the WGS84 frame to the fixed frame.
    * @return The point in fixed-frame coordinates.
    */
-  QPointF waypointToFixedFrame(const CougWaypoint& wp,
-                               const swri_transform_util::Transform& transform);
+  static QPointF waypointToFixedFrame(const CougWaypoint& wp,
+                                      const swri_transform_util::Transform& transform);
 
   /**
    * @brief Projects a waypoint's geographic position into screen (map GL) coordinates.
@@ -341,8 +353,36 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
    * @param wps The waypoint list to draw.
    * @param transform Transform from the waypoint frame to the map frame.
    */
-  void drawPath(const std::vector<CougWaypoint>& wps,
-                const swri_transform_util::Transform& transform);
+  static void drawPath(const std::vector<CougWaypoint>& wps,
+                       const swri_transform_util::Transform& transform);
+
+  /**
+   * @brief Draws translucent capture (orange) and slip (dodger blue) radius circles.
+   * @param wps The waypoint list whose radii should be drawn.
+   * @param transform Transform from the waypoint frame to the map frame.
+   */
+  static void drawWaypointCircles(const std::vector<CougWaypoint>& wps,
+                                  const swri_transform_util::Transform& transform);
+
+  /**
+   * @brief Draws a translucent filled circle in the map frame using a triangle fan.
+   * @param cx Circle center X in fixed-frame meters.
+   * @param cy Circle center Y in fixed-frame meters.
+   * @param radius Circle radius in meters.
+   * @param r,g,b,a RGBA color components in [0, 1].
+   */
+  static void drawFilledCircle(double cx, double cy, double radius, float r, float g, float b,
+                               float a);
+
+  /**
+   * @brief Draws a circle outline in the map frame using a line loop.
+   * @param cx Circle center X in fixed-frame meters.
+   * @param cy Circle center Y in fixed-frame meters.
+   * @param radius Circle radius in meters.
+   * @param r,g,b,a RGBA color components in [0, 1].
+   */
+  static void drawCircleOutline(double cx, double cy, double radius, float r, float g, float b,
+                                float a);
 
   /**
    * @brief Paints waypoint index numbers, depth, and speed labels using QPainter.

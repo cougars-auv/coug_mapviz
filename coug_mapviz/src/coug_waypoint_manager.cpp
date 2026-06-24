@@ -86,6 +86,8 @@ bool CougWaypointManager::saveToFile(const std::string& filename,
       wp_obj["lat"] = wp.position.latitude;
       wp_obj["z"] = wp.position.altitude;
       wp_obj["speed_rpm"] = wp.speed_rpm;
+      wp_obj["capture_radius"] = wp.capture_radius;
+      wp_obj["slip_radius"] = wp.slip_radius;
       waypoints_array.append(wp_obj);
     }
     root[QString::fromStdString(agent)] = waypoints_array;
@@ -137,6 +139,10 @@ bool CougWaypointManager::loadFromFile(const std::string& filename,
         cwp.position.altitude = wp_obj["z"].toDouble();
         cwp.speed_rpm =
             wp_obj.contains("speed_rpm") ? wp_obj["speed_rpm"].toDouble() : kDefaultSpeedRpm;
+        cwp.capture_radius = wp_obj.contains("capture_radius") ? wp_obj["capture_radius"].toDouble()
+                                                               : kDefaultCaptureRadius;
+        cwp.slip_radius =
+            wp_obj.contains("slip_radius") ? wp_obj["slip_radius"].toDouble() : kDefaultSlipRadius;
         wps.push_back(cwp);
       }
     }

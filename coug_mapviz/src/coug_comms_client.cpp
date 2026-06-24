@@ -66,10 +66,18 @@ void CougCommsClient::publishWaypoints(const std::string& agent,
   for (const auto& cwp : wps) {
     geographic_msgs::msg::WayPoint wp;
     wp.position = cwp.position;
-    geographic_msgs::msg::KeyValue kv;
-    kv.key = "speed_rpm";
-    kv.value = std::to_string(cwp.speed_rpm);
-    wp.props.push_back(kv);
+    geographic_msgs::msg::KeyValue speed_kv;
+    speed_kv.key = "speed_rpm";
+    speed_kv.value = std::to_string(cwp.speed_rpm);
+    wp.props.push_back(speed_kv);
+    geographic_msgs::msg::KeyValue capture_kv;
+    capture_kv.key = "capture_radius";
+    capture_kv.value = std::to_string(cwp.capture_radius);
+    wp.props.push_back(capture_kv);
+    geographic_msgs::msg::KeyValue slip_kv;
+    slip_kv.key = "slip_radius";
+    slip_kv.value = std::to_string(cwp.slip_radius);
+    wp.props.push_back(slip_kv);
     waypoint_list.waypoints.push_back(wp);
   }
 

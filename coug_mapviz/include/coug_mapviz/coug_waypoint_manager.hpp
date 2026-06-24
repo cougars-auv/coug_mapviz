@@ -29,6 +29,8 @@
 namespace coug_mapviz {
 
 static constexpr double kDefaultSpeedRpm = 1500.0;
+static constexpr double kDefaultCaptureRadius = 25.0;
+static constexpr double kDefaultSlipRadius = 50.0;
 
 /**
  * @struct CougWaypoint
@@ -37,6 +39,8 @@ static constexpr double kDefaultSpeedRpm = 1500.0;
 struct CougWaypoint {
   geographic_msgs::msg::GeoPoint position;
   double speed_rpm = kDefaultSpeedRpm;
+  double capture_radius = kDefaultCaptureRadius;
+  double slip_radius = kDefaultSlipRadius;
 };
 
 /**

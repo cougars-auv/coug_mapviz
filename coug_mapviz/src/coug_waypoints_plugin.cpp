@@ -27,6 +27,7 @@
 #include <QMouseEvent>
 #include <QPainter>
 #include <algorithm>
+#include <cmath>
 #include <coug_mapviz/coug_waypoints_plugin.hpp>
 #include <cstdlib>
 #include <pluginlib/class_list_macros.hpp>
@@ -40,6 +41,7 @@ namespace coug_mapviz {
 static constexpr double kHitRadiusPx = 15.0;
 static constexpr double kClickMaxDistPx = 5.0;
 static constexpr qint64 kClickMaxDurationMs = 500;
+static constexpr int kCircleSegments = 48;
 
 CougWaypointsPlugin::CougWaypointsPlugin()
     : MapvizPlugin(),
@@ -83,6 +85,10 @@ CougWaypointsPlugin::CougWaypointsPlugin()
                    SLOT(DepthChanged(double)));
   QObject::connect(ui_.speed_editor, SIGNAL(valueChanged(double)), this,
                    SLOT(SpeedChanged(double)));
+  QObject::connect(ui_.capture_radius_editor, SIGNAL(valueChanged(double)), this,
+                   SLOT(CaptureRadiusChanged(double)));
+  QObject::connect(ui_.slip_radius_editor, SIGNAL(valueChanged(double)), this,
+                   SLOT(SlipRadiusChanged(double)));
   QObject::connect(ui_.altitude_mode, SIGNAL(toggled(bool)), this, SLOT(AltitudeModeChanged(bool)));
 }
 
@@ -169,6 +175,8 @@ void CougWaypointsPlugin::deselectWaypoint() {
   ui_.lon_editor->setEnabled(false);
   ui_.depth_editor->setEnabled(false);
   ui_.speed_editor->setEnabled(false);
+  ui_.capture_radius_editor->setEnabled(false);
+  ui_.slip_radius_editor->setEnabled(false);
   ui_.altitude_mode->blockSignals(true);
   ui_.altitude_mode->setChecked(false);
   ui_.altitude_mode->setEnabled(false);
@@ -205,6 +213,8 @@ void CougWaypointsPlugin::populateEditors(const CougWaypoint& wp) {
   }
   set_value(ui_.depth_editor, wp.position.altitude);
   set_value(ui_.speed_editor, wp.speed_rpm);
+  set_value(ui_.capture_radius_editor, wp.capture_radius);
+  set_value(ui_.slip_radius_editor, wp.slip_radius);
 }
 
 void CougWaypointsPlugin::AgentChanged(const QString& text) {
@@ -371,6 +381,13 @@ void CougWaypointsPlugin::Draw(double x, double y, double scale) {
     return;
   }
 
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+  if (!current_agent_.empty()) {
+    drawWaypointCircles(manager_.getWaypoints(current_agent_), transform);
+  }
+
   glLineWidth(2);
 
   for (const auto& [agent, wps] : manager_.getAllWaypoints()) {
@@ -378,6 +395,45 @@ void CougWaypointsPlugin::Draw(double x, double y, double scale) {
       drawPath(wps, transform);
     }
   }
+}
+
+void CougWaypointsPlugin::drawWaypointCircles(const std::vector<CougWaypoint>& wps,
+                                              const swri_transform_util::Transform& transform) {
+  for (const auto& wp : wps) {
+    QPointF center = waypointToFixedFrame(wp, transform);
+    double cx = center.x();
+    double cy = center.y();
+    double cap_r = wp.capture_radius;
+    double slip_r = wp.slip_radius;
+
+    drawFilledCircle(cx, cy, slip_r, 0.118f, 0.565f, 1.0f, 0.12f);
+    drawCircleOutline(cx, cy, slip_r, 0.118f, 0.565f, 1.0f, 0.65f);
+    drawFilledCircle(cx, cy, cap_r, 1.0f, 0.55f, 0.0f, 0.18f);
+    drawCircleOutline(cx, cy, cap_r, 1.0f, 0.55f, 0.0f, 0.75f);
+  }
+}
+
+void CougWaypointsPlugin::drawFilledCircle(double cx, double cy, double radius, float r, float g,
+                                           float b, float a) {
+  glColor4f(r, g, b, a);
+  glBegin(GL_TRIANGLE_FAN);
+  glVertex2d(cx, cy);
+  for (int i = 0; i <= kCircleSegments; ++i) {
+    double theta = 2.0 * M_PI * static_cast<double>(i) / kCircleSegments;
+    glVertex2d(cx + radius * std::cos(theta), cy + radius * std::sin(theta));
+  }
+  glEnd();
+}
+
+void CougWaypointsPlugin::drawCircleOutline(double cx, double cy, double radius, float r, float g,
+                                            float b, float a) {
+  glColor4f(r, g, b, a);
+  glBegin(GL_LINE_LOOP);
+  for (int i = 0; i < kCircleSegments; ++i) {
+    double theta = 2.0 * M_PI * static_cast<double>(i) / kCircleSegments;
+    glVertex2d(cx + radius * std::cos(theta), cy + radius * std::sin(theta));
+  }
+  glEnd();
 }
 
 QPointF CougWaypointsPlugin::waypointToFixedFrame(const CougWaypoint& wp,
@@ -414,14 +470,14 @@ void CougWaypointsPlugin::drawPath(const std::vector<CougWaypoint>& wps,
     points.push_back(waypointToFixedFrame(cwp, transform));
   }
 
-  glColor4f(1.0, 1.0, 1.0, 1.0);
+  glColor4f(1.0, 1.0, 1.0, 0.75);
   glBegin(GL_LINE_STRIP);
   for (const auto& p : points) {
     glVertex2d(p.x(), p.y());
   }
   glEnd();
 
-  glColor4f(0.5, 0.5, 0.5, 1.0);
+  glColor4f(0.5, 0.5, 0.5, 0.75);
   glPointSize(20);
   glBegin(GL_POINTS);
   for (const auto& p : points) {
@@ -446,7 +502,7 @@ void CougWaypointsPlugin::Paint(QPainter* painter, double x, double y, double sc
   painter->setFont(QFont("DejaVu Sans Mono", 10, QFont::Bold));
   for (const auto& [agent, wps] : manager_.getAllWaypoints()) {
     if (agent != current_agent_ && isAgentKnown(agent)) {
-      paintLabels(painter, wps, transform, QColor(255, 255, 255, 200));
+      paintLabels(painter, wps, transform, QColor(255, 255, 255, 191));
     }
   }
 
@@ -503,7 +559,7 @@ void CougWaypointsPlugin::paintLabels(QPainter* painter, const std::vector<CougW
 
     QPointF speed_text_corner(gl_point.x() - 50, gl_point.y() + 33);
     QRectF speed_text_rect(speed_text_corner, QSizeF(100, 20));
-    QString speed_text = QString::number(wps[i].speed_rpm, 'f', 0) + " RPM";
+    QString speed_text = QString::number(wps[i].speed_rpm, 'f', 0) + "RPM";
     painter->drawText(speed_text_rect, Qt::AlignHCenter | Qt::AlignTop, speed_text);
 
     painter->setPen(QPen(color == Qt::white ? Qt::black : color));
@@ -541,6 +597,22 @@ void CougWaypointsPlugin::SpeedChanged(double value) {
   if (selected_point_ < 0) return;
   if (auto* wp = manager_.getWaypointMutable(current_agent_, selected_point_)) {
     wp->speed_rpm = value;
+    map_canvas_->update();
+  }
+}
+
+void CougWaypointsPlugin::CaptureRadiusChanged(double value) {
+  if (selected_point_ < 0) return;
+  if (auto* wp = manager_.getWaypointMutable(current_agent_, selected_point_)) {
+    wp->capture_radius = value;
+    map_canvas_->update();
+  }
+}
+
+void CougWaypointsPlugin::SlipRadiusChanged(double value) {
+  if (selected_point_ < 0) return;
+  if (auto* wp = manager_.getWaypointMutable(current_agent_, selected_point_)) {
+    wp->slip_radius = value;
     map_canvas_->update();
   }
 }
@@ -659,6 +731,8 @@ bool CougWaypointsPlugin::handleMouseRelease(QMouseEvent* event) {
       cwp.position = geo;
       cwp.position.altitude = ui_.depth_editor->value();
       cwp.speed_rpm = ui_.speed_editor->value();
+      cwp.capture_radius = ui_.capture_radius_editor->value();
+      cwp.slip_radius = ui_.slip_radius_editor->value();
 
       manager_.addWaypoint(current_agent_, cwp);
     }
