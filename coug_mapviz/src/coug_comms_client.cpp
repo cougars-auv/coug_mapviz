@@ -142,7 +142,7 @@ void CougCommsClient::callAgentService(const std::string& ns, const std::string&
           if (state)
             recordResult(state, false, ns);
           else
-            status_(Status::kError, "Service call failed (no response)");
+            status_(Status::kError, "Service call failed:" + ns + "/" + cmd);
           return;
         }
         if (state) {

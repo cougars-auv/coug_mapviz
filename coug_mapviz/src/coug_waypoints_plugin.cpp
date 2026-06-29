@@ -256,12 +256,10 @@ void CougWaypointsPlugin::PublishWaypoints() {
 }
 
 void CougWaypointsPlugin::publishAll() {
-  int count = 0;
-  for (const auto& [agent, wps] : manager_.getAllWaypoints()) {
-    comms_.publishWaypoints(agent, wps, target_frame_);
-    count++;
+  for (const auto& agent : agent_namespaces_) {
+    comms_.publishWaypoints(agent, manager_.getWaypoints(agent), target_frame_);
   }
-  PrintInfo("Published " + std::to_string(count) + " agent(s)");
+  PrintInfo("Published " + std::to_string(agent_namespaces_.size()) + " agent(s)");
 }
 
 bool CougWaypointsPlugin::isAgentKnown(const std::string& agent) {
