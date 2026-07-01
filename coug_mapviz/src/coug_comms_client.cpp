@@ -16,7 +16,7 @@
  * @file coug_comms_client.cpp
  * @brief Implementation of the CougCommsClient.
  * @author Nelson Durrant
- * @date June 2026
+ * @date May 2026
  */
 
 #include <swri_transform_util/frames.h>

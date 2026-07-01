@@ -16,7 +16,7 @@
  * @file coug_comms_client.hpp
  * @brief MapViz plugin helper, owns the ROS publishers and Trigger-service calls.
  * @author Nelson Durrant
- * @date June 2026
+ * @date May 2026
  */
 
 #pragma once
