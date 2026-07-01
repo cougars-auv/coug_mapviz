@@ -65,17 +65,14 @@ def launch_setup(context, *args, **kwargs) -> list:
             per_agent = yaml.safe_load(per_agent_template.replace("AUV_NS", ns))
             base["displays"].extend(per_agent["displays"])
 
-        temp_config = tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".mvc")
-        yaml.safe_dump(base, temp_config)
-        temp_config.close()
+        config_content = yaml.safe_dump(base)
     else:
         with open(full_template_path, "r") as f:
             config_content = f.read().replace("AUV_NS", agent_namespaces[0])
 
-        temp_config = tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".mvc")
-        temp_config.write(config_content)
-        temp_config.close()
-
+    temp_config = tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".mvc")
+    temp_config.write(config_content)
+    temp_config.close()
     mapviz_config_file = temp_config.name
 
     return [
