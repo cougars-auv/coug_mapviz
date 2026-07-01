@@ -401,7 +401,7 @@ void CougWaypointsPlugin::drawWaypointCircles(
     const std::vector<coug_interfaces::msg::WayPoint>& wps,
     const swri_transform_util::Transform& transform) {
   for (const auto& wp : wps) {
-    QPointF center = waypointToFixedFrame(wp, transform);
+    QPointF center = wgs84ToMap(wp, transform);
     double cx = center.x();
     double cy = center.y();
     double cap_r = wp.capture_radius;
@@ -437,25 +437,24 @@ void CougWaypointsPlugin::drawCircleOutline(double cx, double cy, double radius,
   glEnd();
 }
 
-QPointF CougWaypointsPlugin::waypointToFixedFrame(const coug_interfaces::msg::WayPoint& wp,
-                                                  const swri_transform_util::Transform& transform) {
+QPointF CougWaypointsPlugin::wgs84ToMap(const coug_interfaces::msg::WayPoint& wp,
+                                        const swri_transform_util::Transform& transform) {
   tf2::Vector3 point(wp.position.longitude, wp.position.latitude, 0.0);
   point = transform * point;
   return QPointF(point.x(), point.y());
 }
 
-QPointF CougWaypointsPlugin::waypointToMapGl(const coug_interfaces::msg::WayPoint& wp,
-                                             const swri_transform_util::Transform& transform) {
-  return map_canvas_->FixedFrameToMapGlCoord(waypointToFixedFrame(wp, transform));
+QPointF CougWaypointsPlugin::wgs84ToGl(const coug_interfaces::msg::WayPoint& wp,
+                                       const swri_transform_util::Transform& transform) {
+  return map_canvas_->FixedFrameToMapGlCoord(wgs84ToMap(wp, transform));
 }
 
-bool CougWaypointsPlugin::screenToGeo(const QPointF& screen_point,
-                                      geographic_msgs::msg::GeoPoint& geo) {
+bool CougWaypointsPlugin::glToWgs84(const QPointF& gl_point, geographic_msgs::msg::GeoPoint& geo) {
   swri_transform_util::Transform transform;
   if (!tf_manager_->GetTransform(swri_transform_util::_wgs84_frame, target_frame_, transform)) {
     return false;
   }
-  QPointF fixed = map_canvas_->MapGlCoordToFixedFrame(screen_point);
+  QPointF fixed = map_canvas_->MapGlCoordToFixedFrame(gl_point);
   tf2::Vector3 position(fixed.x(), fixed.y(), 0.0);
   position = transform * position;
   geo.longitude = position.x();
@@ -468,7 +467,7 @@ void CougWaypointsPlugin::drawPath(const std::vector<coug_interfaces::msg::WayPo
   std::vector<QPointF> points;
   points.reserve(wps.size());
   for (const auto& wp : wps) {
-    points.push_back(waypointToFixedFrame(wp, transform));
+    points.push_back(wgs84ToMap(wp, transform));
   }
 
   glColor4f(1.0, 1.0, 1.0, 0.75);
@@ -524,7 +523,7 @@ void CougWaypointsPlugin::paintPath(QPainter* painter,
                                     int selected_index) {
   QVector<QPointF> points;
   for (const auto& wp : wps) {
-    points.push_back(waypointToMapGl(wp, transform));
+    points.push_back(wgs84ToGl(wp, transform));
   }
 
   QPen pen(color, 2);
@@ -549,7 +548,7 @@ void CougWaypointsPlugin::paintLabels(QPainter* painter,
                                       const swri_transform_util::Transform& transform,
                                       const QColor& color) {
   for (size_t i = 0; i < wps.size(); i++) {
-    QPointF gl_point = waypointToMapGl(wps[i], transform);
+    QPointF gl_point = wgs84ToGl(wps[i], transform);
 
     painter->setPen(QPen(color));
 
@@ -665,7 +664,7 @@ int CougWaypointsPlugin::getClosestPoint(const QPointF& point, double& distance)
   auto wps = manager_.getWaypoints(current_agent_);
 
   for (size_t i = 0; i < wps.size(); i++) {
-    QPointF transformed = waypointToMapGl(wps[i], transform);
+    QPointF transformed = wgs84ToGl(wps[i], transform);
 
     double d = QLineF(transformed, point).length();
     if (d < distance) {
@@ -729,7 +728,7 @@ bool CougWaypointsPlugin::handleMouseRelease(QMouseEvent* event) {
 
   if (event->button() == Qt::LeftButton && is_click) {
     geographic_msgs::msg::GeoPoint geo;
-    if (screenToGeo(event->localPos(), geo)) {
+    if (glToWgs84(event->localPos(), geo)) {
       coug_interfaces::msg::WayPoint wp;
       wp.position = geo;
       wp.position.altitude = ui_.depth_editor->value();
@@ -756,7 +755,7 @@ bool CougWaypointsPlugin::handleMouseMove(QMouseEvent* event) {
     }
 
     geographic_msgs::msg::GeoPoint geo;
-    if (screenToGeo(event->localPos(), geo)) {
+    if (glToWgs84(event->localPos(), geo)) {
       if (auto* wp = manager_.getWaypointMutable(current_agent_, dragged_point_)) {
         wp->position.longitude = geo.longitude;
         wp->position.latitude = geo.latitude;

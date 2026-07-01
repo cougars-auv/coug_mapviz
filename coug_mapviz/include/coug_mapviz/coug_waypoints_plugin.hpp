@@ -316,30 +316,30 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   bool isAgentKnown(const std::string& agent);
 
   /**
-   * @brief Projects a waypoint's geographic position into the map's fixed frame.
+   * @brief Projects a WGS84 coordinates waypoint position into the map frame.
    * @param wp The waypoint to project.
-   * @param transform Transform from the WGS84 frame to the fixed frame.
-   * @return The point in fixed-frame coordinates.
+   * @param transform Transform from the WGS84 frame to the map frame.
+   * @return The point in map-frame coordinates.
    */
-  static QPointF waypointToFixedFrame(const coug_interfaces::msg::WayPoint& wp,
-                                      const swri_transform_util::Transform& transform);
+  static QPointF wgs84ToMap(const coug_interfaces::msg::WayPoint& wp,
+                            const swri_transform_util::Transform& transform);
 
   /**
-   * @brief Projects a waypoint's geographic position into screen (map GL) coordinates.
+   * @brief Projects a WGS84 coordinates waypoint position into Map GL coordinates.
    * @param wp The waypoint to project.
-   * @param transform Transform from the WGS84 frame to the fixed frame.
-   * @return The point in screen-space coordinates.
+   * @param transform Transform from the WGS84 frame to the map frame.
+   * @return The point in Map GL coordinates.
    */
-  QPointF waypointToMapGl(const coug_interfaces::msg::WayPoint& wp,
-                          const swri_transform_util::Transform& transform);
+  QPointF wgs84ToGl(const coug_interfaces::msg::WayPoint& wp,
+                    const swri_transform_util::Transform& transform);
 
   /**
-   * @brief Converts a screen-space point to a geographic position.
-   * @param screen_point The point in screen (map GL) coordinates.
-   * @param geo Output: the corresponding geographic position.
+   * @brief Converts a Map GL coordinate point to a WGS84 geographic position.
+   * @param gl_point The point in Map GL coordinates.
+   * @param geo Output: the corresponding WGS84 geographic position.
    * @return True if the transform was available, false otherwise.
    */
-  bool screenToGeo(const QPointF& screen_point, geographic_msgs::msg::GeoPoint& geo);
+  bool glToWgs84(const QPointF& gl_point, geographic_msgs::msg::GeoPoint& geo);
 
   /**
    * @brief Returns the index of the waypoint within 15px of point, or -1 if none.
