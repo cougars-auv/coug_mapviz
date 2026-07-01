@@ -188,8 +188,7 @@ void CougWaypointsPlugin::deselectWaypoint() {
 }
 
 void CougWaypointsPlugin::populateEditors(const coug_interfaces::msg::WayPoint& wp) {
-  // Positive altitude means altitude mode (above seafloor); negative means depth.
-  bool is_altitude = wp.position.altitude > 0.0;
+  bool is_altitude = wp.mode == coug_interfaces::msg::WayPoint::ALTITUDE;
 
   auto set_value = [](QDoubleSpinBox* editor, double value) {
     editor->setEnabled(true);
@@ -554,7 +553,7 @@ void CougWaypointsPlugin::paintLabels(QPainter* painter,
 
     QPointF depth_text_corner(gl_point.x() - 50, gl_point.y() + 15);
     QRectF depth_text_rect(depth_text_corner, QSizeF(100, 20));
-    QString depth_text = wps[i].position.altitude > 0.0
+    QString depth_text = wps[i].mode == coug_interfaces::msg::WayPoint::ALTITUDE
                              ? "ALT " + QString::number(wps[i].position.altitude, 'f', 1) + "m"
                              : QString::number(wps[i].position.altitude, 'f', 1) + "m";
     painter->drawText(depth_text_rect, Qt::AlignHCenter | Qt::AlignTop, depth_text);
@@ -631,6 +630,8 @@ void CougWaypointsPlugin::AltitudeModeChanged(bool checked) {
     ui_.depth_editor->setMinimum(-9999.99);
     ui_.depth_editor->setMaximum(0.0);
   }
+  wp->mode =
+      checked ? coug_interfaces::msg::WayPoint::ALTITUDE : coug_interfaces::msg::WayPoint::DEPTH;
   double new_val = checked ? std::abs(wp->position.altitude) : -std::abs(wp->position.altitude);
   wp->position.altitude = new_val;
   ui_.depth_editor->blockSignals(true);
@@ -732,6 +733,8 @@ bool CougWaypointsPlugin::handleMouseRelease(QMouseEvent* event) {
       coug_interfaces::msg::WayPoint wp;
       wp.position = geo;
       wp.position.altitude = ui_.depth_editor->value();
+      wp.mode = ui_.altitude_mode->isChecked() ? coug_interfaces::msg::WayPoint::ALTITUDE
+                                               : coug_interfaces::msg::WayPoint::DEPTH;
       wp.speed_rpm = ui_.speed_editor->value();
       wp.capture_radius = ui_.capture_radius_editor->value();
       wp.slip_radius = ui_.slip_radius_editor->value();

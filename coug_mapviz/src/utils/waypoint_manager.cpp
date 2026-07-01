@@ -88,6 +88,7 @@ bool WaypointManager::saveToFile(const std::string& filename,
       wp_obj["lon"] = wp.position.longitude;
       wp_obj["lat"] = wp.position.latitude;
       wp_obj["z"] = wp.position.altitude;
+      wp_obj["mode"] = static_cast<int>(wp.mode);
       wp_obj["speed_rpm"] = wp.speed_rpm;
       wp_obj["capture_radius"] = wp.capture_radius;
       wp_obj["slip_radius"] = wp.slip_radius;
@@ -139,6 +140,7 @@ bool WaypointManager::loadFromFile(const std::string& filename, const std::strin
         wp.position.longitude = wp_obj["lon"].toDouble();
         wp.position.latitude = wp_obj["lat"].toDouble();
         wp.position.altitude = wp_obj["z"].toDouble();
+        wp.mode = static_cast<uint8_t>(wp_obj["mode"].toInt());
         wp.speed_rpm =
             wp_obj.contains("speed_rpm") ? wp_obj["speed_rpm"].toDouble() : kDefaultSpeedRpm;
         wp.capture_radius = wp_obj.contains("capture_radius") ? wp_obj["capture_radius"].toDouble()
