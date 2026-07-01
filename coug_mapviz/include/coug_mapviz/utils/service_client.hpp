@@ -13,7 +13,7 @@
 // limitations under the License.
 
 /**
- * @file coug_comms_client.hpp
+ * @file service_client.hpp
  * @brief MapViz plugin helper, owns the ROS publishers and Trigger-service calls.
  * @author Nelson Durrant
  * @date May 2026
@@ -24,7 +24,7 @@
 #include <swri_transform_util/transform_manager.h>
 
 #include <coug_interfaces/msg/way_point_list.hpp>
-#include <coug_mapviz/coug_waypoint_manager.hpp>
+#include <coug_mapviz/utils/waypoint_manager.hpp>
 #include <functional>
 #include <geometry_msgs/msg/pose_array.hpp>
 #include <map>
@@ -35,13 +35,13 @@
 #include <string>
 #include <vector>
 
-namespace coug_mapviz {
+namespace coug_mapviz::utils {
 
 /**
- * @class CougCommsClient
+ * @class ServiceClient
  * @brief Owns the per-agent waypoint publishers and Trigger-service clients.
  */
-class CougCommsClient {
+class ServiceClient {
  public:
   /**
    * @enum Status
@@ -54,7 +54,7 @@ class CougCommsClient {
    */
   using StatusCallback = std::function<void(Status, const std::string&)>;
 
-  CougCommsClient() = default;
+  ServiceClient() = default;
 
   /**
    * @brief Creates the publishers and service clients for each agent namespace.
@@ -62,14 +62,14 @@ class CougCommsClient {
    * @param tf_manager Transform manager used to project waypoints into the map frame.
    * @param agent_namespaces The agent namespaces to create interfaces for.
    * @param waypoint_topic Topic suffix for the WayPointList publisher.
-   * @param waypoints_map_topic Topic suffix for the PoseArray (map frame) publisher.
+   * @param waypoint_map_topic Topic suffix for the PoseArray (map frame) publisher.
    * @param services Maps each command name to its Trigger service suffix.
    * @param status_cb Callback invoked to report status messages.
    */
   void initialize(const std::shared_ptr<rclcpp::Node>& node,
                   const swri_transform_util::TransformManagerPtr& tf_manager,
                   const std::vector<std::string>& agent_namespaces,
-                  const std::string& waypoint_topic, const std::string& waypoints_map_topic,
+                  const std::string& waypoint_topic, const std::string& waypoint_map_topic,
                   const std::map<std::string, std::string>& services, StatusCallback status_cb);
 
   /**
@@ -78,7 +78,8 @@ class CougCommsClient {
    * @param wps The waypoints to publish.
    * @param target_frame The map frame to project the PoseArray into.
    */
-  void publishWaypoints(const std::string& agent, const std::vector<CougWaypoint>& wps,
+  void publishWaypoints(const std::string& agent,
+                        const std::vector<coug_interfaces::msg::WayPoint>& wps,
                         const std::string& target_frame);
 
   /**
@@ -125,7 +126,7 @@ class CougCommsClient {
   StatusCallback status_;
 
   std::string waypoint_topic_;
-  std::string waypoints_map_topic_;
+  std::string waypoint_map_topic_;
 
   std::map<std::string, rclcpp::Publisher<coug_interfaces::msg::WayPointList>::SharedPtr>
       publishers_;
@@ -135,4 +136,4 @@ class CougCommsClient {
       clients_;
 };
 
-}  // namespace coug_mapviz
+}  // namespace coug_mapviz::utils

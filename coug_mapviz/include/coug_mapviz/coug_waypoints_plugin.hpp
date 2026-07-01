@@ -31,8 +31,8 @@
 #include <QObject>
 #include <QPainter>
 #include <QWidget>
-#include <coug_mapviz/coug_comms_client.hpp>
-#include <coug_mapviz/coug_waypoint_manager.hpp>
+#include <coug_mapviz/utils/service_client.hpp>
+#include <coug_mapviz/utils/waypoint_manager.hpp>
 #include <memory>
 #include <rclcpp/rclcpp.hpp>
 #include <string>
@@ -274,8 +274,8 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   mapviz::MapCanvas* map_canvas_;
 
   // --- ROS Interface ---
-  CougCommsClient comms_;
-  CougWaypointManager manager_;
+  utils::ServiceClient client_;
+  utils::WaypointManager manager_;
   std::string current_agent_;
   std::vector<std::string> agent_namespaces_;
 
@@ -295,7 +295,7 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
    * @brief Enables and populates the lat/lon/depth/speed editors from a waypoint.
    * @param wp The waypoint whose values should fill the editors.
    */
-  void populateEditors(const CougWaypoint& wp);
+  void populateEditors(const coug_interfaces::msg::WayPoint& wp);
 
   /**
    * @brief Publishes waypoints for all agents currently in the manager.
@@ -321,7 +321,7 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
    * @param transform Transform from the WGS84 frame to the fixed frame.
    * @return The point in fixed-frame coordinates.
    */
-  static QPointF waypointToFixedFrame(const CougWaypoint& wp,
+  static QPointF waypointToFixedFrame(const coug_interfaces::msg::WayPoint& wp,
                                       const swri_transform_util::Transform& transform);
 
   /**
@@ -330,7 +330,8 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
    * @param transform Transform from the WGS84 frame to the fixed frame.
    * @return The point in screen-space coordinates.
    */
-  QPointF waypointToMapGl(const CougWaypoint& wp, const swri_transform_util::Transform& transform);
+  QPointF waypointToMapGl(const coug_interfaces::msg::WayPoint& wp,
+                          const swri_transform_util::Transform& transform);
 
   /**
    * @brief Converts a screen-space point to a geographic position.
@@ -353,7 +354,7 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
    * @param wps The waypoint list to draw.
    * @param transform Transform from the waypoint frame to the map frame.
    */
-  static void drawPath(const std::vector<CougWaypoint>& wps,
+  static void drawPath(const std::vector<coug_interfaces::msg::WayPoint>& wps,
                        const swri_transform_util::Transform& transform);
 
   /**
@@ -361,7 +362,7 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
    * @param wps The waypoint list whose radii should be drawn.
    * @param transform Transform from the waypoint frame to the map frame.
    */
-  static void drawWaypointCircles(const std::vector<CougWaypoint>& wps,
+  static void drawWaypointCircles(const std::vector<coug_interfaces::msg::WayPoint>& wps,
                                   const swri_transform_util::Transform& transform);
 
   /**
@@ -391,7 +392,7 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
    * @param transform Transform from the waypoint frame to screen space.
    * @param color Label color.
    */
-  void paintLabels(QPainter* painter, const std::vector<CougWaypoint>& wps,
+  void paintLabels(QPainter* painter, const std::vector<coug_interfaces::msg::WayPoint>& wps,
                    const swri_transform_util::Transform& transform, const QColor& color);
 
   /**
@@ -402,8 +403,9 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
    * @param transform Transform from the waypoint frame to screen space.
    * @param selected_index Index of the selected waypoint to highlight, or -1 for none.
    */
-  void paintPath(QPainter* painter, const std::vector<CougWaypoint>& wps, const QColor& color,
-                 const swri_transform_util::Transform& transform, int selected_index = -1);
+  void paintPath(QPainter* painter, const std::vector<coug_interfaces::msg::WayPoint>& wps,
+                 const QColor& color, const swri_transform_util::Transform& transform,
+                 int selected_index = -1);
 };
 
 }  // namespace coug_mapviz

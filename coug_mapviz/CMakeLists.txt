@@ -41,7 +41,7 @@ add_definitions(-DWFlags=WindowFlags)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(UI_FILES ui/coug_waypoints_config.ui)
-set(SRC_FILES src/coug_waypoints_plugin.cpp src/coug_waypoint_manager.cpp src/coug_comms_client.cpp)
+set(SRC_FILES src/coug_waypoints_plugin.cpp src/utils/waypoint_manager.cpp src/utils/service_client.cpp)
 set(HEADER_FILES include/${PROJECT_NAME}/coug_waypoints_plugin.hpp)
 
 qt5_wrap_ui(UI_SRC_FILES ${UI_FILES})

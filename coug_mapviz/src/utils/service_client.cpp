@@ -13,8 +13,8 @@
 // limitations under the License.
 
 /**
- * @file coug_comms_client.cpp
- * @brief Implementation of the CougCommsClient.
+ * @file service_client.cpp
+ * @brief Implementation of the ServiceClient.
  * @author Nelson Durrant
  * @date May 2026
  */
@@ -22,33 +22,31 @@
 #include <swri_transform_util/frames.h>
 #include <swri_transform_util/transform.h>
 
-#include <coug_mapviz/coug_comms_client.hpp>
-#include <geographic_msgs/msg/key_value.hpp>
-#include <geographic_msgs/msg/way_point.hpp>
+#include <coug_mapviz/utils/service_client.hpp>
 #include <string>
 #include <utility>
 
-namespace coug_mapviz {
+namespace coug_mapviz::utils {
 
-void CougCommsClient::initialize(const std::shared_ptr<rclcpp::Node>& node,
-                                 const swri_transform_util::TransformManagerPtr& tf_manager,
-                                 const std::vector<std::string>& agent_namespaces,
-                                 const std::string& waypoint_topic,
-                                 const std::string& waypoints_map_topic,
-                                 const std::map<std::string, std::string>& services,
-                                 StatusCallback status_cb) {
+void ServiceClient::initialize(const std::shared_ptr<rclcpp::Node>& node,
+                               const swri_transform_util::TransformManagerPtr& tf_manager,
+                               const std::vector<std::string>& agent_namespaces,
+                               const std::string& waypoint_topic,
+                               const std::string& waypoint_map_topic,
+                               const std::map<std::string, std::string>& services,
+                               StatusCallback status_cb) {
   node_ = node;
   tf_manager_ = tf_manager;
   status_ = std::move(status_cb);
   waypoint_topic_ = waypoint_topic;
-  waypoints_map_topic_ = waypoints_map_topic;
+  waypoint_map_topic_ = waypoint_map_topic;
 
   for (const auto& ns : agent_namespaces) {
     publishers_[ns + "/" + waypoint_topic_] =
         node_->create_publisher<coug_interfaces::msg::WayPointList>(ns + "/" + waypoint_topic_,
                                                                     rclcpp::SystemDefaultsQoS());
-    map_publishers_[ns + "/" + waypoints_map_topic_] =
-        node_->create_publisher<geometry_msgs::msg::PoseArray>(ns + "/" + waypoints_map_topic_,
+    map_publishers_[ns + "/" + waypoint_map_topic_] =
+        node_->create_publisher<geometry_msgs::msg::PoseArray>(ns + "/" + waypoint_map_topic_,
                                                                rclcpp::SystemDefaultsQoS());
     for (const auto& [cmd, svc] : services) {
       clients_[ns][cmd] = node_->create_client<std_srvs::srv::Trigger>(ns + "/" + svc);
@@ -56,46 +54,30 @@ void CougCommsClient::initialize(const std::shared_ptr<rclcpp::Node>& node,
   }
 }
 
-void CougCommsClient::publishWaypoints(const std::string& agent,
-                                       const std::vector<CougWaypoint>& wps,
-                                       const std::string& target_frame) {
+void ServiceClient::publishWaypoints(const std::string& agent,
+                                     const std::vector<coug_interfaces::msg::WayPoint>& wps,
+                                     const std::string& target_frame) {
   std::string topic = agent + "/" + waypoint_topic_;
   coug_interfaces::msg::WayPointList waypoint_list;
   waypoint_list.header.frame_id = swri_transform_util::_wgs84_frame;
   waypoint_list.header.stamp = node_->now();
-  for (const auto& cwp : wps) {
-    geographic_msgs::msg::WayPoint wp;
-    wp.position = cwp.position;
-    geographic_msgs::msg::KeyValue speed_kv;
-    speed_kv.key = "speed_rpm";
-    speed_kv.value = std::to_string(cwp.speed_rpm);
-    wp.props.push_back(speed_kv);
-    geographic_msgs::msg::KeyValue capture_kv;
-    capture_kv.key = "capture_radius";
-    capture_kv.value = std::to_string(cwp.capture_radius);
-    wp.props.push_back(capture_kv);
-    geographic_msgs::msg::KeyValue slip_kv;
-    slip_kv.key = "slip_radius";
-    slip_kv.value = std::to_string(cwp.slip_radius);
-    wp.props.push_back(slip_kv);
-    waypoint_list.waypoints.push_back(wp);
-  }
+  waypoint_list.waypoints = wps;
 
   publishers_[topic]->publish(waypoint_list);
 
-  std::string map_topic = agent + "/" + waypoints_map_topic_;
+  std::string map_topic = agent + "/" + waypoint_map_topic_;
   swri_transform_util::Transform transform;
   if (tf_manager_->GetTransform(target_frame, swri_transform_util::_wgs84_frame, transform)) {
     geometry_msgs::msg::PoseArray pose_array;
     pose_array.header.frame_id = target_frame;
     pose_array.header.stamp = node_->now();
-    for (const auto& cwp : wps) {
-      tf2::Vector3 point(cwp.position.longitude, cwp.position.latitude, 0.0);
+    for (const auto& wp : wps) {
+      tf2::Vector3 point(wp.position.longitude, wp.position.latitude, 0.0);
       point = transform * point;
       geometry_msgs::msg::Pose pose;
       pose.position.x = point.x();
       pose.position.y = point.y();
-      pose.position.z = cwp.position.altitude;
+      pose.position.z = wp.position.altitude;
       pose.orientation.w = 1.0;
       pose_array.poses.push_back(pose);
     }
@@ -103,8 +85,8 @@ void CougCommsClient::publishWaypoints(const std::string& agent,
   }
 }
 
-void CougCommsClient::callService(const std::string& cmd, const std::vector<std::string>& agents,
-                                  bool aggregate) {
+void ServiceClient::callService(const std::string& cmd, const std::vector<std::string>& agents,
+                                bool aggregate) {
   status_(Status::kInfo, "[" + cmd + "] Calling service...");
   if (aggregate) {
     auto state = std::make_shared<CallState>();
@@ -116,8 +98,8 @@ void CougCommsClient::callService(const std::string& cmd, const std::vector<std:
   }
 }
 
-void CougCommsClient::callAgentService(const std::string& ns, const std::string& cmd,
-                                       std::shared_ptr<CallState> state) {
+void ServiceClient::callAgentService(const std::string& ns, const std::string& cmd,
+                                     std::shared_ptr<CallState> state) {
   auto ns_it = clients_.find(ns);
   if (ns_it == clients_.end() || ns_it->second.find(cmd) == ns_it->second.end()) {
     if (state)
@@ -157,8 +139,8 @@ void CougCommsClient::callAgentService(const std::string& ns, const std::string&
       });
 }
 
-void CougCommsClient::recordResult(std::shared_ptr<CallState> state, bool success,
-                                   const std::string& agent) {
+void ServiceClient::recordResult(std::shared_ptr<CallState> state, bool success,
+                                 const std::string& agent) {
   std::lock_guard<std::mutex> lock(state->mutex);
   if (success)
     state->succeeded++;
@@ -183,4 +165,4 @@ void CougCommsClient::recordResult(std::shared_ptr<CallState> state, bool succes
   }
 }
 
-}  // namespace coug_mapviz
+}  // namespace coug_mapviz::utils

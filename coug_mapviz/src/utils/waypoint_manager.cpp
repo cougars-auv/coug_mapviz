@@ -13,8 +13,8 @@
 // limitations under the License.
 
 /**
- * @file coug_waypoint_manager.cpp
- * @brief Implementation of the CougWaypointManager.
+ * @file waypoint_manager.cpp
+ * @brief Implementation of the WaypointManager.
  * @author Nelson Durrant
  * @date May 2026
  */
@@ -24,27 +24,30 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QString>
-#include <coug_mapviz/coug_waypoint_manager.hpp>
+#include <coug_mapviz/utils/waypoint_manager.hpp>
 
-namespace coug_mapviz {
+namespace coug_mapviz::utils {
 
-void CougWaypointManager::addWaypoint(const std::string& agent, const CougWaypoint& wp) {
+void WaypointManager::addWaypoint(const std::string& agent,
+                                  const coug_interfaces::msg::WayPoint& wp) {
   waypoints_[agent].push_back(wp);
 }
 
-void CougWaypointManager::setWaypoints(const std::string& agent,
-                                       const std::vector<CougWaypoint>& waypoints) {
+void WaypointManager::setWaypoints(const std::string& agent,
+                                   const std::vector<coug_interfaces::msg::WayPoint>& waypoints) {
   waypoints_[agent] = waypoints;
 }
 
-std::vector<CougWaypoint> CougWaypointManager::getWaypoints(const std::string& agent) const {
+std::vector<coug_interfaces::msg::WayPoint> WaypointManager::getWaypoints(
+    const std::string& agent) const {
   if (waypoints_.find(agent) != waypoints_.end()) {
     return waypoints_.at(agent);
   }
   return {};
 }
 
-CougWaypoint* CougWaypointManager::getWaypointMutable(const std::string& agent, size_t index) {
+coug_interfaces::msg::WayPoint* WaypointManager::getWaypointMutable(const std::string& agent,
+                                                                    size_t index) {
   auto it = waypoints_.find(agent);
   if (it == waypoints_.end() || index >= it->second.size()) {
     return nullptr;
@@ -52,26 +55,26 @@ CougWaypoint* CougWaypointManager::getWaypointMutable(const std::string& agent, 
   return &it->second[index];
 }
 
-void CougWaypointManager::removeWaypoint(const std::string& agent, size_t index) {
+void WaypointManager::removeWaypoint(const std::string& agent, size_t index) {
   auto it = waypoints_.find(agent);
   if (it != waypoints_.end() && index < it->second.size()) {
     it->second.erase(it->second.begin() + index);
   }
 }
 
-const std::map<std::string, std::vector<CougWaypoint>>& CougWaypointManager::getAllWaypoints()
-    const {
+const std::map<std::string, std::vector<coug_interfaces::msg::WayPoint>>&
+WaypointManager::getAllWaypoints() const {
   return waypoints_;
 }
 
-void CougWaypointManager::clearWaypoints(const std::string& agent) { waypoints_[agent].clear(); }
+void WaypointManager::clearWaypoints(const std::string& agent) { waypoints_[agent].clear(); }
 
-void CougWaypointManager::clearAllWaypoints() { waypoints_.clear(); }
+void WaypointManager::clearAllWaypoints() { waypoints_.clear(); }
 
-void CougWaypointManager::removeAgent(const std::string& agent) { waypoints_.erase(agent); }
+void WaypointManager::removeAgent(const std::string& agent) { waypoints_.erase(agent); }
 
-bool CougWaypointManager::saveToFile(const std::string& filename,
-                                     const std::string& specific_agent) const {
+bool WaypointManager::saveToFile(const std::string& filename,
+                                 const std::string& specific_agent) const {
   QJsonObject root;
 
   for (const auto& [agent, wps] : waypoints_) {
@@ -103,8 +106,7 @@ bool CougWaypointManager::saveToFile(const std::string& filename,
   return false;
 }
 
-bool CougWaypointManager::loadFromFile(const std::string& filename,
-                                       const std::string& specific_agent) {
+bool WaypointManager::loadFromFile(const std::string& filename, const std::string& specific_agent) {
   QFile file(QString::fromStdString(filename));
   if (!file.open(QIODevice::ReadOnly)) {
     return false;
@@ -127,23 +129,23 @@ bool CougWaypointManager::loadFromFile(const std::string& filename,
       continue;
     }
 
-    std::vector<CougWaypoint> wps;
+    std::vector<coug_interfaces::msg::WayPoint> wps;
     QJsonArray array = obj[agent_key].toArray();
 
     for (const auto& val : array) {
       QJsonObject wp_obj = val.toObject();
       if (wp_obj.contains("lat") && wp_obj.contains("lon")) {
-        CougWaypoint cwp;
-        cwp.position.longitude = wp_obj["lon"].toDouble();
-        cwp.position.latitude = wp_obj["lat"].toDouble();
-        cwp.position.altitude = wp_obj["z"].toDouble();
-        cwp.speed_rpm =
+        coug_interfaces::msg::WayPoint wp;
+        wp.position.longitude = wp_obj["lon"].toDouble();
+        wp.position.latitude = wp_obj["lat"].toDouble();
+        wp.position.altitude = wp_obj["z"].toDouble();
+        wp.speed_rpm =
             wp_obj.contains("speed_rpm") ? wp_obj["speed_rpm"].toDouble() : kDefaultSpeedRpm;
-        cwp.capture_radius = wp_obj.contains("capture_radius") ? wp_obj["capture_radius"].toDouble()
-                                                               : kDefaultCaptureRadius;
-        cwp.slip_radius =
+        wp.capture_radius = wp_obj.contains("capture_radius") ? wp_obj["capture_radius"].toDouble()
+                                                              : kDefaultCaptureRadius;
+        wp.slip_radius =
             wp_obj.contains("slip_radius") ? wp_obj["slip_radius"].toDouble() : kDefaultSlipRadius;
-        wps.push_back(cwp);
+        wps.push_back(wp);
       }
     }
     waypoints_[agent] = wps;
@@ -153,4 +155,4 @@ bool CougWaypointManager::loadFromFile(const std::string& filename,
   return loaded_count > 0;
 }
 
-}  // namespace coug_mapviz
+}  // namespace coug_mapviz::utils

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 /**
- * @file coug_waypoint_manager.hpp
+ * @file waypoint_manager.hpp
  * @brief MapViz plugin helper, manages waypoint storage and file I/O.
  * @author Nelson Durrant
  * @date May 2026
@@ -21,57 +21,47 @@
 
 #pragma once
 
-#include <geographic_msgs/msg/geo_point.hpp>
+#include <coug_interfaces/msg/way_point.hpp>
 #include <map>
 #include <string>
 #include <vector>
 
-namespace coug_mapviz {
+namespace coug_mapviz::utils {
 
 static constexpr double kDefaultSpeedRpm = 1500.0;
 static constexpr double kDefaultCaptureRadius = 25.0;
 static constexpr double kDefaultSlipRadius = 50.0;
 
 /**
- * @struct CougWaypoint
- * @brief C++ container for waypoint data.
- */
-struct CougWaypoint {
-  geographic_msgs::msg::GeoPoint position;
-  double speed_rpm = kDefaultSpeedRpm;
-  double capture_radius = kDefaultCaptureRadius;
-  double slip_radius = kDefaultSlipRadius;
-};
-
-/**
- * @class CougWaypointManager
+ * @class WaypointManager
  * @brief Handles storage, retrieval, and serialization of waypoints.
  */
-class CougWaypointManager {
+class WaypointManager {
  public:
-  CougWaypointManager() = default;
-  ~CougWaypointManager() = default;
+  WaypointManager() = default;
+  ~WaypointManager() = default;
 
   /**
    * @brief Adds a waypoint for the specified agent.
    * @param agent The agent namespace.
    * @param wp The waypoint to add.
    */
-  void addWaypoint(const std::string& agent, const CougWaypoint& wp);
+  void addWaypoint(const std::string& agent, const coug_interfaces::msg::WayPoint& wp);
 
   /**
    * @brief Replaces the waypoint list for a specific agent.
    * @param agent The agent namespace.
    * @param waypoints The new list of waypoints.
    */
-  void setWaypoints(const std::string& agent, const std::vector<CougWaypoint>& waypoints);
+  void setWaypoints(const std::string& agent,
+                    const std::vector<coug_interfaces::msg::WayPoint>& waypoints);
 
   /**
    * @brief Gets the waypoints for a specific agent.
    * @param agent The agent namespace.
    * @return A vector of waypoints.
    */
-  std::vector<CougWaypoint> getWaypoints(const std::string& agent) const;
+  std::vector<coug_interfaces::msg::WayPoint> getWaypoints(const std::string& agent) const;
 
   /**
    * @brief Returns a mutable pointer to a single waypoint for in-place edits.
@@ -79,7 +69,7 @@ class CougWaypointManager {
    * @param index The waypoint index.
    * @return Pointer to the waypoint, or nullptr if the agent or index is invalid.
    */
-  CougWaypoint* getWaypointMutable(const std::string& agent, size_t index);
+  coug_interfaces::msg::WayPoint* getWaypointMutable(const std::string& agent, size_t index);
 
   /**
    * @brief Removes a single waypoint from an agent.
@@ -92,7 +82,7 @@ class CougWaypointManager {
    * @brief Gets all managed waypoints as a map.
    * @return Map of agent namespace to waypoint list.
    */
-  const std::map<std::string, std::vector<CougWaypoint>>& getAllWaypoints() const;
+  const std::map<std::string, std::vector<coug_interfaces::msg::WayPoint>>& getAllWaypoints() const;
 
   /**
    * @brief Removes an agent and its waypoints from the manager.
@@ -128,7 +118,7 @@ class CougWaypointManager {
   bool loadFromFile(const std::string& filename, const std::string& agent = "");
 
  private:
-  std::map<std::string, std::vector<CougWaypoint>> waypoints_;
+  std::map<std::string, std::vector<coug_interfaces::msg::WayPoint>> waypoints_;
 };
 
-}  // namespace coug_mapviz
+}  // namespace coug_mapviz::utils
