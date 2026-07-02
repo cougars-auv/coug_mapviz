@@ -33,6 +33,7 @@ def launch_setup(context, *args, **kwargs) -> list:
     agent_namespaces = yaml.safe_load(agent_list_str)
     is_multiagent = len(agent_namespaces) > 1
 
+    pkg_share = get_package_share_directory("coug_mapviz")
     fleet_params = PathJoinSubstitution(
         [
             EnvironmentVariable("CONFIG_DIR"),
@@ -40,7 +41,6 @@ def launch_setup(context, *args, **kwargs) -> list:
             "coug_mapviz_params.yaml",
         ]
     )
-    pkg_share = get_package_share_directory("coug_mapviz")
     full_template_path = os.path.join(pkg_share, "config", "mapviz_config.mvc.template")
 
     if is_multiagent:
