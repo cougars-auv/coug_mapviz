@@ -100,16 +100,15 @@ void ServiceClient::callService(const std::string& cmd, const std::vector<std::s
 
 void ServiceClient::callAgentService(const std::string& ns, const std::string& cmd,
                                      std::shared_ptr<CallState> state) {
+  rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr client;
   auto ns_it = clients_.find(ns);
-  if (ns_it == clients_.end() || ns_it->second.find(cmd) == ns_it->second.end()) {
-    if (state)
-      recordResult(state, false, ns);
-    else
-      status_(Status::kError, "Service not available: " + ns + "/" + cmd);
-    return;
+  if (ns_it != clients_.end()) {
+    auto cmd_it = ns_it->second.find(cmd);
+    if (cmd_it != ns_it->second.end()) {
+      client = cmd_it->second;
+    }
   }
-  auto& client = clients_[ns][cmd];
-  if (!client->service_is_ready()) {
+  if (!client || !client->service_is_ready()) {
     if (state)
       recordResult(state, false, ns);
     else
@@ -124,7 +123,7 @@ void ServiceClient::callAgentService(const std::string& ns, const std::string& c
           if (state)
             recordResult(state, false, ns);
           else
-            status_(Status::kError, "Service call failed:" + ns + "/" + cmd);
+            status_(Status::kError, "Service call failed: " + ns + "/" + cmd);
           return;
         }
         if (state) {

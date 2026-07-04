@@ -32,6 +32,7 @@
 #include <cstdlib>
 #include <pluginlib/class_list_macros.hpp>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 PLUGINLIB_EXPORT_CLASS(coug_mapviz::CougWaypointsPlugin, mapviz::MapvizPlugin)
@@ -104,41 +105,24 @@ bool CougWaypointsPlugin::Initialize(QGLWidget* canvas) {
   map_canvas_ = dynamic_cast<mapviz::MapCanvas*>(canvas);
   map_canvas_->installEventFilter(this);
 
-  std::string waypoint_topic, waypoint_map_topic;
-  std::string start_service, stop_service, surface_service, home_service;
-  if (!node_->has_parameter("agent_namespaces")) {
-    node_->declare_parameter("agent_namespaces", std::vector<std::string>{});
-  }
-  if (!node_->has_parameter("waypoint_topic")) {
-    node_->declare_parameter("waypoint_topic", std::string("waypoints"));
-  }
-  if (!node_->has_parameter("waypoint_map_topic")) {
-    node_->declare_parameter("waypoint_map_topic", std::string("waypoints_map"));
-  }
-  if (!node_->has_parameter("start_service")) {
-    node_->declare_parameter("start_service", std::string("base/start"));
-  }
-  if (!node_->has_parameter("stop_service")) {
-    node_->declare_parameter("stop_service", std::string("base/stop"));
-  }
-  if (!node_->has_parameter("surface_service")) {
-    node_->declare_parameter("surface_service", std::string("base/surface"));
-  }
-  if (!node_->has_parameter("home_service")) {
-    node_->declare_parameter("home_service", std::string("base/home"));
-  }
-  node_->get_parameter("agent_namespaces", agent_namespaces_);
-  node_->get_parameter("waypoint_topic", waypoint_topic);
-  node_->get_parameter("waypoint_map_topic", waypoint_map_topic);
-  node_->get_parameter("start_service", start_service);
-  node_->get_parameter("stop_service", stop_service);
-  node_->get_parameter("surface_service", surface_service);
-  node_->get_parameter("home_service", home_service);
+  auto getOrDeclare = [this](const std::string& name, const auto& default_value) {
+    if (!node_->has_parameter(name)) {
+      node_->declare_parameter(name, default_value);
+    }
+    std::decay_t<decltype(default_value)> value;
+    node_->get_parameter(name, value);
+    return value;
+  };
+
+  agent_namespaces_ = getOrDeclare("agent_namespaces", std::vector<std::string>{});
+  const std::string waypoint_topic = getOrDeclare("waypoint_topic", std::string("waypoints"));
+  const std::string waypoint_map_topic =
+      getOrDeclare("waypoint_map_topic", std::string("waypoints_map"));
   const std::map<std::string, std::string> services = {
-      {"start", start_service},
-      {"stop", stop_service},
-      {"surface", surface_service},
-      {"home", home_service},
+      {"start", getOrDeclare("start_service", std::string("base/start"))},
+      {"stop", getOrDeclare("stop_service", std::string("base/stop"))},
+      {"surface", getOrDeclare("surface_service", std::string("base/surface"))},
+      {"home", getOrDeclare("home_service", std::string("base/home"))},
   };
   for (const auto& ns : agent_namespaces_) {
     ui_.agent_selector->addItem(QString::fromStdString(ns));
