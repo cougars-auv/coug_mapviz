@@ -236,7 +236,7 @@ displays:
     config:
       visible: false
       collapsed: true
-      topic: /AUV_NS/odometry/dvl
+      topic: /AUV_NS/dvl/odometry
       color: "#55ffff"
       draw_style: lines
       position_tolerance: 0
