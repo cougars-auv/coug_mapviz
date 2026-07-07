@@ -14,7 +14,7 @@
 
 /**
  * @file service_client.hpp
- * @brief MapViz plugin helper, owns the ROS publishers and Trigger-service calls.
+ * @brief MapViz plugin helper that owns the waypoint publishers and Trigger-service clients.
  * @author Nelson Durrant
  * @date May 2026
  */
@@ -39,7 +39,7 @@ namespace coug_mapviz::utils {
 
 /**
  * @class ServiceClient
- * @brief Owns the per-agent waypoint publishers and Trigger-service clients.
+ * @brief MapViz plugin helper that owns the waypoint publishers and Trigger-service clients.
  */
 class ServiceClient {
  public:

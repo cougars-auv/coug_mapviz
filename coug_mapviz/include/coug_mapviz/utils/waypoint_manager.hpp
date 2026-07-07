@@ -14,7 +14,7 @@
 
 /**
  * @file waypoint_manager.hpp
- * @brief MapViz plugin helper, manages waypoint storage and file I/O.
+ * @brief MapViz plugin helper that manages waypoint storage and file I/O.
  * @author Nelson Durrant
  * @date May 2026
  */
@@ -34,7 +34,7 @@ static constexpr double kDefaultSlipRadius = 50.0;
 
 /**
  * @class WaypointManager
- * @brief Handles storage, retrieval, and serialization of waypoints.
+ * @brief MapViz plugin helper that manages waypoint storage and file I/O.
  */
 class WaypointManager {
  public:

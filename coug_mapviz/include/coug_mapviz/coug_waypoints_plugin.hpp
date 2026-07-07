@@ -42,7 +42,7 @@ namespace coug_mapviz {
 
 /**
  * @class CougWaypointsPlugin
- * @brief A MapViz plugin for multi-agent waypoint mission planning.
+ * @brief MapViz plugin for multi-agent waypoint mission planning.
  */
 class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   Q_OBJECT
