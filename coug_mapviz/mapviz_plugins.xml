@@ -1,6 +1,6 @@
 <library path="coug_mapviz">
   <class name="coug_mapviz/coug_waypoints" type="coug_mapviz::CougWaypointsPlugin"
     base_class_type="mapviz::MapvizPlugin">
-    <description>CougUV fleet waypoint dashboard</description>
+    <description></description>
   </class>
 </library>
