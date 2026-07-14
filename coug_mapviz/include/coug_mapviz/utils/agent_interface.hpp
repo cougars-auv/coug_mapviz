@@ -13,8 +13,8 @@
 // limitations under the License.
 
 /**
- * @file service_client.hpp
- * @brief MapViz plugin helper that owns the ROS 2 service clients and publishers.
+ * @file agent_interface.hpp
+ * @brief MapViz plugin helper that owns the per-agent ROS 2 publishers and service clients.
  * @author Nelson Durrant
  * @date May 2026
  */
@@ -38,10 +38,10 @@
 namespace coug_mapviz::utils {
 
 /**
- * @class ServiceClient
- * @brief MapViz plugin helper that owns the ROS 2 service clients and publishers.
+ * @class AgentInterface
+ * @brief MapViz plugin helper that owns the per-agent ROS 2 publishers and service clients.
  */
-class ServiceClient {
+class AgentInterface {
  public:
   /**
    * @enum Status
@@ -54,7 +54,7 @@ class ServiceClient {
    */
   using StatusCallback = std::function<void(Status, const std::string&)>;
 
-  ServiceClient() = default;
+  AgentInterface() = default;
 
   /**
    * @brief Creates the publishers and service clients for each agent namespace.

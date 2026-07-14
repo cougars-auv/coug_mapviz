@@ -39,7 +39,7 @@ PLUGINLIB_EXPORT_CLASS(coug_mapviz::CougWaypointsPlugin, mapviz::MapvizPlugin)
 
 namespace coug_mapviz {
 
-using utils::ServiceClient;
+using utils::AgentInterface;
 
 static constexpr double kHitRadiusPx = 15.0;
 static constexpr double kClickMaxDistPx = 5.0;
@@ -128,20 +128,20 @@ bool CougWaypointsPlugin::Initialize(QGLWidget* canvas) {
     ui_.agent_selector->addItem(QString::fromStdString(ns));
   }
 
-  client_.initialize(node_, tf_manager_, agent_namespaces_, waypoint_topic, waypoint_map_topic,
-                     services, [this](ServiceClient::Status level, const std::string& msg) {
-                       switch (level) {
-                         case ServiceClient::Status::kInfo:
-                           PrintInfo(msg);
-                           break;
-                         case ServiceClient::Status::kWarning:
-                           PrintWarning(msg);
-                           break;
-                         case ServiceClient::Status::kError:
-                           PrintError(msg);
-                           break;
-                       }
-                     });
+  interface_.initialize(node_, tf_manager_, agent_namespaces_, waypoint_topic, waypoint_map_topic,
+                        services, [this](AgentInterface::Status level, const std::string& msg) {
+                          switch (level) {
+                            case AgentInterface::Status::kInfo:
+                              PrintInfo(msg);
+                              break;
+                            case AgentInterface::Status::kWarning:
+                              PrintWarning(msg);
+                              break;
+                            case AgentInterface::Status::kError:
+                              PrintError(msg);
+                              break;
+                          }
+                        });
 
   initialized_ = true;
   return true;
@@ -208,23 +208,23 @@ void CougWaypointsPlugin::AgentChanged(const QString& text) {
 
   auto wps = manager_.getWaypoints(current_agent_);
   if (wps.empty()) {
-    PrintInfo("Click to add waypoints");
+    PrintInfo("Click to add waypoints.");
   } else {
-    PrintInfo(current_agent_ + " (" + std::to_string(wps.size()) + " waypoints)");
+    PrintInfo(current_agent_ + " (" + std::to_string(wps.size()) + " waypoints).");
   }
 }
 
 void CougWaypointsPlugin::callService(const std::string& cmd) {
   if (ui_.apply_all->isChecked()) {
     if (agent_namespaces_.empty()) {
-      PrintError("No agents configured");
+      PrintError("No agents configured.");
       return;
     }
-    client_.callService(cmd, agent_namespaces_, true);
+    interface_.callService(cmd, agent_namespaces_, true);
   } else if (!current_agent_.empty()) {
-    client_.callService(cmd, {current_agent_}, false);
+    interface_.callService(cmd, {current_agent_}, false);
   } else {
-    PrintError("No agent selected");
+    PrintError("No agent selected.");
   }
 }
 
@@ -233,18 +233,18 @@ void CougWaypointsPlugin::PublishWaypoints() {
     publishAll();
   } else if (!current_agent_.empty()) {
     auto wps = manager_.getWaypoints(current_agent_);
-    client_.publishWaypoints(current_agent_, wps, target_frame_);
-    PrintInfo("Published 1 agent(s)");
+    interface_.publishWaypoints(current_agent_, wps, target_frame_);
+    PrintInfo("Published 1 agent(s).");
   } else {
-    PrintError("No agent selected");
+    PrintError("No agent selected.");
   }
 }
 
 void CougWaypointsPlugin::publishAll() {
   for (const auto& agent : agent_namespaces_) {
-    client_.publishWaypoints(agent, manager_.getWaypoints(agent), target_frame_);
+    interface_.publishWaypoints(agent, manager_.getWaypoints(agent), target_frame_);
   }
-  PrintInfo("Published " + std::to_string(agent_namespaces_.size()) + " agent(s)");
+  PrintInfo("Published " + std::to_string(agent_namespaces_.size()) + " agent(s).");
 }
 
 bool CougWaypointsPlugin::isAgentKnown(const std::string& agent) {
@@ -261,7 +261,7 @@ void CougWaypointsPlugin::Clear() {
     manager_.clearWaypoints(current_agent_);
     count = 1;
   } else {
-    PrintError("No agent selected");
+    PrintError("No agent selected.");
     return;
   }
 
@@ -274,7 +274,7 @@ void CougWaypointsPlugin::Clear() {
   ui_.depth_editor->setValue(0.0);
   dragged_point_ = -1;
   deselectWaypoint();
-  PrintInfo("Cleared " + std::to_string(count) + " agent(s)");
+  PrintInfo("Cleared " + std::to_string(count) + " agent(s).");
 }
 
 void CougWaypointsPlugin::SaveWaypoints() {
@@ -299,7 +299,7 @@ void CougWaypointsPlugin::SaveWaypoints() {
   std::string agent_to_save = "";
   if (!ui_.apply_all->isChecked()) {
     if (current_agent_.empty()) {
-      PrintError("No agent selected");
+      PrintError("No agent selected.");
       return;
     }
     agent_to_save = current_agent_;
@@ -307,9 +307,9 @@ void CougWaypointsPlugin::SaveWaypoints() {
 
   if (manager_.saveToFile(filename.toStdString(), agent_to_save)) {
     int count = agent_to_save.empty() ? static_cast<int>(manager_.getAllWaypoints().size()) : 1;
-    PrintInfo("Saved " + std::to_string(count) + " agent(s)");
+    PrintInfo("Saved " + std::to_string(count) + " agent(s).");
   } else {
-    PrintError("Failed to save");
+    PrintError("Failed to save.");
   }
 }
 
@@ -327,7 +327,7 @@ void CougWaypointsPlugin::LoadWaypoints() {
   std::string agent_to_load = "";
   if (!ui_.apply_all->isChecked()) {
     if (current_agent_.empty()) {
-      PrintError("No agent selected");
+      PrintError("No agent selected.");
       return;
     }
     agent_to_load = current_agent_;
@@ -348,9 +348,9 @@ void CougWaypointsPlugin::LoadWaypoints() {
 
     AgentChanged(QString::fromStdString(current_agent_));
     int count = agent_to_load.empty() ? static_cast<int>(manager_.getAllWaypoints().size()) : 1;
-    PrintInfo("Loaded " + std::to_string(count) + " agent(s)");
+    PrintInfo("Loaded " + std::to_string(count) + " agent(s).");
   } else {
-    PrintError("Failed to load");
+    PrintError("Failed to load.");
   }
 }
 

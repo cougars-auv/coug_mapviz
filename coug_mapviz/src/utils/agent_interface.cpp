@@ -13,8 +13,8 @@
 // limitations under the License.
 
 /**
- * @file service_client.cpp
- * @brief Implementation of the ServiceClient.
+ * @file agent_interface.cpp
+ * @brief Implementation of the AgentInterface.
  * @author Nelson Durrant
  * @date May 2026
  */
@@ -22,19 +22,19 @@
 #include <swri_transform_util/frames.h>
 #include <swri_transform_util/transform.h>
 
-#include <coug_mapviz/utils/service_client.hpp>
+#include <coug_mapviz/utils/agent_interface.hpp>
 #include <string>
 #include <utility>
 
 namespace coug_mapviz::utils {
 
-void ServiceClient::initialize(const std::shared_ptr<rclcpp::Node>& node,
-                               const swri_transform_util::TransformManagerPtr& tf_manager,
-                               const std::vector<std::string>& agent_namespaces,
-                               const std::string& waypoint_topic,
-                               const std::string& waypoint_map_topic,
-                               const std::map<std::string, std::string>& services,
-                               StatusCallback status_cb) {
+void AgentInterface::initialize(const std::shared_ptr<rclcpp::Node>& node,
+                                const swri_transform_util::TransformManagerPtr& tf_manager,
+                                const std::vector<std::string>& agent_namespaces,
+                                const std::string& waypoint_topic,
+                                const std::string& waypoint_map_topic,
+                                const std::map<std::string, std::string>& services,
+                                StatusCallback status_cb) {
   node_ = node;
   tf_manager_ = tf_manager;
   status_ = std::move(status_cb);
@@ -54,9 +54,9 @@ void ServiceClient::initialize(const std::shared_ptr<rclcpp::Node>& node,
   }
 }
 
-void ServiceClient::publishWaypoints(const std::string& agent,
-                                     const std::vector<coug_interfaces::msg::WayPoint>& wps,
-                                     const std::string& target_frame) {
+void AgentInterface::publishWaypoints(const std::string& agent,
+                                      const std::vector<coug_interfaces::msg::WayPoint>& wps,
+                                      const std::string& target_frame) {
   std::string topic = agent + "/" + waypoint_topic_;
   coug_interfaces::msg::WayPointList waypoint_list;
   waypoint_list.header.frame_id = swri_transform_util::_wgs84_frame;
@@ -85,8 +85,8 @@ void ServiceClient::publishWaypoints(const std::string& agent,
   }
 }
 
-void ServiceClient::callService(const std::string& cmd, const std::vector<std::string>& agents,
-                                bool aggregate) {
+void AgentInterface::callService(const std::string& cmd, const std::vector<std::string>& agents,
+                                 bool aggregate) {
   status_(Status::kInfo, "[" + cmd + "] Calling service...");
   if (aggregate) {
     auto state = std::make_shared<CallState>();
@@ -98,8 +98,8 @@ void ServiceClient::callService(const std::string& cmd, const std::vector<std::s
   }
 }
 
-void ServiceClient::callAgentService(const std::string& ns, const std::string& cmd,
-                                     std::shared_ptr<CallState> state) {
+void AgentInterface::callAgentService(const std::string& ns, const std::string& cmd,
+                                      std::shared_ptr<CallState> state) {
   rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr client;
   auto ns_it = clients_.find(ns);
   if (ns_it != clients_.end()) {
@@ -138,8 +138,8 @@ void ServiceClient::callAgentService(const std::string& ns, const std::string& c
       });
 }
 
-void ServiceClient::recordResult(std::shared_ptr<CallState> state, bool success,
-                                 const std::string& agent) {
+void AgentInterface::recordResult(std::shared_ptr<CallState> state, bool success,
+                                  const std::string& agent) {
   std::lock_guard<std::mutex> lock(state->mutex);
   if (success)
     state->succeeded++;
@@ -151,12 +151,12 @@ void ServiceClient::recordResult(std::shared_ptr<CallState> state, bool success,
   int s = state->succeeded, t = state->total;
   std::string prefix = "[" + state->cmd + "] ";
   if (s == t) {
-    status_(Status::kInfo, prefix + "All " + std::to_string(t) + " agent(s) confirmed");
+    status_(Status::kInfo, prefix + "All " + std::to_string(t) + " agent(s) confirmed.");
   } else {
     std::string failed_str;
     for (const auto& f : state->failed) failed_str += " " + f;
-    std::string msg =
-        prefix + std::to_string(s) + "/" + std::to_string(t) + " confirmed; failed:" + failed_str;
+    std::string msg = prefix + std::to_string(s) + "/" + std::to_string(t) +
+                      " confirmed; failed:" + failed_str + ".";
     if (s == 0)
       status_(Status::kError, msg);
     else

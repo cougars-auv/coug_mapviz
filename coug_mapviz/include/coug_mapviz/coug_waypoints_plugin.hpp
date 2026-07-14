@@ -31,7 +31,7 @@
 #include <QObject>
 #include <QPainter>
 #include <QWidget>
-#include <coug_mapviz/utils/service_client.hpp>
+#include <coug_mapviz/utils/agent_interface.hpp>
 #include <coug_mapviz/utils/waypoint_manager.hpp>
 #include <memory>
 #include <rclcpp/rclcpp.hpp>
@@ -274,7 +274,7 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   mapviz::MapCanvas* map_canvas_;
 
   // --- ROS Interface ---
-  utils::ServiceClient client_;
+  utils::AgentInterface interface_;
   utils::WaypointManager manager_;
   std::string current_agent_;
   std::vector<std::string> agent_namespaces_;
