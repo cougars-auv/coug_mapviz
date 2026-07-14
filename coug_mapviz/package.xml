@@ -6,6 +6,7 @@
   <description>CoUGARs MapViz visualization configurations and plugins.</description>
   <maintainer email="snelsond@byu.edu">snelsondurrant</maintainer>
   <license>Apache-2.0</license>
+  <url type="repository">https://github.com/cougars-auv/coug_mapviz</url>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
