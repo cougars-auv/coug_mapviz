@@ -170,6 +170,23 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
    */
   bool handleMouseMove(QMouseEvent* event);
 
+  // --- Thread-Safe Status Updates ---
+ Q_SIGNALS:
+  /**
+   * @brief Signal emitted from background thread to request a status update on the GUI thread.
+   * @param level The severity level of the status message (from AgentInterface::Status).
+   * @param msg The message string to display in the UI.
+   */
+  void StatusUpdateRequested(int level, const QString& msg);
+
+ public Q_SLOTS:
+  /**
+   * @brief Slot to handle status updates safely on the GUI thread.
+   * @param level The severity level of the status message.
+   * @param msg The message string to display.
+   */
+  void HandleStatusUpdate(int level, const QString& msg);
+
  protected Q_SLOTS:
   // --- UI Slots ---
   /**

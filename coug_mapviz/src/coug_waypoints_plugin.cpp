@@ -93,6 +93,10 @@ CougWaypointsPlugin::CougWaypointsPlugin()
   QObject::connect(ui_.slip_radius_editor, SIGNAL(valueChanged(double)), this,
                    SLOT(SlipRadiusChanged(double)));
   QObject::connect(ui_.altitude_mode, SIGNAL(toggled(bool)), this, SLOT(AltitudeModeChanged(bool)));
+
+  // --- Status Updates ---
+  QObject::connect(this, SIGNAL(StatusUpdateRequested(int, const QString&)), this,
+                   SLOT(HandleStatusUpdate(int, const QString&)), Qt::QueuedConnection);
 }
 
 CougWaypointsPlugin::~CougWaypointsPlugin() {
@@ -130,21 +134,26 @@ bool CougWaypointsPlugin::Initialize(QGLWidget* canvas) {
 
   interface_.initialize(node_, tf_manager_, agent_namespaces_, waypoint_topic, waypoint_map_topic,
                         services, [this](AgentInterface::Status level, const std::string& msg) {
-                          switch (level) {
-                            case AgentInterface::Status::kInfo:
-                              PrintInfo(msg);
-                              break;
-                            case AgentInterface::Status::kWarning:
-                              PrintWarning(msg);
-                              break;
-                            case AgentInterface::Status::kError:
-                              PrintError(msg);
-                              break;
-                          }
+                          Q_EMIT StatusUpdateRequested(static_cast<int>(level),
+                                                       QString::fromStdString(msg));
                         });
 
   initialized_ = true;
   return true;
+}
+
+void CougWaypointsPlugin::HandleStatusUpdate(int level, const QString& msg) {
+  switch (static_cast<AgentInterface::Status>(level)) {
+    case AgentInterface::Status::kInfo:
+      PrintInfo(msg.toStdString());
+      break;
+    case AgentInterface::Status::kWarning:
+      PrintWarning(msg.toStdString());
+      break;
+    case AgentInterface::Status::kError:
+      PrintError(msg.toStdString());
+      break;
+  }
 }
 
 void CougWaypointsPlugin::VisibilityChanged(bool visible) {
