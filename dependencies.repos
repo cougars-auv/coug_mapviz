@@ -3,3 +3,7 @@ repositories:
     type: git
     url: https://github.com/cougars-auv/coug_interfaces.git
     version: main
+  mapviz:
+    type: zip
+    url: https://github.com/swri-robotics/mapviz/archive/refs/tags/2.6.4.zip
+    version: mapviz-2.6.4
