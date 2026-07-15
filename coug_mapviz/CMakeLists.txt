@@ -5,20 +5,8 @@ if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
 endif()
 
-if(${CMAKE_VERSION} VERSION_EQUAL "3.11.0" OR ${CMAKE_VERSION} VERSION_GREATER "3.11.0")
-  cmake_policy(SET CMP0072 NEW)
-endif()
-
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
-endif()
-
-# Skip builds on incompatible architectures
-if(NOT "$ENV{ROS_BUILD_ARCH}" STREQUAL "amd64")
-  message(STATUS "Skipping coug_mapviz build on $ENV{ROS_BUILD_ARCH}")
-  find_package(ament_cmake REQUIRED)
-  ament_package()
-  return()
 endif()
 
 # --- Dependencies ---

@@ -21,14 +21,14 @@
   <depend>libqt5-opengl</depend>
   <depend>libqt5-opengl-dev</depend>
   <depend>libqt5-widgets</depend>
-  <depend condition="$ROS_BUILD_ARCH == 'amd64'">mapviz</depend>
-  <depend condition="$ROS_BUILD_ARCH == 'amd64'">mapviz_plugins</depend>
+  <depend>mapviz</depend>
+  <depend>mapviz_plugins</depend>
   <depend>pluginlib</depend>
   <depend>rclcpp</depend>
   <depend>std_srvs</depend>
-  <depend condition="$ROS_BUILD_ARCH == 'amd64'">swri_transform_util</depend>
+  <depend>swri_transform_util</depend>
   <depend>tf2</depend>
-  <depend condition="$ROS_BUILD_ARCH == 'amd64'">tile_map</depend>
+  <depend>tile_map</depend>
   <depend>yaml-cpp</depend>
 
   <test_depend>ament_cmake_gtest</test_depend>
