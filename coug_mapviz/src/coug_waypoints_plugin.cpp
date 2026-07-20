@@ -81,7 +81,6 @@ CougWaypointsPlugin::CougWaypointsPlugin()
   QObject::connect(ui_.load, SIGNAL(clicked()), this, SLOT(LoadWaypoints()));
 
   // --- Waypoint Editors ---
-  // All six value editors share one slot; EditorChanged() dispatches on sender().
   QObject::connect(ui_.lat_editor, SIGNAL(valueChanged(double)), this, SLOT(EditorChanged(double)));
   QObject::connect(ui_.lon_editor, SIGNAL(valueChanged(double)), this, SLOT(EditorChanged(double)));
   QObject::connect(ui_.depth_editor, SIGNAL(valueChanged(double)), this,
