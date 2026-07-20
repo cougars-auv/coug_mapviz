@@ -237,46 +237,10 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   void Home() { callService("home"); }
 
   /**
-   * @brief Shows or hides waypoints when the visibility checkbox changes.
-   * @param visible True to show, false to hide.
+   * @brief Updates the field of the selected waypoint tied to the editor that changed.
+   * @param value New value from the editor that emitted the signal.
    */
-  void VisibilityChanged(bool visible);
-
-  /**
-   * @brief Updates the latitude of the selected waypoint.
-   * @param value New latitude in degrees.
-   */
-  void LatChanged(double value);
-
-  /**
-   * @brief Updates the longitude of the selected waypoint.
-   * @param value New longitude in degrees.
-   */
-  void LonChanged(double value);
-
-  /**
-   * @brief Updates the depth of the selected waypoint.
-   * @param value New depth value.
-   */
-  void DepthChanged(double value);
-
-  /**
-   * @brief Updates the thruster speed of the selected waypoint.
-   * @param value New speed in RPM.
-   */
-  void SpeedChanged(double value);
-
-  /**
-   * @brief Updates the capture radius of the selected waypoint.
-   * @param value New capture radius in meters.
-   */
-  void CaptureRadiusChanged(double value);
-
-  /**
-   * @brief Updates the slip radius of the selected waypoint.
-   * @param value New slip radius in meters.
-   */
-  void SlipRadiusChanged(double value);
+  void EditorChanged(double value);
 
   /**
    * @brief Toggles altitude (ALT) mode and flips the depth spinbox range.

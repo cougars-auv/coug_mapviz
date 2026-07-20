@@ -81,17 +81,17 @@ CougWaypointsPlugin::CougWaypointsPlugin()
   QObject::connect(ui_.load, SIGNAL(clicked()), this, SLOT(LoadWaypoints()));
 
   // --- Waypoint Editors ---
-  QObject::connect(this, SIGNAL(VisibleChanged(bool)), this, SLOT(VisibilityChanged(bool)));
-  QObject::connect(ui_.lat_editor, SIGNAL(valueChanged(double)), this, SLOT(LatChanged(double)));
-  QObject::connect(ui_.lon_editor, SIGNAL(valueChanged(double)), this, SLOT(LonChanged(double)));
+  // All six value editors share one slot; EditorChanged() dispatches on sender().
+  QObject::connect(ui_.lat_editor, SIGNAL(valueChanged(double)), this, SLOT(EditorChanged(double)));
+  QObject::connect(ui_.lon_editor, SIGNAL(valueChanged(double)), this, SLOT(EditorChanged(double)));
   QObject::connect(ui_.depth_editor, SIGNAL(valueChanged(double)), this,
-                   SLOT(DepthChanged(double)));
+                   SLOT(EditorChanged(double)));
   QObject::connect(ui_.speed_editor, SIGNAL(valueChanged(double)), this,
-                   SLOT(SpeedChanged(double)));
+                   SLOT(EditorChanged(double)));
   QObject::connect(ui_.capture_radius_editor, SIGNAL(valueChanged(double)), this,
-                   SLOT(CaptureRadiusChanged(double)));
+                   SLOT(EditorChanged(double)));
   QObject::connect(ui_.slip_radius_editor, SIGNAL(valueChanged(double)), this,
-                   SLOT(SlipRadiusChanged(double)));
+                   SLOT(EditorChanged(double)));
   QObject::connect(ui_.altitude_mode, SIGNAL(toggled(bool)), this, SLOT(AltitudeModeChanged(bool)));
 
   // --- Status Updates ---
@@ -153,14 +153,6 @@ void CougWaypointsPlugin::HandleStatusUpdate(int level, const QString& msg) {
     case AgentInterface::Status::kError:
       PrintError(msg.toStdString());
       break;
-  }
-}
-
-void CougWaypointsPlugin::VisibilityChanged(bool visible) {
-  if (visible) {
-    map_canvas_->installEventFilter(this);
-  } else {
-    map_canvas_->removeEventFilter(this);
   }
 }
 
@@ -563,52 +555,28 @@ void CougWaypointsPlugin::paintLabels(QPainter* painter,
   }
 }
 
-void CougWaypointsPlugin::LatChanged(double value) {
+void CougWaypointsPlugin::EditorChanged(double value) {
   if (selected_point_ < 0) return;
-  if (auto* wp = manager_.getWaypointMutable(current_agent_, selected_point_)) {
+  auto* wp = manager_.getWaypointMutable(current_agent_, selected_point_);
+  if (!wp) return;
+
+  QObject* editor = sender();
+  if (editor == ui_.lat_editor) {
     wp->position.latitude = value;
-    map_canvas_->update();
-  }
-}
-
-void CougWaypointsPlugin::LonChanged(double value) {
-  if (selected_point_ < 0) return;
-  if (auto* wp = manager_.getWaypointMutable(current_agent_, selected_point_)) {
+  } else if (editor == ui_.lon_editor) {
     wp->position.longitude = value;
-    map_canvas_->update();
-  }
-}
-
-void CougWaypointsPlugin::DepthChanged(double value) {
-  if (selected_point_ < 0) return;
-  if (auto* wp = manager_.getWaypointMutable(current_agent_, selected_point_)) {
+  } else if (editor == ui_.depth_editor) {
     wp->position.altitude = value;
-    map_canvas_->update();
-  }
-}
-
-void CougWaypointsPlugin::SpeedChanged(double value) {
-  if (selected_point_ < 0) return;
-  if (auto* wp = manager_.getWaypointMutable(current_agent_, selected_point_)) {
+  } else if (editor == ui_.speed_editor) {
     wp->speed_rpm = value;
-    map_canvas_->update();
-  }
-}
-
-void CougWaypointsPlugin::CaptureRadiusChanged(double value) {
-  if (selected_point_ < 0) return;
-  if (auto* wp = manager_.getWaypointMutable(current_agent_, selected_point_)) {
+  } else if (editor == ui_.capture_radius_editor) {
     wp->capture_radius = value;
-    map_canvas_->update();
-  }
-}
-
-void CougWaypointsPlugin::SlipRadiusChanged(double value) {
-  if (selected_point_ < 0) return;
-  if (auto* wp = manager_.getWaypointMutable(current_agent_, selected_point_)) {
+  } else if (editor == ui_.slip_radius_editor) {
     wp->slip_radius = value;
-    map_canvas_->update();
+  } else {
+    return;
   }
+  map_canvas_->update();
 }
 
 void CougWaypointsPlugin::AltitudeModeChanged(bool checked) {
@@ -635,6 +603,9 @@ void CougWaypointsPlugin::AltitudeModeChanged(bool checked) {
 
 bool CougWaypointsPlugin::eventFilter(QObject* object, QEvent* event) {
   (void)object;
+  if (!Visible()) {
+    return false;
+  }
   switch (event->type()) {
     case QEvent::MouseButtonPress:
       return handleMousePress(dynamic_cast<QMouseEvent*>(event));
