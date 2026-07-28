@@ -3,7 +3,7 @@
 <package format="3">
   <name>coug_mapviz</name>
   <version>0.0.0</version>
-  <description>CoUGARs MapViz visualization configurations and plugins.</description>
+  <description>MapViz visualization configurations and plugins.</description>
   <maintainer email="snelsond@byu.edu">snelsondurrant</maintainer>
   <license>Apache-2.0</license>
   <url type="repository">https://github.com/cougars-auv/coug_mapviz</url>
