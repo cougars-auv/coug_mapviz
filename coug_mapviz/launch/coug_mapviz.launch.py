@@ -71,10 +71,11 @@ def launch_setup(context, *args, **kwargs) -> list:
         with open(full_template_path, "r") as f:
             config_content = f.read().replace("AUV_NS", agent_namespaces[0])
 
-    temp_config = tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".mvc")
-    temp_config.write(config_content)
-    temp_config.close()
-    mapviz_config_file = temp_config.name
+    with tempfile.NamedTemporaryFile(
+        mode="w", delete=False, suffix=".mvc"
+    ) as temp_config:
+        temp_config.write(config_content)
+        mapviz_config_file = temp_config.name
 
     return [
         Node(
