@@ -15,7 +15,7 @@
         <x>0</x>
         <y>0</y>
         <width>280</width>
-        <height>410</height>
+        <height>492</height>
       </rect>
     </property>
 
@@ -237,7 +237,7 @@
             </font>
           </property>
           <property name="text">
-            <string>Capture (m):</string>
+            <string>Capture XY (m):</string>
           </property>
         </widget>
       </item>
@@ -264,8 +264,45 @@
         </widget>
       </item>
 
-      <!-- Row 7: Slip Radius -->
+      <!-- Row 7: Capture Radius Z -->
       <item row="7" column="0">
+        <widget class="QLabel" name="label_capture_z">
+          <property name="font">
+            <font>
+              <family>Sans Serif</family>
+              <pointsize>8</pointsize>
+            </font>
+          </property>
+          <property name="text">
+            <string>Capture Z (m):</string>
+          </property>
+        </widget>
+      </item>
+      <item row="7" column="1" colspan="3">
+        <widget class="QDoubleSpinBox" name="capture_radius_z_editor">
+          <property name="enabled">
+            <bool>false</bool>
+          </property>
+          <property name="decimals">
+            <number>1</number>
+          </property>
+          <property name="minimum">
+            <double>0.1</double>
+          </property>
+          <property name="maximum">
+            <double>9999.990000000000009</double>
+          </property>
+          <property name="value">
+            <double>2.0</double>
+          </property>
+          <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::PlusMinus</enum>
+          </property>
+        </widget>
+      </item>
+
+      <!-- Row 8: Slip Radius -->
+      <item row="8" column="0">
         <widget class="QLabel" name="label_slip">
           <property name="font">
             <font>
@@ -274,11 +311,11 @@
             </font>
           </property>
           <property name="text">
-            <string>Slip (m):</string>
+            <string>Slip XY (m):</string>
           </property>
         </widget>
       </item>
-      <item row="7" column="1" colspan="3">
+      <item row="8" column="1" colspan="3">
         <widget class="QDoubleSpinBox" name="slip_radius_editor">
           <property name="enabled">
             <bool>false</bool>
@@ -301,8 +338,45 @@
         </widget>
       </item>
 
-      <!-- Row 8: Separator -->
-      <item row="8" column="1" colspan="3">
+      <!-- Row 9: Slip Radius Z -->
+      <item row="9" column="0">
+        <widget class="QLabel" name="label_slip_z">
+          <property name="font">
+            <font>
+              <family>Sans Serif</family>
+              <pointsize>8</pointsize>
+            </font>
+          </property>
+          <property name="text">
+            <string>Slip Z (m):</string>
+          </property>
+        </widget>
+      </item>
+      <item row="9" column="1" colspan="3">
+        <widget class="QDoubleSpinBox" name="slip_radius_z_editor">
+          <property name="enabled">
+            <bool>false</bool>
+          </property>
+          <property name="decimals">
+            <number>1</number>
+          </property>
+          <property name="minimum">
+            <double>0.1</double>
+          </property>
+          <property name="maximum">
+            <double>9999.990000000000009</double>
+          </property>
+          <property name="value">
+            <double>4.0</double>
+          </property>
+          <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::PlusMinus</enum>
+          </property>
+        </widget>
+      </item>
+
+      <!-- Row 10: Separator -->
+      <item row="10" column="1" colspan="3">
         <widget class="QFrame" name="separator_top">
           <property name="frameShape">
             <enum>QFrame::HLine</enum>
@@ -313,8 +387,8 @@
         </widget>
       </item>
 
-      <!-- Row 9: Publish / Clear -->
-      <item row="9" column="1" colspan="3">
+      <!-- Row 11: Publish / Clear -->
+      <item row="11" column="1" colspan="3">
         <layout class="QHBoxLayout" name="horizontalLayout_pub_clear">
           <item>
             <widget class="QPushButton" name="publish">
@@ -333,8 +407,8 @@
         </layout>
       </item>
 
-      <!-- Row 10: Load / Save -->
-      <item row="10" column="1" colspan="3">
+      <!-- Row 12: Load / Save -->
+      <item row="12" column="1" colspan="3">
         <layout class="QHBoxLayout" name="horizontalLayout_file">
           <item>
             <widget class="QPushButton" name="load">
@@ -353,8 +427,8 @@
         </layout>
       </item>
 
-      <!-- Row 11: Separator -->
-      <item row="11" column="1" colspan="3">
+      <!-- Row 13: Separator -->
+      <item row="13" column="1" colspan="3">
         <widget class="QFrame" name="separator">
           <property name="frameShape">
             <enum>QFrame::HLine</enum>
@@ -365,8 +439,8 @@
         </widget>
       </item>
 
-      <!-- Row 12: Start / Stop -->
-      <item row="12" column="1" colspan="3">
+      <!-- Row 14: Start / Stop -->
+      <item row="14" column="1" colspan="3">
         <layout class="QHBoxLayout" name="horizontalLayout_start_stop">
           <item>
             <widget class="QPushButton" name="start">
@@ -385,8 +459,8 @@
         </layout>
       </item>
 
-      <!-- Row 13: Surface / Home -->
-      <item row="13" column="1" colspan="3">
+      <!-- Row 15: Surface / Home -->
+      <item row="15" column="1" colspan="3">
         <layout class="QHBoxLayout" name="horizontalLayout_surface_home">
           <item>
             <widget class="QPushButton" name="home">
@@ -405,8 +479,8 @@
         </layout>
       </item>
 
-      <!-- Row 14: Checkbox -->
-      <item row="14" column="1" colspan="3">
+      <!-- Row 16: Checkbox -->
+      <item row="16" column="1" colspan="3">
         <widget class="QCheckBox" name="apply_all">
           <property name="font">
             <font>
@@ -423,8 +497,8 @@
         </widget>
       </item>
 
-      <!-- Row 15: Status -->
-      <item row="15" column="0">
+      <!-- Row 17: Status -->
+      <item row="17" column="0">
         <widget class="QLabel" name="label_2">
           <property name="font">
             <font>
@@ -437,7 +511,7 @@
           </property>
         </widget>
       </item>
-      <item row="15" column="1" colspan="3">
+      <item row="17" column="1" colspan="3">
         <widget class="QLabel" name="status">
           <property name="font">
             <font>

@@ -28,10 +28,6 @@
 
 namespace coug_mapviz::utils {
 
-static constexpr double kDefaultSpeedRpm = 1500.0;
-static constexpr double kDefaultCaptureRadius = 25.0;
-static constexpr double kDefaultSlipRadius = 50.0;
-
 /**
  * @class WaypointManager
  * @brief MapViz plugin helper that manages waypoint storage and file I/O.
@@ -112,10 +108,12 @@ class WaypointManager {
   /**
    * @brief Loads waypoints from a JSON file keyed by agent namespace.
    * @param filename The full path to the file.
+   * @param defaults Waypoint supplying the values for any fields the file omits.
    * @param agent Optional: only load this agent.
    * @return True if successful.
    */
-  bool loadFromFile(const std::string& filename, const std::string& agent = "");
+  bool loadFromFile(const std::string& filename, const coug_interfaces::msg::WayPoint& defaults,
+                    const std::string& agent = "");
 
  private:
   std::map<std::string, std::vector<coug_interfaces::msg::WayPoint>> waypoints_;

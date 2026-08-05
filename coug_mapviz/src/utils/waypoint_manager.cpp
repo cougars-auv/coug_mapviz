@@ -91,7 +91,9 @@ bool WaypointManager::saveToFile(const std::string& filename,
       wp_obj["mode"] = static_cast<int>(wp.mode);
       wp_obj["speed_rpm"] = wp.speed_rpm;
       wp_obj["capture_radius"] = wp.capture_radius;
+      wp_obj["capture_radius_z"] = wp.capture_radius_z;
       wp_obj["slip_radius"] = wp.slip_radius;
+      wp_obj["slip_radius_z"] = wp.slip_radius_z;
       waypoints_array.append(wp_obj);
     }
     root[QString::fromStdString(agent)] = waypoints_array;
@@ -107,7 +109,9 @@ bool WaypointManager::saveToFile(const std::string& filename,
   return false;
 }
 
-bool WaypointManager::loadFromFile(const std::string& filename, const std::string& specific_agent) {
+bool WaypointManager::loadFromFile(const std::string& filename,
+                                   const coug_interfaces::msg::WayPoint& defaults,
+                                   const std::string& specific_agent) {
   QFile file(QString::fromStdString(filename));
   if (!file.open(QIODevice::ReadOnly)) {
     return false;
@@ -136,17 +140,22 @@ bool WaypointManager::loadFromFile(const std::string& filename, const std::strin
     for (const auto& val : array) {
       QJsonObject wp_obj = val.toObject();
       if (wp_obj.contains("lat") && wp_obj.contains("lon")) {
-        coug_interfaces::msg::WayPoint wp;
+        coug_interfaces::msg::WayPoint wp = defaults;
         wp.position.longitude = wp_obj["lon"].toDouble();
         wp.position.latitude = wp_obj["lat"].toDouble();
         wp.position.altitude = wp_obj["z"].toDouble();
         wp.mode = static_cast<uint8_t>(wp_obj["mode"].toInt());
-        wp.speed_rpm =
-            wp_obj.contains("speed_rpm") ? wp_obj["speed_rpm"].toDouble() : kDefaultSpeedRpm;
-        wp.capture_radius = wp_obj.contains("capture_radius") ? wp_obj["capture_radius"].toDouble()
-                                                              : kDefaultCaptureRadius;
-        wp.slip_radius =
-            wp_obj.contains("slip_radius") ? wp_obj["slip_radius"].toDouble() : kDefaultSlipRadius;
+
+        auto load_if_present = [&wp_obj](const QString& key, double& field) {
+          if (wp_obj.contains(key)) {
+            field = wp_obj[key].toDouble();
+          }
+        };
+        load_if_present("speed_rpm", wp.speed_rpm);
+        load_if_present("capture_radius", wp.capture_radius);
+        load_if_present("capture_radius_z", wp.capture_radius_z);
+        load_if_present("slip_radius", wp.slip_radius);
+        load_if_present("slip_radius_z", wp.slip_radius_z);
         wps.push_back(wp);
       }
     }

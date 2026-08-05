@@ -257,6 +257,7 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   // --- ROS Interface ---
   utils::AgentInterface interface_;
   utils::WaypointManager manager_;
+  coug_interfaces::msg::WayPoint default_waypoint_;
   std::string current_agent_;
   std::vector<std::string> agent_namespaces_;
 
@@ -267,6 +268,11 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   qint64 mouse_down_time_;
 
   // --- Helpers ---
+  /**
+   * @brief Seeds the speed and radius editors from default_waypoint_.
+   */
+  void applyDefaultsToEditors();
+
   /**
    * @brief Clears the selection and disables the lat/lon/depth/speed editors.
    */

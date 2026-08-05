@@ -89,7 +89,11 @@ CougWaypointsPlugin::CougWaypointsPlugin()
                    SLOT(EditorChanged(double)));
   QObject::connect(ui_.capture_radius_editor, SIGNAL(valueChanged(double)), this,
                    SLOT(EditorChanged(double)));
+  QObject::connect(ui_.capture_radius_z_editor, SIGNAL(valueChanged(double)), this,
+                   SLOT(EditorChanged(double)));
   QObject::connect(ui_.slip_radius_editor, SIGNAL(valueChanged(double)), this,
+                   SLOT(EditorChanged(double)));
+  QObject::connect(ui_.slip_radius_z_editor, SIGNAL(valueChanged(double)), this,
                    SLOT(EditorChanged(double)));
   QObject::connect(ui_.altitude_mode, SIGNAL(toggled(bool)), this, SLOT(AltitudeModeChanged(bool)));
 
@@ -131,6 +135,17 @@ bool CougWaypointsPlugin::Initialize(QGLWidget* canvas) {
     ui_.agent_selector->addItem(QString::fromStdString(ns));
   }
 
+  default_waypoint_.speed_rpm = getOrDeclare("default_speed_rpm", ui_.speed_editor->value());
+  default_waypoint_.capture_radius =
+      getOrDeclare("default_capture_radius", ui_.capture_radius_editor->value());
+  default_waypoint_.capture_radius_z =
+      getOrDeclare("default_capture_radius_z", ui_.capture_radius_z_editor->value());
+  default_waypoint_.slip_radius =
+      getOrDeclare("default_slip_radius", ui_.slip_radius_editor->value());
+  default_waypoint_.slip_radius_z =
+      getOrDeclare("default_slip_radius_z", ui_.slip_radius_z_editor->value());
+  applyDefaultsToEditors();
+
   interface_.initialize(node_, tf_manager_, agent_namespaces_, waypoint_topic, waypoint_map_topic,
                         services, [this](AgentInterface::Status level, const std::string& msg) {
                           Q_EMIT StatusUpdateRequested(static_cast<int>(level),
@@ -155,6 +170,20 @@ void CougWaypointsPlugin::HandleStatusUpdate(int level, const QString& msg) {
   }
 }
 
+void CougWaypointsPlugin::applyDefaultsToEditors() {
+  auto set_value = [](QDoubleSpinBox* editor, double value) {
+    editor->blockSignals(true);
+    editor->setValue(value);
+    editor->blockSignals(false);
+  };
+
+  set_value(ui_.speed_editor, default_waypoint_.speed_rpm);
+  set_value(ui_.capture_radius_editor, default_waypoint_.capture_radius);
+  set_value(ui_.capture_radius_z_editor, default_waypoint_.capture_radius_z);
+  set_value(ui_.slip_radius_editor, default_waypoint_.slip_radius);
+  set_value(ui_.slip_radius_z_editor, default_waypoint_.slip_radius_z);
+}
+
 void CougWaypointsPlugin::deselectWaypoint() {
   selected_point_ = -1;
   ui_.lat_editor->setEnabled(false);
@@ -162,7 +191,9 @@ void CougWaypointsPlugin::deselectWaypoint() {
   ui_.depth_editor->setEnabled(false);
   ui_.speed_editor->setEnabled(false);
   ui_.capture_radius_editor->setEnabled(false);
+  ui_.capture_radius_z_editor->setEnabled(false);
   ui_.slip_radius_editor->setEnabled(false);
+  ui_.slip_radius_z_editor->setEnabled(false);
   ui_.altitude_mode->blockSignals(true);
   ui_.altitude_mode->setChecked(false);
   ui_.altitude_mode->setEnabled(false);
@@ -199,7 +230,9 @@ void CougWaypointsPlugin::populateEditors(const coug_interfaces::msg::WayPoint& 
   set_value(ui_.depth_editor, wp.position.altitude);
   set_value(ui_.speed_editor, wp.speed_rpm);
   set_value(ui_.capture_radius_editor, wp.capture_radius);
+  set_value(ui_.capture_radius_z_editor, wp.capture_radius_z);
   set_value(ui_.slip_radius_editor, wp.slip_radius);
+  set_value(ui_.slip_radius_z_editor, wp.slip_radius_z);
 }
 
 void CougWaypointsPlugin::AgentChanged(const QString& text) {
@@ -333,7 +366,7 @@ void CougWaypointsPlugin::LoadWaypoints() {
     agent_to_load = current_agent_;
   }
 
-  if (manager_.loadFromFile(filename.toStdString(), agent_to_load)) {
+  if (manager_.loadFromFile(filename.toStdString(), default_waypoint_, agent_to_load)) {
     std::vector<std::string> unknown_agents;
     for (const auto& [agent, wps] : manager_.getAllWaypoints()) {
       (void)wps;
@@ -570,8 +603,12 @@ void CougWaypointsPlugin::EditorChanged(double value) {
     wp->speed_rpm = value;
   } else if (editor == ui_.capture_radius_editor) {
     wp->capture_radius = value;
+  } else if (editor == ui_.capture_radius_z_editor) {
+    wp->capture_radius_z = value;
   } else if (editor == ui_.slip_radius_editor) {
     wp->slip_radius = value;
+  } else if (editor == ui_.slip_radius_z_editor) {
+    wp->slip_radius_z = value;
   } else {
     return;
   }
@@ -700,7 +737,9 @@ bool CougWaypointsPlugin::handleMouseRelease(QMouseEvent* event) {
                                                : coug_interfaces::msg::WayPoint::DEPTH;
       wp.speed_rpm = ui_.speed_editor->value();
       wp.capture_radius = ui_.capture_radius_editor->value();
+      wp.capture_radius_z = ui_.capture_radius_z_editor->value();
       wp.slip_radius = ui_.slip_radius_editor->value();
+      wp.slip_radius_z = ui_.slip_radius_z_editor->value();
 
       manager_.addWaypoint(current_agent_, wp);
     }
