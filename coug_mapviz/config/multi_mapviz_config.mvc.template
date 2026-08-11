@@ -61,7 +61,7 @@ displays:
     config:
       visible: true
       collapsed: true
-      topic: /AUV_NS/base/odometry/global_est
+      topic: /AUV_NS/base/odometry/global_nbr
       color: "#ffaa00"
       draw_style: lines
       position_tolerance: 0
