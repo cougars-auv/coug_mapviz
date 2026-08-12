@@ -3,6 +3,7 @@ project(coug_mapviz)
 
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -11,54 +12,29 @@ endif()
 
 # --- Dependencies ---
 find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
 
-find_package(coug_interfaces REQUIRED)
-find_package(geographic_msgs REQUIRED)
-find_package(geometry_msgs REQUIRED)
-find_package(mapviz REQUIRED)
-find_package(pluginlib REQUIRED)
-find_package(rclcpp REQUIRED)
-find_package(std_srvs REQUIRED)
-find_package(swri_transform_util REQUIRED)
-find_package(tf2 REQUIRED)
 find_package(Qt5 REQUIRED COMPONENTS Core Gui OpenGL Widgets)
 find_package(OpenGL REQUIRED)
 
 # --- Qt Setup ---
-add_definitions(-DWFlags=WindowFlags)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTOUIC_SEARCH_PATHS "${CMAKE_CURRENT_SOURCE_DIR}/ui")
 
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
-set(UI_FILES ui/coug_waypoints_config.ui)
-set(SRC_FILES src/coug_waypoints_plugin.cpp src/utils/waypoint_manager.cpp src/utils/agent_interface.cpp)
-set(HEADER_FILES include/${PROJECT_NAME}/coug_waypoints_plugin.hpp)
-
-qt5_wrap_ui(UI_SRC_FILES ${UI_FILES})
-qt5_wrap_cpp(MOC_FILES ${HEADER_FILES})
-
-# --- Component Library ---
-ament_auto_add_library(${PROJECT_NAME} SHARED
-  ${MOC_FILES}
-  ${SRC_FILES}
-  ${UI_SRC_FILES}
+# --- Plugin Library ---
+ament_auto_add_library(${PROJECT_NAME} SHARED NO_TARGET_LINK_LIBRARIES
+  include/${PROJECT_NAME}/coug_waypoints_plugin.hpp
+  src/coug_waypoints_plugin.cpp
+  src/utils/agent_interface.cpp
+  src/utils/waypoint_manager.cpp
 )
 
-target_include_directories(${PROJECT_NAME} PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include/${PACKAGE_NAME}>)
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC
-  "PLUGINLIB__DISABLE_BOOST_FUNCTIONS")
-
-ament_target_dependencies(${PROJECT_NAME}
-  coug_interfaces
-  geographic_msgs
-  geometry_msgs
-  mapviz
-  pluginlib
-  rclcpp
-  std_srvs
-  swri_transform_util
-  tf2
+  "PLUGINLIB__DISABLE_BOOST_FUNCTIONS"
+  "WFlags=WindowFlags"
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -72,20 +48,7 @@ target_link_libraries(${PROJECT_NAME}
 # --- Export ---
 pluginlib_export_plugin_description_file(mapviz mapviz_plugins.xml)
 
-ament_export_dependencies(
-  coug_interfaces
-  geographic_msgs
-  geometry_msgs
-  mapviz
-  Qt5
-  rclcpp
-  swri_transform_util
-  tf2
-)
-
-# --- Testing ---
-if(BUILD_TESTING)
-endif()
+ament_export_dependencies(Qt5)
 
 ament_auto_package(
   INSTALL_TO_SHARE

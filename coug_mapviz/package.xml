@@ -11,7 +11,9 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
+  <exec_depend>mapviz_plugins</exec_depend>
   <exec_depend>python3-yaml</exec_depend>
+  <exec_depend>tile_map</exec_depend>
 
   <depend>coug_interfaces</depend>
   <depend>geographic_msgs</depend>
@@ -22,14 +24,11 @@
   <depend>libqt5-opengl-dev</depend>
   <depend>libqt5-widgets</depend>
   <depend>mapviz</depend>
-  <depend>mapviz_plugins</depend>
   <depend>pluginlib</depend>
   <depend>rclcpp</depend>
   <depend>std_srvs</depend>
   <depend>swri_transform_util</depend>
   <depend>tf2</depend>
-  <depend>tile_map</depend>
-  <depend>yaml-cpp</depend>
 
   <test_depend>ament_cmake_gtest</test_depend>
 
