@@ -60,7 +60,7 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   bool Initialize(QGLWidget* canvas) override;
 
   /**
-   * @brief Shuts down the plugin and releases resources.
+   * @brief Shuts down the plugin (unused).
    */
   void Shutdown() override {}
 
@@ -274,18 +274,18 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   void applyDefaultsToEditors();
 
   /**
-   * @brief Clears the selection and disables the lat/lon/depth/speed editors.
+   * @brief Clears the selection and disables the waypoint editors.
    */
   void deselectWaypoint();
 
   /**
-   * @brief Enables and populates the lat/lon/depth/speed editors from a waypoint.
+   * @brief Enables and populates the waypoint editors from a waypoint.
    * @param wp The waypoint whose values should fill the editors.
    */
   void populateEditors(const coug_interfaces::msg::WayPoint& wp);
 
   /**
-   * @brief Publishes waypoints for all agents currently in the manager.
+   * @brief Publishes waypoints for every configured agent namespace.
    */
   void publishAll();
 
@@ -329,10 +329,10 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   bool glToWgs84(const QPointF& gl_point, geographic_msgs::msg::GeoPoint& geo);
 
   /**
-   * @brief Returns the index of the waypoint within 15px of point, or -1 if none.
+   * @brief Returns the index of the waypoint closest to point; callers apply the hit radius.
    * @param point The screen-space position to test.
    * @param distance Output: distance in pixels to the closest waypoint.
-   * @return Index of the closest waypoint, or -1.
+   * @return Index of the closest waypoint, or -1 if there are none or the transform is missing.
    */
   int getClosestPoint(const QPointF& point, double& distance);
 

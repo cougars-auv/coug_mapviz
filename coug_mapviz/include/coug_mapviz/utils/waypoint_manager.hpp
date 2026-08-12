@@ -108,9 +108,9 @@ class WaypointManager {
   /**
    * @brief Loads waypoints from a JSON file keyed by agent namespace.
    * @param filename The full path to the file.
-   * @param defaults Waypoint supplying the values for any fields the file omits.
+   * @param defaults Waypoint supplying the speed and radius values the file omits.
    * @param agent Optional: only load this agent.
-   * @return True if successful.
+   * @return True if at least one agent was loaded.
    */
   bool loadFromFile(const std::string& filename, const coug_interfaces::msg::WayPoint& defaults,
                     const std::string& agent = "");
