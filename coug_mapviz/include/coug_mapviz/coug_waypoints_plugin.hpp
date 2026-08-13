@@ -152,21 +152,21 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   /**
    * @brief Handles mouse press events for adding/selecting waypoints.
    * @param event The mouse event.
-   * @return True if handled.
+   * @return True if the event was handled.
    */
   bool handleMousePress(QMouseEvent* event);
 
   /**
    * @brief Handles mouse release events for placing/modifying waypoints.
    * @param event The mouse event.
-   * @return True if handled.
+   * @return True if the event was handled.
    */
   bool handleMouseRelease(QMouseEvent* event);
 
   /**
    * @brief Handles mouse move events for dragging waypoints.
    * @param event The mouse event.
-   * @return True if handled.
+   * @return True if the event was handled.
    */
   bool handleMouseMove(QMouseEvent* event);
 
@@ -182,8 +182,8 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
  public Q_SLOTS:
   /**
    * @brief Slot to handle status updates safely on the GUI thread.
-   * @param level The severity level of the status message.
-   * @param msg The message string to display.
+   * @param level The severity level of the status message (from AgentInterface::Status).
+   * @param msg The message string to display in the UI.
    */
   void HandleStatusUpdate(int level, const QString& msg);
 

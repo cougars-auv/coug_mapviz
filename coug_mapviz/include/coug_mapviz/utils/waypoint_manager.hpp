@@ -101,7 +101,7 @@ class WaypointManager {
    * @brief Saves waypoints to a JSON file keyed by agent namespace.
    * @param filename The full path to the file.
    * @param agent Optional: only save this agent.
-   * @return True if successful.
+   * @return True if the file was opened and written.
    */
   bool saveToFile(const std::string& filename, const std::string& agent = "") const;
 
