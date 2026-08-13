@@ -45,6 +45,7 @@ static constexpr double kHitRadiusPx = 15.0;
 static constexpr double kClickMaxDistPx = 5.0;
 static constexpr qint64 kClickMaxDurationMs = 500;
 static constexpr int kCircleSegments = 48;
+static constexpr double kDepthEditorLimit = 9999.99;
 
 CougWaypointsPlugin::CougWaypointsPlugin()
     : MapvizPlugin(),
@@ -198,7 +199,7 @@ void CougWaypointsPlugin::deselectWaypoint() {
   ui_.altitude_mode->setChecked(false);
   ui_.altitude_mode->setEnabled(false);
   ui_.altitude_mode->blockSignals(false);
-  ui_.depth_editor->setMinimum(-9999.99);
+  ui_.depth_editor->setMinimum(-kDepthEditorLimit);
   ui_.depth_editor->setMaximum(0.0);
 }
 
@@ -222,9 +223,9 @@ void CougWaypointsPlugin::populateEditors(const coug_interfaces::msg::WayPoint& 
 
   if (is_altitude) {
     ui_.depth_editor->setMinimum(0.0);
-    ui_.depth_editor->setMaximum(9999.99);
+    ui_.depth_editor->setMaximum(kDepthEditorLimit);
   } else {
-    ui_.depth_editor->setMinimum(-9999.99);
+    ui_.depth_editor->setMinimum(-kDepthEditorLimit);
     ui_.depth_editor->setMaximum(0.0);
   }
   set_value(ui_.depth_editor, wp.position.altitude);
@@ -622,9 +623,9 @@ void CougWaypointsPlugin::AltitudeModeChanged(bool checked) {
 
   if (checked) {
     ui_.depth_editor->setMinimum(0.0);
-    ui_.depth_editor->setMaximum(9999.99);
+    ui_.depth_editor->setMaximum(kDepthEditorLimit);
   } else {
-    ui_.depth_editor->setMinimum(-9999.99);
+    ui_.depth_editor->setMinimum(-kDepthEditorLimit);
     ui_.depth_editor->setMaximum(0.0);
   }
   wp->mode =
