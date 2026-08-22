@@ -12,13 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/**
- * @file waypoint_manager.cpp
- * @brief Implementation of the WaypointManager.
- * @author Nelson Durrant
- * @date May 2026
- */
-
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonDocument>

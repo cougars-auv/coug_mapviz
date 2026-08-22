@@ -12,13 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/**
- * @file coug_waypoints_plugin.cpp
- * @brief Implementation of the CougWaypointsPlugin.
- * @author Nelson Durrant
- * @date May 2026
- */
-
 #include <swri_transform_util/frames.h>
 
 #include <QDateTime>
