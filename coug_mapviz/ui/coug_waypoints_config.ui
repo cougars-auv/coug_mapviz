@@ -1,13 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
-
-  <!--
-  @file coug_waypoints_config.ui
-  @brief UI for the CougWaypointsPlugin.
-  @author Nelson Durrant
-  @date May 2026
-  -->
-
   <class>coug_waypoints_config</class>
   <widget class="QWidget" name="coug_waypoints_config">
     <property name="geometry">
