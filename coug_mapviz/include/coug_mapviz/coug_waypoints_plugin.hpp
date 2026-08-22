@@ -121,7 +121,7 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   QWidget* config_widget_;
   mapviz::MapCanvas* map_canvas_;
 
-  // --- ROS Interface ---
+  // --- ROS Interfaces ---
   utils::AgentInterface interface_;
   utils::WaypointManager manager_;
   coug_interfaces::msg::WayPoint default_waypoint_;
