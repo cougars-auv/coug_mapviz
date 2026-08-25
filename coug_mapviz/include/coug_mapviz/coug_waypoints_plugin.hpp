@@ -25,9 +25,10 @@
 #include <QPainter>
 #include <QWidget>
 #include <coug_mapviz/utils/agent_interface.hpp>
-#include <coug_mapviz/utils/waypoint_manager.hpp>
+#include <coug_mapviz/utils/waypoint_store.hpp>
 #include <memory>
 #include <rclcpp/rclcpp.hpp>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -123,45 +124,56 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
 
   // --- ROS Interfaces ---
   utils::AgentInterface interface_;
-  utils::WaypointManager manager_;
+  utils::WaypointStore store_;
   coug_interfaces::msg::WayPoint default_waypoint_;
   std::string current_agent_;
   std::vector<std::string> agent_namespaces_;
+  std::set<std::string> known_agents_;
 
   // --- Interaction State ---
-  int selected_point_;
-  int dragged_point_;
+  int selected_idx_;
+  int dragged_idx_;
   QPointF mouse_down_pos_;
   qint64 mouse_down_time_;
 
-  // --- Helpers ---
-  void applyDefaultsToEditors();
+  // --- Agent Selection ---
+  bool isAgentKnown(const std::string& agent) const;
 
-  void deselectWaypoint();
+  bool resolveSelectedAgent(std::string& agent);
+
+  int affectedAgentCount(const std::string& agent) const;
+
+  // --- Editor Binding ---
+  void applyDefaultsToEditors();
 
   void populateEditors(const coug_interfaces::msg::WayPoint& waypoint);
 
+  void deselectWaypoint();
+
+  // --- Agent Actions ---
   void publishAll();
 
   void callService(const std::string& cmd);
 
-  bool isAgentKnown(const std::string& agent);
+  static QString missionDirectory();
 
-  static QPointF wgs84ToMap(const coug_interfaces::msg::WayPoint& waypoint,
-                            const swri_transform_util::Transform& transform);
+  // --- Coordinate Conversion ---
+  static QPointF wgs84ToFixedPoint(const coug_interfaces::msg::WayPoint& waypoint,
+                                   const swri_transform_util::Transform& fixed_T_wgs84);
 
   QPointF wgs84ToGl(const coug_interfaces::msg::WayPoint& waypoint,
-                    const swri_transform_util::Transform& transform);
+                    const swri_transform_util::Transform& fixed_T_wgs84);
 
   bool glToWgs84(const QPointF& gl_point, geographic_msgs::msg::GeoPoint& geo_point);
 
-  int getClosestPoint(const QPointF& point, double& distance);
+  int findClosestWaypoint(const QPointF& point, double& distance);
 
+  // --- Rendering ---
   static void drawPath(const std::vector<coug_interfaces::msg::WayPoint>& waypoints,
-                       const swri_transform_util::Transform& transform);
+                       const swri_transform_util::Transform& fixed_T_wgs84);
 
   static void drawWaypointCircles(const std::vector<coug_interfaces::msg::WayPoint>& waypoints,
-                                  const swri_transform_util::Transform& transform);
+                                  const swri_transform_util::Transform& fixed_T_wgs84);
 
   static void drawFilledCircle(double center_x, double center_y, double radius, float red,
                                float green, float blue, float alpha);
@@ -170,10 +182,10 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
                                 float green, float blue, float alpha);
 
   void paintLabels(QPainter* painter, const std::vector<coug_interfaces::msg::WayPoint>& waypoints,
-                   const swri_transform_util::Transform& transform, const QColor& color);
+                   const swri_transform_util::Transform& fixed_T_wgs84, const QColor& color);
 
   void paintPath(QPainter* painter, const std::vector<coug_interfaces::msg::WayPoint>& waypoints,
-                 const QColor& color, const swri_transform_util::Transform& transform,
+                 const QColor& color, const swri_transform_util::Transform& fixed_T_wgs84,
                  int selected_idx = -1);
 };
 

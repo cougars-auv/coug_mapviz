@@ -16,6 +16,7 @@
 #include <swri_transform_util/transform.h>
 
 #include <coug_mapviz/utils/agent_interface.hpp>
+#include <coug_mapviz/utils/geo_conversions.hpp>
 #include <string>
 #include <utility>
 
@@ -27,20 +28,18 @@ void AgentInterface::initialize(const std::shared_ptr<rclcpp::Node>& node,
                                 const std::string& waypoint_topic,
                                 const std::string& waypoint_map_topic,
                                 const std::map<std::string, std::string>& services,
-                                StatusCallback status_cb) {
+                                StatusCallback status_callback) {
   node_ = node;
   tf_manager_ = tf_manager;
-  status_ = std::move(status_cb);
+  status_ = std::move(status_callback);
   waypoint_topic_ = waypoint_topic;
   waypoint_map_topic_ = waypoint_map_topic;
 
   for (const auto& agent_ns : agent_namespaces) {
-    publishers_[agent_ns + "/" + waypoint_topic_] =
-        node_->create_publisher<coug_interfaces::msg::WayPointList>(
-            agent_ns + "/" + waypoint_topic_, rclcpp::SystemDefaultsQoS());
-    map_publishers_[agent_ns + "/" + waypoint_map_topic_] =
-        node_->create_publisher<geometry_msgs::msg::PoseArray>(agent_ns + "/" + waypoint_map_topic_,
-                                                               rclcpp::SystemDefaultsQoS());
+    publishers_[agent_ns] = node_->create_publisher<coug_interfaces::msg::WayPointList>(
+        agent_ns + "/" + waypoint_topic_, rclcpp::SystemDefaultsQoS());
+    map_publishers_[agent_ns] = node_->create_publisher<geometry_msgs::msg::PoseArray>(
+        agent_ns + "/" + waypoint_map_topic_, rclcpp::SystemDefaultsQoS());
     for (const auto& [cmd, service] : services) {
       clients_[agent_ns][cmd] =
           node_->create_client<std_srvs::srv::Trigger>(agent_ns + "/" + service);
@@ -51,23 +50,27 @@ void AgentInterface::initialize(const std::shared_ptr<rclcpp::Node>& node,
 void AgentInterface::publishWaypoints(const std::string& agent,
                                       const std::vector<coug_interfaces::msg::WayPoint>& waypoints,
                                       const std::string& target_frame) {
-  std::string topic = agent + "/" + waypoint_topic_;
+  auto publisher_it = publishers_.find(agent);
+  auto map_publisher_it = map_publishers_.find(agent);
+  if (publisher_it == publishers_.end() || map_publisher_it == map_publishers_.end()) {
+    status_(Status::kError, "Publisher not registered: " + agent);
+    return;
+  }
+
   coug_interfaces::msg::WayPointList waypoint_list;
   waypoint_list.header.frame_id = swri_transform_util::_wgs84_frame;
   waypoint_list.header.stamp = node_->now();
   waypoint_list.waypoints = waypoints;
 
-  publishers_[topic]->publish(waypoint_list);
+  publisher_it->second->publish(waypoint_list);
 
-  std::string map_topic = agent + "/" + waypoint_map_topic_;
-  swri_transform_util::Transform transform;
-  if (tf_manager_->GetTransform(target_frame, swri_transform_util::_wgs84_frame, transform)) {
+  swri_transform_util::Transform fixed_T_wgs84;
+  if (tf_manager_->GetTransform(target_frame, swri_transform_util::_wgs84_frame, fixed_T_wgs84)) {
     geometry_msgs::msg::PoseArray pose_array;
     pose_array.header.frame_id = target_frame;
     pose_array.header.stamp = node_->now();
     for (const auto& waypoint : waypoints) {
-      tf2::Vector3 point(waypoint.position.longitude, waypoint.position.latitude, 0.0);
-      point = transform * point;
+      const tf2::Vector3 point = wgs84ToFixed(waypoint, fixed_T_wgs84);
       geometry_msgs::msg::Pose pose;
       pose.position.x = point.x();
       pose.position.y = point.y();
@@ -75,7 +78,7 @@ void AgentInterface::publishWaypoints(const std::string& agent,
       pose.orientation.w = 1.0;
       pose_array.poses.push_back(pose);
     }
-    map_publishers_[map_topic]->publish(pose_array);
+    map_publisher_it->second->publish(pose_array);
   }
 }
 

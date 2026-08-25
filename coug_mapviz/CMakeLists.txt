@@ -27,7 +27,6 @@ ament_auto_add_library(${PROJECT_NAME} SHARED NO_TARGET_LINK_LIBRARIES
   include/${PROJECT_NAME}/coug_waypoints_plugin.hpp
   src/coug_waypoints_plugin.cpp
   src/utils/agent_interface.cpp
-  src/utils/waypoint_manager.cpp
 )
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)

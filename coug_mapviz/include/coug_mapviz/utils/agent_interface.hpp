@@ -17,7 +17,7 @@
 #include <swri_transform_util/transform_manager.h>
 
 #include <coug_interfaces/msg/way_point_list.hpp>
-#include <coug_mapviz/utils/waypoint_manager.hpp>
+#include <coug_mapviz/utils/waypoint_store.hpp>
 #include <functional>
 #include <geometry_msgs/msg/pose_array.hpp>
 #include <map>
@@ -42,7 +42,8 @@ class AgentInterface {
                   const swri_transform_util::TransformManagerPtr& tf_manager,
                   const std::vector<std::string>& agent_namespaces,
                   const std::string& waypoint_topic, const std::string& waypoint_map_topic,
-                  const std::map<std::string, std::string>& services, StatusCallback status_cb);
+                  const std::map<std::string, std::string>& services,
+                  StatusCallback status_callback);
 
   void publishWaypoints(const std::string& agent,
                         const std::vector<coug_interfaces::msg::WayPoint>& waypoints,

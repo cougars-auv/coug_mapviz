@@ -12,71 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#pragma once
+
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QString>
-#include <coug_mapviz/utils/waypoint_manager.hpp>
+#include <coug_interfaces/msg/way_point.hpp>
+#include <coug_mapviz/utils/waypoint_store.hpp>
+#include <string>
+#include <vector>
 
 namespace coug_mapviz::utils {
 
-void WaypointManager::addWaypoint(const std::string& agent,
-                                  const coug_interfaces::msg::WayPoint& waypoint) {
-  waypoints_[agent].push_back(waypoint);
-}
+inline bool saveMission(const std::string& filename, const WaypointMap& waypoints,
+                        const std::string& specific_agent = "") {
+  QJsonObject root_obj;
 
-void WaypointManager::setWaypoints(const std::string& agent,
-                                   const std::vector<coug_interfaces::msg::WayPoint>& waypoints) {
-  waypoints_[agent] = waypoints;
-}
-
-std::vector<coug_interfaces::msg::WayPoint> WaypointManager::getWaypoints(
-    const std::string& agent) const {
-  if (waypoints_.find(agent) != waypoints_.end()) {
-    return waypoints_.at(agent);
-  }
-  return {};
-}
-
-coug_interfaces::msg::WayPoint* WaypointManager::getWaypointMutable(const std::string& agent,
-                                                                    size_t waypoint_idx) {
-  auto it = waypoints_.find(agent);
-  if (it == waypoints_.end() || waypoint_idx >= it->second.size()) {
-    return nullptr;
-  }
-  return &it->second[waypoint_idx];
-}
-
-void WaypointManager::removeWaypoint(const std::string& agent, size_t waypoint_idx) {
-  auto it = waypoints_.find(agent);
-  if (it != waypoints_.end() && waypoint_idx < it->second.size()) {
-    it->second.erase(it->second.begin() + waypoint_idx);
-  }
-}
-
-const std::map<std::string, std::vector<coug_interfaces::msg::WayPoint>>&
-WaypointManager::getAllWaypoints() const {
-  return waypoints_;
-}
-
-void WaypointManager::clearWaypoints(const std::string& agent) { waypoints_[agent].clear(); }
-
-void WaypointManager::clearAllWaypoints() { waypoints_.clear(); }
-
-void WaypointManager::removeAgent(const std::string& agent) { waypoints_.erase(agent); }
-
-bool WaypointManager::saveToFile(const std::string& filename,
-                                 const std::string& specific_agent) const {
-  QJsonObject root;
-
-  for (const auto& [agent, waypoints] : waypoints_) {
+  for (const auto& [agent, agent_waypoints] : waypoints) {
     if (!specific_agent.empty() && agent != specific_agent) {
       continue;
     }
 
     QJsonArray waypoints_array;
-    for (const auto& waypoint : waypoints) {
+    for (const auto& waypoint : agent_waypoints) {
       QJsonObject waypoint_obj;
       waypoint_obj["lon"] = waypoint.position.longitude;
       waypoint_obj["lat"] = waypoint.position.latitude;
@@ -89,10 +49,10 @@ bool WaypointManager::saveToFile(const std::string& filename,
       waypoint_obj["slip_radius_z"] = waypoint.slip_radius_z;
       waypoints_array.append(waypoint_obj);
     }
-    root[QString::fromStdString(agent)] = waypoints_array;
+    root_obj[QString::fromStdString(agent)] = waypoints_array;
   }
 
-  QJsonDocument json_doc(root);
+  QJsonDocument json_doc(root_obj);
   QFile file(QString::fromStdString(filename));
   if (file.open(QIODevice::WriteOnly)) {
     file.write(json_doc.toJson());
@@ -102,9 +62,8 @@ bool WaypointManager::saveToFile(const std::string& filename,
   return false;
 }
 
-bool WaypointManager::loadFromFile(const std::string& filename,
-                                   const coug_interfaces::msg::WayPoint& defaults,
-                                   const std::string& specific_agent) {
+inline bool loadMission(const std::string& filename, const coug_interfaces::msg::WayPoint& defaults,
+                        WaypointMap& waypoints, const std::string& specific_agent = "") {
   QFile file(QString::fromStdString(filename));
   if (!file.open(QIODevice::ReadOnly)) {
     return false;
@@ -127,7 +86,7 @@ bool WaypointManager::loadFromFile(const std::string& filename,
       continue;
     }
 
-    std::vector<coug_interfaces::msg::WayPoint> waypoints;
+    std::vector<coug_interfaces::msg::WayPoint> agent_waypoints;
     QJsonArray array = root_obj[agent_key].toArray();
 
     for (const auto& array_value : array) {
@@ -149,10 +108,10 @@ bool WaypointManager::loadFromFile(const std::string& filename,
         loadIfPresent("capture_radius_z", waypoint.capture_radius_z);
         loadIfPresent("slip_radius", waypoint.slip_radius);
         loadIfPresent("slip_radius_z", waypoint.slip_radius_z);
-        waypoints.push_back(waypoint);
+        agent_waypoints.push_back(waypoint);
       }
     }
-    waypoints_[agent] = waypoints;
+    waypoints[agent] = agent_waypoints;
     loaded_count++;
   }
 
