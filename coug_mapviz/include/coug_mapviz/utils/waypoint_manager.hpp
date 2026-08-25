@@ -26,16 +26,16 @@ class WaypointManager {
   WaypointManager() = default;
   ~WaypointManager() = default;
 
-  void addWaypoint(const std::string& agent, const coug_interfaces::msg::WayPoint& wp);
+  void addWaypoint(const std::string& agent, const coug_interfaces::msg::WayPoint& waypoint);
 
   void setWaypoints(const std::string& agent,
                     const std::vector<coug_interfaces::msg::WayPoint>& waypoints);
 
   std::vector<coug_interfaces::msg::WayPoint> getWaypoints(const std::string& agent) const;
 
-  coug_interfaces::msg::WayPoint* getWaypointMutable(const std::string& agent, size_t index);
+  coug_interfaces::msg::WayPoint* getWaypointMutable(const std::string& agent, size_t waypoint_idx);
 
-  void removeWaypoint(const std::string& agent, size_t index);
+  void removeWaypoint(const std::string& agent, size_t waypoint_idx);
 
   const std::map<std::string, std::vector<coug_interfaces::msg::WayPoint>>& getAllWaypoints() const;
 

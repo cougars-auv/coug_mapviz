@@ -85,10 +85,10 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
 
   // --- Thread-Safe Status Updates ---
  Q_SIGNALS:
-  void StatusUpdateRequested(int level, const QString& msg);
+  void StatusUpdateRequested(int level, const QString& message);
 
  public Q_SLOTS:
-  void HandleStatusUpdate(int level, const QString& msg);
+  void HandleStatusUpdate(int level, const QString& message);
 
  protected Q_SLOTS:
   // --- UI Slots ---
@@ -139,7 +139,7 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
 
   void deselectWaypoint();
 
-  void populateEditors(const coug_interfaces::msg::WayPoint& wp);
+  void populateEditors(const coug_interfaces::msg::WayPoint& waypoint);
 
   void publishAll();
 
@@ -147,34 +147,34 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
 
   bool isAgentKnown(const std::string& agent);
 
-  static QPointF wgs84ToMap(const coug_interfaces::msg::WayPoint& wp,
+  static QPointF wgs84ToMap(const coug_interfaces::msg::WayPoint& waypoint,
                             const swri_transform_util::Transform& transform);
 
-  QPointF wgs84ToGl(const coug_interfaces::msg::WayPoint& wp,
+  QPointF wgs84ToGl(const coug_interfaces::msg::WayPoint& waypoint,
                     const swri_transform_util::Transform& transform);
 
-  bool glToWgs84(const QPointF& gl_point, geographic_msgs::msg::GeoPoint& geo);
+  bool glToWgs84(const QPointF& gl_point, geographic_msgs::msg::GeoPoint& geo_point);
 
   int getClosestPoint(const QPointF& point, double& distance);
 
-  static void drawPath(const std::vector<coug_interfaces::msg::WayPoint>& wps,
+  static void drawPath(const std::vector<coug_interfaces::msg::WayPoint>& waypoints,
                        const swri_transform_util::Transform& transform);
 
-  static void drawWaypointCircles(const std::vector<coug_interfaces::msg::WayPoint>& wps,
+  static void drawWaypointCircles(const std::vector<coug_interfaces::msg::WayPoint>& waypoints,
                                   const swri_transform_util::Transform& transform);
 
-  static void drawFilledCircle(double cx, double cy, double radius, float r, float g, float b,
-                               float a);
+  static void drawFilledCircle(double center_x, double center_y, double radius, float red,
+                               float green, float blue, float alpha);
 
-  static void drawCircleOutline(double cx, double cy, double radius, float r, float g, float b,
-                                float a);
+  static void drawCircleOutline(double center_x, double center_y, double radius, float red,
+                                float green, float blue, float alpha);
 
-  void paintLabels(QPainter* painter, const std::vector<coug_interfaces::msg::WayPoint>& wps,
+  void paintLabels(QPainter* painter, const std::vector<coug_interfaces::msg::WayPoint>& waypoints,
                    const swri_transform_util::Transform& transform, const QColor& color);
 
-  void paintPath(QPainter* painter, const std::vector<coug_interfaces::msg::WayPoint>& wps,
+  void paintPath(QPainter* painter, const std::vector<coug_interfaces::msg::WayPoint>& waypoints,
                  const QColor& color, const swri_transform_util::Transform& transform,
-                 int selected_index = -1);
+                 int selected_idx = -1);
 };
 
 }  // namespace coug_mapviz

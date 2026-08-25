@@ -45,7 +45,7 @@ class AgentInterface {
                   const std::map<std::string, std::string>& services, StatusCallback status_cb);
 
   void publishWaypoints(const std::string& agent,
-                        const std::vector<coug_interfaces::msg::WayPoint>& wps,
+                        const std::vector<coug_interfaces::msg::WayPoint>& waypoints,
                         const std::string& target_frame);
 
   void callService(const std::string& cmd, const std::vector<std::string>& agents, bool aggregate);
@@ -60,7 +60,7 @@ class AgentInterface {
     std::mutex mutex;
   };
 
-  void callAgentService(const std::string& ns, const std::string& cmd,
+  void callAgentService(const std::string& agent_ns, const std::string& cmd,
                         std::shared_ptr<CallState> state = nullptr);
 
   void recordResult(std::shared_ptr<CallState> state, bool success, const std::string& agent);

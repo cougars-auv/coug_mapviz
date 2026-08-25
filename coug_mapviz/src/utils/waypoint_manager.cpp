@@ -22,8 +22,8 @@
 namespace coug_mapviz::utils {
 
 void WaypointManager::addWaypoint(const std::string& agent,
-                                  const coug_interfaces::msg::WayPoint& wp) {
-  waypoints_[agent].push_back(wp);
+                                  const coug_interfaces::msg::WayPoint& waypoint) {
+  waypoints_[agent].push_back(waypoint);
 }
 
 void WaypointManager::setWaypoints(const std::string& agent,
@@ -40,18 +40,18 @@ std::vector<coug_interfaces::msg::WayPoint> WaypointManager::getWaypoints(
 }
 
 coug_interfaces::msg::WayPoint* WaypointManager::getWaypointMutable(const std::string& agent,
-                                                                    size_t index) {
+                                                                    size_t waypoint_idx) {
   auto it = waypoints_.find(agent);
-  if (it == waypoints_.end() || index >= it->second.size()) {
+  if (it == waypoints_.end() || waypoint_idx >= it->second.size()) {
     return nullptr;
   }
-  return &it->second[index];
+  return &it->second[waypoint_idx];
 }
 
-void WaypointManager::removeWaypoint(const std::string& agent, size_t index) {
+void WaypointManager::removeWaypoint(const std::string& agent, size_t waypoint_idx) {
   auto it = waypoints_.find(agent);
-  if (it != waypoints_.end() && index < it->second.size()) {
-    it->second.erase(it->second.begin() + index);
+  if (it != waypoints_.end() && waypoint_idx < it->second.size()) {
+    it->second.erase(it->second.begin() + waypoint_idx);
   }
 }
 
@@ -70,32 +70,32 @@ bool WaypointManager::saveToFile(const std::string& filename,
                                  const std::string& specific_agent) const {
   QJsonObject root;
 
-  for (const auto& [agent, wps] : waypoints_) {
+  for (const auto& [agent, waypoints] : waypoints_) {
     if (!specific_agent.empty() && agent != specific_agent) {
       continue;
     }
 
     QJsonArray waypoints_array;
-    for (const auto& wp : wps) {
-      QJsonObject wp_obj;
-      wp_obj["lon"] = wp.position.longitude;
-      wp_obj["lat"] = wp.position.latitude;
-      wp_obj["z"] = wp.position.altitude;
-      wp_obj["mode"] = static_cast<int>(wp.mode);
-      wp_obj["speed_rpm"] = wp.speed_rpm;
-      wp_obj["capture_radius"] = wp.capture_radius;
-      wp_obj["capture_radius_z"] = wp.capture_radius_z;
-      wp_obj["slip_radius"] = wp.slip_radius;
-      wp_obj["slip_radius_z"] = wp.slip_radius_z;
-      waypoints_array.append(wp_obj);
+    for (const auto& waypoint : waypoints) {
+      QJsonObject waypoint_obj;
+      waypoint_obj["lon"] = waypoint.position.longitude;
+      waypoint_obj["lat"] = waypoint.position.latitude;
+      waypoint_obj["z"] = waypoint.position.altitude;
+      waypoint_obj["mode"] = static_cast<int>(waypoint.mode);
+      waypoint_obj["speed_rpm"] = waypoint.speed_rpm;
+      waypoint_obj["capture_radius"] = waypoint.capture_radius;
+      waypoint_obj["capture_radius_z"] = waypoint.capture_radius_z;
+      waypoint_obj["slip_radius"] = waypoint.slip_radius;
+      waypoint_obj["slip_radius_z"] = waypoint.slip_radius_z;
+      waypoints_array.append(waypoint_obj);
     }
     root[QString::fromStdString(agent)] = waypoints_array;
   }
 
-  QJsonDocument doc(root);
+  QJsonDocument json_doc(root);
   QFile file(QString::fromStdString(filename));
   if (file.open(QIODevice::WriteOnly)) {
-    file.write(doc.toJson());
+    file.write(json_doc.toJson());
     file.close();
     return true;
   }
@@ -111,48 +111,48 @@ bool WaypointManager::loadFromFile(const std::string& filename,
   }
 
   QByteArray data = file.readAll();
-  QJsonDocument doc = QJsonDocument::fromJson(data);
+  QJsonDocument json_doc = QJsonDocument::fromJson(data);
 
-  if (!doc.isObject()) {
+  if (!json_doc.isObject()) {
     return false;
   }
 
-  QJsonObject obj = doc.object();
+  QJsonObject root_obj = json_doc.object();
   int loaded_count = 0;
 
-  for (const QString& agent_key : obj.keys()) {
+  for (const QString& agent_key : root_obj.keys()) {
     std::string agent = agent_key.toStdString();
 
     if (!specific_agent.empty() && agent != specific_agent) {
       continue;
     }
 
-    std::vector<coug_interfaces::msg::WayPoint> wps;
-    QJsonArray array = obj[agent_key].toArray();
+    std::vector<coug_interfaces::msg::WayPoint> waypoints;
+    QJsonArray array = root_obj[agent_key].toArray();
 
-    for (const auto& val : array) {
-      QJsonObject wp_obj = val.toObject();
-      if (wp_obj.contains("lat") && wp_obj.contains("lon")) {
-        coug_interfaces::msg::WayPoint wp = defaults;
-        wp.position.longitude = wp_obj["lon"].toDouble();
-        wp.position.latitude = wp_obj["lat"].toDouble();
-        wp.position.altitude = wp_obj["z"].toDouble();
-        wp.mode = static_cast<uint8_t>(wp_obj["mode"].toInt());
+    for (const auto& array_value : array) {
+      QJsonObject waypoint_obj = array_value.toObject();
+      if (waypoint_obj.contains("lat") && waypoint_obj.contains("lon")) {
+        coug_interfaces::msg::WayPoint waypoint = defaults;
+        waypoint.position.longitude = waypoint_obj["lon"].toDouble();
+        waypoint.position.latitude = waypoint_obj["lat"].toDouble();
+        waypoint.position.altitude = waypoint_obj["z"].toDouble();
+        waypoint.mode = static_cast<uint8_t>(waypoint_obj["mode"].toInt());
 
-        auto load_if_present = [&wp_obj](const QString& key, double& field) {
-          if (wp_obj.contains(key)) {
-            field = wp_obj[key].toDouble();
+        auto loadIfPresent = [&waypoint_obj](const QString& key, double& field) {
+          if (waypoint_obj.contains(key)) {
+            field = waypoint_obj[key].toDouble();
           }
         };
-        load_if_present("speed_rpm", wp.speed_rpm);
-        load_if_present("capture_radius", wp.capture_radius);
-        load_if_present("capture_radius_z", wp.capture_radius_z);
-        load_if_present("slip_radius", wp.slip_radius);
-        load_if_present("slip_radius_z", wp.slip_radius_z);
-        wps.push_back(wp);
+        loadIfPresent("speed_rpm", waypoint.speed_rpm);
+        loadIfPresent("capture_radius", waypoint.capture_radius);
+        loadIfPresent("capture_radius_z", waypoint.capture_radius_z);
+        loadIfPresent("slip_radius", waypoint.slip_radius);
+        loadIfPresent("slip_radius_z", waypoint.slip_radius_z);
+        waypoints.push_back(waypoint);
       }
     }
-    waypoints_[agent] = wps;
+    waypoints_[agent] = waypoints;
     loaded_count++;
   }
 
