@@ -43,6 +43,16 @@ static constexpr qint64 kClickMaxDurationMs = 500;
 static constexpr int kCircleSegments = 48;
 static constexpr double kDepthEditorLimit = 9999.99;
 
+static constexpr float kWaypointMarkerPx = 20.0f;
+static constexpr int kPathWidthPx = 2;
+static constexpr int kLabelWidthPx = 100;
+static constexpr int kLabelHeightPx = 20;
+static constexpr int kLabelOffsetXPx = 50;
+static constexpr int kDepthLabelOffsetYPx = 15;
+static constexpr int kSpeedLabelOffsetYPx = 33;
+static constexpr int kIndexLabelSizePx = 40;
+static constexpr float kPathAlpha = 0.75f;
+
 namespace {
 
 struct EditorBinding {
@@ -229,7 +239,7 @@ void CougWaypointsPlugin::Draw(double x, double y, double scale) {
     drawWaypointCircles(store_.getWaypoints(current_agent_), fixed_T_wgs84);
   }
 
-  glLineWidth(2);
+  glLineWidth(kPathWidthPx);
 
   for (const auto& [agent, waypoints] : store_.getAllWaypoints()) {
     if (agent != current_agent_ && isAgentKnown(agent)) {
@@ -713,15 +723,15 @@ void CougWaypointsPlugin::drawPath(const std::vector<coug_interfaces::msg::WayPo
     points.push_back(wgs84ToFixedPoint(waypoint, fixed_T_wgs84));
   }
 
-  glColor4f(1.0, 1.0, 1.0, 0.75);
+  glColor4f(1.0, 1.0, 1.0, kPathAlpha);
   glBegin(GL_LINE_STRIP);
   for (const auto& point : points) {
     glVertex2d(point.x(), point.y());
   }
   glEnd();
 
-  glColor4f(0.5, 0.5, 0.5, 0.75);
-  glPointSize(20);
+  glColor4f(0.5, 0.5, 0.5, kPathAlpha);
+  glPointSize(kWaypointMarkerPx);
   glBegin(GL_POINTS);
   for (const auto& point : points) {
     glVertex2d(point.x(), point.y());
@@ -778,22 +788,23 @@ void CougWaypointsPlugin::paintLabels(QPainter* painter,
 
     painter->setPen(QPen(color));
 
-    QPointF depth_text_corner(gl_point.x() - 50, gl_point.y() + 15);
-    QRectF depth_text_rect(depth_text_corner, QSizeF(100, 20));
+    QPointF depth_text_corner(gl_point.x() - kLabelOffsetXPx, gl_point.y() + kDepthLabelOffsetYPx);
+    QRectF depth_text_rect(depth_text_corner, QSizeF(kLabelWidthPx, kLabelHeightPx));
     QString depth_text =
         waypoints[i].mode == coug_interfaces::msg::WayPoint::ALTITUDE
             ? "ALT " + QString::number(waypoints[i].position.altitude, 'f', 1) + "m"
             : QString::number(waypoints[i].position.altitude, 'f', 1) + "m";
     painter->drawText(depth_text_rect, Qt::AlignHCenter | Qt::AlignTop, depth_text);
 
-    QPointF speed_text_corner(gl_point.x() - 50, gl_point.y() + 33);
-    QRectF speed_text_rect(speed_text_corner, QSizeF(100, 20));
+    QPointF speed_text_corner(gl_point.x() - kLabelOffsetXPx, gl_point.y() + kSpeedLabelOffsetYPx);
+    QRectF speed_text_rect(speed_text_corner, QSizeF(kLabelWidthPx, kLabelHeightPx));
     QString speed_text = QString::number(waypoints[i].speed_rpm, 'f', 0) + "RPM";
     painter->drawText(speed_text_rect, Qt::AlignHCenter | Qt::AlignTop, speed_text);
 
     painter->setPen(QPen(color == Qt::white ? Qt::black : color));
-    QPointF num_corner(gl_point.x() - 20, gl_point.y() - 20);
-    QRectF num_rect(num_corner, QSizeF(40, 40));
+    QPointF num_corner(gl_point.x() - kIndexLabelSizePx / 2.0,
+                       gl_point.y() - kIndexLabelSizePx / 2.0);
+    QRectF num_rect(num_corner, QSizeF(kIndexLabelSizePx, kIndexLabelSizePx));
     painter->drawText(num_rect, Qt::AlignHCenter | Qt::AlignVCenter, QString::number(i + 1));
   }
 }
@@ -808,18 +819,18 @@ void CougWaypointsPlugin::paintPath(QPainter* painter,
     points.push_back(wgs84ToGl(waypoint, fixed_T_wgs84));
   }
 
-  QPen pen(color, 2);
+  QPen pen(color, kPathWidthPx);
   painter->setPen(pen);
   painter->drawPolyline(points);
   for (int i = 0; i < points.size(); ++i) {
     if (i == selected_idx) {
-      painter->setPen(QPen(Qt::yellow, 20, Qt::SolidLine, Qt::RoundCap));
+      painter->setPen(QPen(Qt::yellow, kWaypointMarkerPx, Qt::SolidLine, Qt::RoundCap));
       painter->drawPoint(points[i]);
     } else if (color == Qt::blue) {
-      painter->setPen(QPen(Qt::cyan, 20, Qt::SolidLine, Qt::RoundCap));
+      painter->setPen(QPen(Qt::cyan, kWaypointMarkerPx, Qt::SolidLine, Qt::RoundCap));
       painter->drawPoint(points[i]);
     } else {
-      painter->setPen(QPen(Qt::gray, 20, Qt::SolidLine, Qt::RoundCap));
+      painter->setPen(QPen(Qt::gray, kWaypointMarkerPx, Qt::SolidLine, Qt::RoundCap));
       painter->drawPoint(points[i]);
     }
   }
