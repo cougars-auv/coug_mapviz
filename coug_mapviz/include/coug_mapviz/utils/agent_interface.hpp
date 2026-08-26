@@ -74,11 +74,11 @@ class AgentInterface {
   std::string waypoint_map_topic_;
 
   std::map<std::string, rclcpp::Publisher<coug_interfaces::msg::WayPointList>::SharedPtr>
-      publishers_;
+      waypoint_pubs_;
   std::map<std::string, rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr>
-      map_publishers_;
+      waypoint_map_pubs_;
   std::map<std::string, std::map<std::string, rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr>>
-      clients_;
+      service_clients_;
 };
 
 }  // namespace coug_mapviz::utils

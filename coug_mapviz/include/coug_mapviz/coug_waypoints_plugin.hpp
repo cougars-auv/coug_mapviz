@@ -126,7 +126,7 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   utils::AgentInterface interface_;
   utils::WaypointStore store_;
   coug_interfaces::msg::WayPoint default_waypoint_;
-  std::string current_agent_;
+  std::string curr_agent_;
   std::vector<std::string> agent_namespaces_;
   std::set<std::string> known_agents_;
 

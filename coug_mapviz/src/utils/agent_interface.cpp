@@ -36,12 +36,12 @@ void AgentInterface::initialize(const std::shared_ptr<rclcpp::Node>& node,
   waypoint_map_topic_ = waypoint_map_topic;
 
   for (const auto& agent_ns : agent_namespaces) {
-    publishers_[agent_ns] = node_->create_publisher<coug_interfaces::msg::WayPointList>(
+    waypoint_pubs_[agent_ns] = node_->create_publisher<coug_interfaces::msg::WayPointList>(
         agent_ns + "/" + waypoint_topic_, rclcpp::SystemDefaultsQoS());
-    map_publishers_[agent_ns] = node_->create_publisher<geometry_msgs::msg::PoseArray>(
+    waypoint_map_pubs_[agent_ns] = node_->create_publisher<geometry_msgs::msg::PoseArray>(
         agent_ns + "/" + waypoint_map_topic_, rclcpp::SystemDefaultsQoS());
     for (const auto& [cmd, service] : services) {
-      clients_[agent_ns][cmd] =
+      service_clients_[agent_ns][cmd] =
           node_->create_client<std_srvs::srv::Trigger>(agent_ns + "/" + service);
     }
   }
@@ -50,9 +50,9 @@ void AgentInterface::initialize(const std::shared_ptr<rclcpp::Node>& node,
 void AgentInterface::publishWaypoints(const std::string& agent,
                                       const std::vector<coug_interfaces::msg::WayPoint>& waypoints,
                                       const std::string& target_frame) {
-  auto publisher_it = publishers_.find(agent);
-  auto map_publisher_it = map_publishers_.find(agent);
-  if (publisher_it == publishers_.end() || map_publisher_it == map_publishers_.end()) {
+  auto publisher_it = waypoint_pubs_.find(agent);
+  auto map_publisher_it = waypoint_map_pubs_.find(agent);
+  if (publisher_it == waypoint_pubs_.end() || map_publisher_it == waypoint_map_pubs_.end()) {
     status_(Status::kError, "Publisher not registered: " + agent);
     return;
   }
@@ -98,8 +98,8 @@ void AgentInterface::callService(const std::string& cmd, const std::vector<std::
 void AgentInterface::callAgentService(const std::string& agent_ns, const std::string& cmd,
                                       std::shared_ptr<CallState> state) {
   rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr client;
-  auto ns_it = clients_.find(agent_ns);
-  if (ns_it != clients_.end()) {
+  auto ns_it = service_clients_.find(agent_ns);
+  if (ns_it != service_clients_.end()) {
     auto cmd_it = ns_it->second.find(cmd);
     if (cmd_it != ns_it->second.end()) {
       client = cmd_it->second;
