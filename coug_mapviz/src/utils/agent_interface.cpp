@@ -34,6 +34,7 @@ void AgentInterface::initialize(const std::shared_ptr<rclcpp::Node>& node,
   status_ = std::move(status_callback);
   waypoint_topic_ = waypoint_topic;
   waypoint_map_topic_ = waypoint_map_topic;
+  services_ = services;
 
   for (const auto& agent_ns : agent_namespaces) {
     waypoint_pubs_[agent_ns] = node_->create_publisher<coug_interfaces::msg::WayPointList>(
@@ -109,7 +110,7 @@ void AgentInterface::callAgentService(const std::string& agent_ns, const std::st
     if (state)
       recordResult(state, false, agent_ns);
     else
-      status_(Status::kError, "Service not available: " + agent_ns + "/" + cmd);
+      status_(Status::kError, "Service not available: " + resolvedName(agent_ns, cmd));
     return;
   }
   auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
@@ -121,7 +122,7 @@ void AgentInterface::callAgentService(const std::string& agent_ns, const std::st
           if (state)
             recordResult(state, false, agent_ns);
           else
-            status_(Status::kError, "Service call failed: " + agent_ns + "/" + cmd);
+            status_(Status::kError, "Service call failed: " + resolvedName(agent_ns, cmd));
           return;
         }
         if (state) {
@@ -134,6 +135,12 @@ void AgentInterface::callAgentService(const std::string& agent_ns, const std::st
             status_(Status::kWarning, prefix + response->message);
         }
       });
+}
+
+std::string AgentInterface::resolvedName(const std::string& agent_ns,
+                                         const std::string& cmd) const {
+  auto it = services_.find(cmd);
+  return agent_ns + "/" + (it == services_.end() ? cmd : it->second);
 }
 
 void AgentInterface::recordResult(std::shared_ptr<CallState> state, bool success,

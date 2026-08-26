@@ -66,12 +66,15 @@ class AgentInterface {
 
   void recordResult(std::shared_ptr<CallState> state, bool success, const std::string& agent);
 
+  std::string resolvedName(const std::string& agent_ns, const std::string& cmd) const;
+
   std::shared_ptr<rclcpp::Node> node_;
   swri_transform_util::TransformManagerPtr tf_manager_;
   StatusCallback status_;
 
   std::string waypoint_topic_;
   std::string waypoint_map_topic_;
+  std::map<std::string, std::string> services_;
 
   std::map<std::string, rclcpp::Publisher<coug_interfaces::msg::WayPointList>::SharedPtr>
       waypoint_pubs_;

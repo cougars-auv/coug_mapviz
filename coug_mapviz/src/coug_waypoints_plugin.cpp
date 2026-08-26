@@ -643,7 +643,7 @@ void CougWaypointsPlugin::publishAll() {
   for (const auto& agent : agent_namespaces_) {
     interface_.publishWaypoints(agent, store_.getWaypoints(agent), target_frame_);
   }
-  PrintInfo("Published to " + std::to_string(agent_namespaces_.size()) + " agent(s).");
+  PrintInfo("Published " + std::to_string(agent_namespaces_.size()) + " agent(s).");
 }
 
 void CougWaypointsPlugin::callService(const std::string& cmd) {
