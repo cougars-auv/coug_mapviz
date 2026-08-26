@@ -98,16 +98,16 @@ inline bool loadMission(const std::string& filename, const coug_interfaces::msg:
         waypoint.position.altitude = waypoint_obj["z"].toDouble();
         waypoint.mode = static_cast<uint8_t>(waypoint_obj["mode"].toInt());
 
-        auto loadIfPresent = [&waypoint_obj](const QString& key, double& field) {
+        auto load_if_present = [&waypoint_obj](const QString& key, double& field) {
           if (waypoint_obj.contains(key)) {
             field = waypoint_obj[key].toDouble();
           }
         };
-        loadIfPresent("speed_rpm", waypoint.speed_rpm);
-        loadIfPresent("capture_radius", waypoint.capture_radius);
-        loadIfPresent("capture_radius_z", waypoint.capture_radius_z);
-        loadIfPresent("slip_radius", waypoint.slip_radius);
-        loadIfPresent("slip_radius_z", waypoint.slip_radius_z);
+        load_if_present("speed_rpm", waypoint.speed_rpm);
+        load_if_present("capture_radius", waypoint.capture_radius);
+        load_if_present("capture_radius_z", waypoint.capture_radius_z);
+        load_if_present("slip_radius", waypoint.slip_radius);
+        load_if_present("slip_radius_z", waypoint.slip_radius_z);
         agent_waypoints.push_back(waypoint);
       }
     }

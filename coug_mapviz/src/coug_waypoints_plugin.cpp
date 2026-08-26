@@ -167,7 +167,7 @@ bool CougWaypointsPlugin::Initialize(QGLWidget* canvas) {
   }
   map_canvas_->installEventFilter(this);
 
-  auto getOrDeclare = [this](const std::string& name, const auto& default_value) {
+  auto get_or_declare = [this](const std::string& name, const auto& default_value) {
     if (!node_->has_parameter(name)) {
       node_->declare_parameter(name, default_value);
     }
@@ -176,30 +176,30 @@ bool CougWaypointsPlugin::Initialize(QGLWidget* canvas) {
     return value;
   };
 
-  agent_namespaces_ = getOrDeclare("agent_namespaces", std::vector<std::string>{});
-  const std::string waypoint_topic = getOrDeclare("waypoint_topic", std::string("waypoints"));
+  agent_namespaces_ = get_or_declare("agent_namespaces", std::vector<std::string>{});
+  const std::string waypoint_topic = get_or_declare("waypoint_topic", std::string("waypoints"));
   const std::string waypoint_map_topic =
-      getOrDeclare("waypoint_map_topic", std::string("waypoints_map"));
+      get_or_declare("waypoint_map_topic", std::string("waypoints_map"));
   const std::map<std::string, std::string> services = {
-      {"start", getOrDeclare("start_service", std::string("base/start"))},
-      {"stop", getOrDeclare("stop_service", std::string("base/stop"))},
-      {"surface", getOrDeclare("surface_service", std::string("base/surface"))},
-      {"home", getOrDeclare("home_service", std::string("base/home"))},
+      {"start", get_or_declare("start_service", std::string("base/start"))},
+      {"stop", get_or_declare("stop_service", std::string("base/stop"))},
+      {"surface", get_or_declare("surface_service", std::string("base/surface"))},
+      {"home", get_or_declare("home_service", std::string("base/home"))},
   };
   known_agents_ = std::set<std::string>(agent_namespaces_.begin(), agent_namespaces_.end());
   for (const auto& agent_ns : agent_namespaces_) {
     ui_.agent_selector->addItem(QString::fromStdString(agent_ns));
   }
 
-  default_waypoint_.speed_rpm = getOrDeclare("default_speed_rpm", ui_.speed_editor->value());
+  default_waypoint_.speed_rpm = get_or_declare("default_speed_rpm", ui_.speed_editor->value());
   default_waypoint_.capture_radius =
-      getOrDeclare("default_capture_radius", ui_.capture_radius_editor->value());
+      get_or_declare("default_capture_radius", ui_.capture_radius_editor->value());
   default_waypoint_.capture_radius_z =
-      getOrDeclare("default_capture_radius_z", ui_.capture_radius_z_editor->value());
+      get_or_declare("default_capture_radius_z", ui_.capture_radius_z_editor->value());
   default_waypoint_.slip_radius =
-      getOrDeclare("default_slip_radius", ui_.slip_radius_editor->value());
+      get_or_declare("default_slip_radius", ui_.slip_radius_editor->value());
   default_waypoint_.slip_radius_z =
-      getOrDeclare("default_slip_radius_z", ui_.slip_radius_z_editor->value());
+      get_or_declare("default_slip_radius_z", ui_.slip_radius_z_editor->value());
   applyDefaultsToEditors();
 
   interface_.initialize(node_, tf_manager_, agent_namespaces_, waypoint_topic, waypoint_map_topic,
