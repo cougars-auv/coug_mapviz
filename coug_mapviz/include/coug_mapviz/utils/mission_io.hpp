@@ -20,14 +20,16 @@
 #include <QJsonObject>
 #include <QString>
 #include <coug_interfaces/msg/way_point.hpp>
-#include <coug_mapviz/utils/waypoint_store.hpp>
+#include <map>
 #include <string>
 #include <vector>
 
 namespace coug_mapviz::utils {
 
-inline bool saveMission(const std::string& filename, const WaypointMap& waypoints,
-                        const std::string& specific_agent = "") {
+inline bool saveMission(
+    const std::string& filename,
+    const std::map<std::string, std::vector<coug_interfaces::msg::WayPoint>>& waypoints,
+    const std::string& specific_agent = "") {
   QJsonObject root_obj;
 
   for (const auto& [agent, agent_waypoints] : waypoints) {
@@ -62,8 +64,10 @@ inline bool saveMission(const std::string& filename, const WaypointMap& waypoint
   return false;
 }
 
-inline bool loadMission(const std::string& filename, const coug_interfaces::msg::WayPoint& defaults,
-                        WaypointMap& waypoints, const std::string& specific_agent = "") {
+inline bool loadMission(
+    const std::string& filename, const coug_interfaces::msg::WayPoint& defaults,
+    std::map<std::string, std::vector<coug_interfaces::msg::WayPoint>>& waypoints,
+    const std::string& specific_agent = "") {
   QFile file(QString::fromStdString(filename));
   if (!file.open(QIODevice::ReadOnly)) {
     return false;

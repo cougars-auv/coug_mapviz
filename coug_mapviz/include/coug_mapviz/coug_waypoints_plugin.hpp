@@ -25,7 +25,8 @@
 #include <QPainter>
 #include <QWidget>
 #include <coug_mapviz/utils/agent_interface.hpp>
-#include <coug_mapviz/utils/waypoint_store.hpp>
+#include <coug_mapviz/utils/mission_io.hpp>
+#include <map>
 #include <memory>
 #include <rclcpp/rclcpp.hpp>
 #include <set>
@@ -124,7 +125,7 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
 
   // --- ROS Interfaces ---
   utils::AgentInterface interface_;
-  utils::WaypointStore store_;
+  std::map<std::string, std::vector<coug_interfaces::msg::WayPoint>> waypoints_;
   coug_interfaces::msg::WayPoint default_waypoint_;
   std::string current_agent_;
   std::vector<std::string> agent_namespaces_;
@@ -137,6 +138,8 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   qint64 mouse_down_time_;
 
   // --- Agent Selection ---
+  const std::vector<coug_interfaces::msg::WayPoint>& agentWaypoints(const std::string& agent) const;
+
   bool isAgentKnown(const std::string& agent) const;
 
   bool resolveSelectedAgent(std::string& agent);

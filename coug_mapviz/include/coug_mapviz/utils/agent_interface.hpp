@@ -16,8 +16,8 @@
 
 #include <swri_transform_util/transform_manager.h>
 
+#include <coug_interfaces/msg/way_point.hpp>
 #include <coug_interfaces/msg/way_point_list.hpp>
-#include <coug_mapviz/utils/waypoint_store.hpp>
 #include <functional>
 #include <geometry_msgs/msg/pose_array.hpp>
 #include <map>
