@@ -171,7 +171,7 @@ bool CougWaypointsPlugin::Initialize(QGLWidget* canvas) {
     if (!node_->has_parameter(name)) {
       node_->declare_parameter(name, default_value);
     }
-    std::decay_t<decltype(default_value)> value;
+    std::decay_t<decltype(default_value)> value = default_value;
     node_->get_parameter(name, value);
     return value;
   };
