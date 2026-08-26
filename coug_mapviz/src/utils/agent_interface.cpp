@@ -137,12 +137,6 @@ void AgentInterface::callAgentService(const std::string& agent_ns, const std::st
       });
 }
 
-std::string AgentInterface::resolvedName(const std::string& agent_ns,
-                                         const std::string& cmd) const {
-  auto it = services_.find(cmd);
-  return agent_ns + "/" + (it == services_.end() ? cmd : it->second);
-}
-
 void AgentInterface::recordResult(std::shared_ptr<CallState> state, bool success,
                                   const std::string& agent) {
   std::lock_guard<std::mutex> lock(state->mutex);
@@ -168,6 +162,12 @@ void AgentInterface::recordResult(std::shared_ptr<CallState> state, bool success
     else
       status_(Status::kWarning, message);
   }
+}
+
+std::string AgentInterface::resolvedName(const std::string& agent_ns,
+                                         const std::string& cmd) const {
+  auto it = services_.find(cmd);
+  return agent_ns + "/" + (it == services_.end() ? cmd : it->second);
 }
 
 }  // namespace coug_mapviz::utils
