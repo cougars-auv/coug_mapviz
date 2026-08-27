@@ -158,13 +158,13 @@ size_t AgentInterface::commandIndex(Command command) { return static_cast<size_t
 const char* AgentInterface::commandName(Command command) {
   switch (command) {
     case Command::kStart:
-      return "START";
+      return "start";
     case Command::kStop:
-      return "STOP";
+      return "stop";
     case Command::kSurface:
-      return "SURFACE";
+      return "surface";
     case Command::kHome:
-      return "HOME";
+      return "home";
   }
   return "UNKNOWN";
 }

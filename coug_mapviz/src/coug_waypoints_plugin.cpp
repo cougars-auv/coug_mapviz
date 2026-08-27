@@ -343,7 +343,7 @@ void CougWaypointsPlugin::PublishWaypoints() {
   } else if (!current_agent_.empty()) {
     const auto& waypoints = agentWaypoints(current_agent_);
     interface_.publishWaypoints(current_agent_, waypoints, target_frame_);
-    PrintInfo("Published 1 agent(s).");
+    PrintInfo("Published to 1 agent(s).");
   } else {
     PrintError("No agent selected.");
   }
@@ -638,7 +638,7 @@ void CougWaypointsPlugin::publishAll() {
   for (const auto& agent : agent_namespaces_) {
     interface_.publishWaypoints(agent, agentWaypoints(agent), target_frame_);
   }
-  PrintInfo("Published " + std::to_string(agent_namespaces_.size()) + " agent(s).");
+  PrintInfo("Published to " + std::to_string(agent_namespaces_.size()) + " agent(s).");
 }
 
 void CougWaypointsPlugin::callService(AgentInterface::Command command) {
