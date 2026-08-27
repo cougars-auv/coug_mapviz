@@ -24,6 +24,16 @@ constexpr int kLabelOffsetXPx = 50;
 constexpr int kDepthLabelOffsetYPx = 15;
 constexpr int kSpeedLabelOffsetYPx = 33;
 constexpr int kIndexLabelSizePx = 40;
+const QColor kSlipCircleColor(30, 144, 255, 166);
+const QColor kSlipCircleFillColor(30, 144, 255, 30);
+const QColor kCaptureCircleColor(255, 140, 0, 191);
+const QColor kCaptureCircleFillColor(255, 140, 0, 46);
+const QColor kLightLabelColor(Qt::white);
+const QColor kDarkLabelColor(Qt::black);
+const QColor kActivePathColor(Qt::blue);
+const QColor kSelectedWaypointColor(Qt::yellow);
+const QColor kActiveWaypointColor(Qt::cyan);
+const QColor kInactiveWaypointColor(Qt::gray);
 
 }  // namespace
 
@@ -55,12 +65,12 @@ void WaypointRenderer::paintCircles(QPainter* painter,
     const double slip_radius_px = QLineF(gl_center, gl_slip_edge).length();
     const double capture_radius_px = QLineF(gl_center, gl_capture_edge).length();
 
-    painter->setPen(QPen(QColor(30, 144, 255, 166), 1.5));
-    painter->setBrush(QBrush(QColor(30, 144, 255, 30)));
+    painter->setPen(QPen(kSlipCircleColor, 1.5));
+    painter->setBrush(QBrush(kSlipCircleFillColor));
     painter->drawEllipse(gl_center, slip_radius_px, slip_radius_px);
 
-    painter->setPen(QPen(QColor(255, 140, 0, 191), 1.5));
-    painter->setBrush(QBrush(QColor(255, 140, 0, 46)));
+    painter->setPen(QPen(kCaptureCircleColor, 1.5));
+    painter->setBrush(QBrush(kCaptureCircleFillColor));
     painter->drawEllipse(gl_center, capture_radius_px, capture_radius_px);
   }
 }
@@ -88,7 +98,7 @@ void WaypointRenderer::paintLabels(QPainter* painter,
     painter->drawText(speed_rect, Qt::AlignHCenter | Qt::AlignTop,
                       QString::number(waypoints[i].speed_rpm, 'f', 0) + "RPM");
 
-    painter->setPen(QPen(color == Qt::white ? Qt::black : color));
+    painter->setPen(QPen(color == kLightLabelColor ? kDarkLabelColor : color));
     const QRectF index_rect(
         QPointF(gl_point.x() - kIndexLabelSizePx / 2.0, gl_point.y() - kIndexLabelSizePx / 2.0),
         QSizeF(kIndexLabelSizePx, kIndexLabelSizePx));
@@ -107,9 +117,9 @@ void WaypointRenderer::paintPath(QPainter* painter,
   painter->setPen(QPen(color, kPathWidthPx));
   painter->drawPolyline(points);
   for (int i = 0; i < points.size(); ++i) {
-    const QColor marker_color = i == selected_idx   ? Qt::yellow
-                                : color == Qt::blue ? Qt::cyan
-                                                    : Qt::gray;
+    const QColor marker_color = i == selected_idx           ? kSelectedWaypointColor
+                                : color == kActivePathColor ? kActiveWaypointColor
+                                                            : kInactiveWaypointColor;
     painter->setPen(QPen(marker_color, kWaypointMarkerPx, Qt::SolidLine, Qt::RoundCap));
     painter->drawPoint(points[i]);
   }

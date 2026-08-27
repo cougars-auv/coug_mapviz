@@ -44,6 +44,12 @@ constexpr double kHitRadiusPx = 15.0;
 constexpr double kClickMaxDistPx = 5.0;
 constexpr qint64 kClickMaxDurationMs = 500;
 constexpr double kDepthEditorLimit = 9999.99;
+const QColor kConfigBackgroundColor(Qt::white);
+const QColor kStatusTextColor(Qt::darkGreen);
+const QColor kInactivePathColor(200, 200, 200, 191);
+const QColor kInactiveLabelColor(255, 255, 255, 191);
+const QColor kActivePathColor(Qt::blue);
+const QColor kActiveLabelColor(Qt::white);
 
 void setEditorValue(QDoubleSpinBox* editor, double value) {
   editor->blockSignals(true);
@@ -64,10 +70,10 @@ CougWaypointsPlugin::CougWaypointsPlugin()
   ui_.setupUi(config_widget_);
 
   QPalette config_palette(config_widget_->palette());
-  config_palette.setColor(QPalette::Window, Qt::white);
+  config_palette.setColor(QPalette::Window, kConfigBackgroundColor);
   config_widget_->setPalette(config_palette);
   QPalette status_palette(ui_.status->palette());
-  status_palette.setColor(QPalette::Text, Qt::darkGreen);
+  status_palette.setColor(QPalette::Text, kStatusTextColor);
   ui_.status->setPalette(status_palette);
 
   connect(ui_.agent_selector, &QComboBox::currentTextChanged, this,
@@ -162,8 +168,8 @@ void CougWaypointsPlugin::Paint(QPainter* painter, double x, double y, double sc
   painter->setFont(QFont("DejaVu Sans Mono", 10, QFont::Bold));
   for (const auto& [agent, waypoints] : waypoints_) {
     if (agent != current_agent_ && isAgentKnown(agent)) {
-      renderer_->paintPath(painter, waypoints, QColor(200, 200, 200, 191), fixed_T_wgs84);
-      renderer_->paintLabels(painter, waypoints, fixed_T_wgs84, QColor(255, 255, 255, 191));
+      renderer_->paintPath(painter, waypoints, kInactivePathColor, fixed_T_wgs84);
+      renderer_->paintLabels(painter, waypoints, fixed_T_wgs84, kInactiveLabelColor);
     }
   }
 
@@ -171,8 +177,8 @@ void CougWaypointsPlugin::Paint(QPainter* painter, double x, double y, double sc
     const auto& waypoints = agentWaypoints(current_agent_);
     if (!waypoints.empty()) {
       renderer_->paintCircles(painter, waypoints, fixed_T_wgs84);
-      renderer_->paintPath(painter, waypoints, QColor(Qt::blue), fixed_T_wgs84, selected_idx_);
-      renderer_->paintLabels(painter, waypoints, fixed_T_wgs84, Qt::white);
+      renderer_->paintPath(painter, waypoints, kActivePathColor, fixed_T_wgs84, selected_idx_);
+      renderer_->paintLabels(painter, waypoints, fixed_T_wgs84, kActiveLabelColor);
     }
   }
   painter->restore();
