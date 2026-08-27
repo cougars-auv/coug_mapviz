@@ -48,7 +48,7 @@ class FleetInterface {
 
   void initialize(const std::shared_ptr<rclcpp::Node>& node,
                   const swri_transform_util::TransformManagerPtr& tf_manager,
-                  const std::vector<std::string>& agent_namespaces, const Config& config,
+                  const std::vector<std::string>& agent_list, const Config& config,
                   StatusCallback status_callback);
 
   void publishWaypoints(const std::string& agent_name,

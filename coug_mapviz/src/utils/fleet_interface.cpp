@@ -24,14 +24,14 @@ namespace coug_mapviz::utils {
 
 void FleetInterface::initialize(const std::shared_ptr<rclcpp::Node>& node,
                                 const swri_transform_util::TransformManagerPtr& tf_manager,
-                                const std::vector<std::string>& agent_namespaces,
-                                const Config& config, StatusCallback status_callback) {
+                                const std::vector<std::string>& agent_list, const Config& config,
+                                StatusCallback status_callback) {
   node_ = node;
   tf_manager_ = tf_manager;
   config_ = config;
   status_ = std::move(status_callback);
 
-  for (const auto& agent_name : agent_namespaces) {
+  for (const auto& agent_name : agent_list) {
     AgentEntry agent;
     agent.waypoint_pub = node_->create_publisher<coug_interfaces::msg::WayPointList>(
         agent_name + "/" + config_.waypoint_topic, rclcpp::SystemDefaultsQoS());

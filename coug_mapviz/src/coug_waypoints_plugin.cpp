@@ -120,8 +120,8 @@ bool CougWaypointsPlugin::Initialize(QGLWidget* canvas) {
   param_listener_ = std::make_shared<coug_waypoints::ParamListener>(node_);
   params_ = param_listener_->get_params();
 
-  agent_namespaces_ = params_.agent_namespaces;
-  for (const auto& agent_ns : agent_namespaces_) {
+  agent_list_ = params_.agent_list;
+  for (const auto& agent_ns : agent_list_) {
     ui_.agent_selector->addItem(QString::fromStdString(agent_ns));
   }
 
@@ -137,7 +137,7 @@ bool CougWaypointsPlugin::Initialize(QGLWidget* canvas) {
       params_.waypoint_map_topic,
       {params_.start_service, params_.stop_service, params_.surface_service, params_.home_service},
   };
-  interface_.initialize(node_, tf_manager_, agent_namespaces_, interface_config,
+  interface_.initialize(node_, tf_manager_, agent_list_, interface_config,
                         [this](FleetInterface::Status level, const std::string& message) {
                           Q_EMIT StatusUpdateRequested(static_cast<int>(level),
                                                        QString::fromStdString(message));
@@ -557,8 +557,7 @@ const std::vector<coug_interfaces::msg::WayPoint>& CougWaypointsPlugin::agentWay
 }
 
 bool CougWaypointsPlugin::isAgentKnown(const std::string& agent) const {
-  return std::find(agent_namespaces_.begin(), agent_namespaces_.end(), agent) !=
-         agent_namespaces_.end();
+  return std::find(agent_list_.begin(), agent_list_.end(), agent) != agent_list_.end();
 }
 
 bool CougWaypointsPlugin::resolveSelectedAgent(std::string& agent) {
@@ -635,19 +634,19 @@ void CougWaypointsPlugin::deselectWaypoint() {
 }
 
 void CougWaypointsPlugin::publishAll() {
-  for (const auto& agent : agent_namespaces_) {
+  for (const auto& agent : agent_list_) {
     interface_.publishWaypoints(agent, agentWaypoints(agent), target_frame_);
   }
-  PrintInfo("Published to " + std::to_string(agent_namespaces_.size()) + " agent(s).");
+  PrintInfo("Published to " + std::to_string(agent_list_.size()) + " agent(s).");
 }
 
 void CougWaypointsPlugin::callService(FleetInterface::Command command) {
   if (ui_.apply_all->isChecked()) {
-    if (agent_namespaces_.empty()) {
+    if (agent_list_.empty()) {
       PrintError("No agents configured.");
       return;
     }
-    interface_.callService(command, agent_namespaces_, true);
+    interface_.callService(command, agent_list_, true);
   } else if (!current_agent_.empty()) {
     interface_.callService(command, {current_agent_}, false);
   } else {

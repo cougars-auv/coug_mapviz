@@ -32,8 +32,8 @@ def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Node
     use_sim_time = LaunchConfiguration("use_sim_time")
     agent_list_str = LaunchConfiguration("agent_list").perform(context)
 
-    agent_namespaces = yaml.safe_load(agent_list_str)
-    is_multiagent = len(agent_namespaces) > 1
+    agent_list = yaml.safe_load(agent_list_str)
+    is_multiagent = len(agent_list) > 1
 
     pkg_share = get_package_share_directory("coug_mapviz")
     fleet_params = PathJoinSubstitution(
@@ -63,14 +63,14 @@ def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Node
         with open(per_agent_template_path, "r") as f:
             per_agent_template = f.read()
 
-        for ns in agent_namespaces:
-            per_agent = yaml.safe_load(per_agent_template.replace("AUV_NS", ns))
+        for ns in agent_list:
+            per_agent = yaml.safe_load(per_agent_template.replace("AGENT_NS", ns))
             base["displays"].extend(per_agent["displays"])
 
         config_content = yaml.safe_dump(base)
     else:
         with open(full_template_path, "r") as f:
-            config_content = f.read().replace("AUV_NS", agent_namespaces[0])
+            config_content = f.read().replace("AGENT_NS", agent_list[0])
 
     with tempfile.NamedTemporaryFile(
         mode="w", delete=False, suffix=".mvc"
@@ -88,7 +88,7 @@ def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Node
                 {
                     "config": mapviz_config_file,
                     "use_sim_time": use_sim_time,
-                    "agent_namespaces": agent_namespaces,
+                    "agent_list": agent_list,
                 },
             ],
         ),

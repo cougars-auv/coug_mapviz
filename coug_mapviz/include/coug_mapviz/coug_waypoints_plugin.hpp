@@ -158,7 +158,7 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   std::map<std::string, std::vector<coug_interfaces::msg::WayPoint>> waypoints_;
   coug_interfaces::msg::WayPoint default_waypoint_;
   std::string current_agent_;
-  std::vector<std::string> agent_namespaces_;
+  std::vector<std::string> agent_list_;
 
   int selected_idx_;
   int dragged_idx_;

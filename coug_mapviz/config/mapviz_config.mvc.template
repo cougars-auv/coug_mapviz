@@ -39,7 +39,7 @@ displays:
     config:
       visible: true
       collapsed: true
-      frame: AUV_NS/base_link
+      frame: AGENT_NS/base_link
       color: "#00ff00"
       draw_style: arrows
       position_tolerance: 0
@@ -51,7 +51,7 @@ displays:
     config:
       visible: true
       collapsed: true
-      topic: /AUV_NS/gps/fix
+      topic: /AGENT_NS/gps/fix
       color: "#55aaff"
       draw_style: points
       position_tolerance: 0
@@ -65,7 +65,7 @@ displays:
     config:
       visible: true
       collapsed: true
-      topic: /AUV_NS/smoothed_path
+      topic: /AGENT_NS/smoothed_path
       color: "#ff55ff"
       qos_depth: 10
       qos_history: 1
@@ -76,7 +76,7 @@ displays:
     config:
       visible: true
       collapsed: true
-      topic: /AUV_NS/odometry/truth
+      topic: /AGENT_NS/odometry/truth
       color: "#ffffff"
       draw_style: lines
       position_tolerance: 0
@@ -96,7 +96,7 @@ displays:
     config:
       visible: false
       collapsed: true
-      topic: /AUV_NS/odometry/global_ekf
+      topic: /AGENT_NS/odometry/global_ekf
       color: "#ff55ff"
       draw_style: lines
       position_tolerance: 0
@@ -116,7 +116,7 @@ displays:
     config:
       visible: false
       collapsed: true
-      topic: /AUV_NS/odometry/global_ukf
+      topic: /AGENT_NS/odometry/global_ukf
       color: "#ffff00"
       draw_style: lines
       position_tolerance: 0
@@ -136,7 +136,7 @@ displays:
     config:
       visible: false
       collapsed: true
-      topic: /AUV_NS/odometry/global_iekf
+      topic: /AGENT_NS/odometry/global_iekf
       color: "#aa00ff"
       draw_style: lines
       position_tolerance: 0
@@ -156,7 +156,7 @@ displays:
     config:
       visible: false
       collapsed: true
-      topic: /AUV_NS/odometry/global_tpi
+      topic: /AGENT_NS/odometry/global_tpi
       color: "#ff0000"
       draw_style: lines
       position_tolerance: 0
@@ -176,7 +176,7 @@ displays:
     config:
       visible: false
       collapsed: true
-      topic: /AUV_NS/odometry/global_lpi
+      topic: /AGENT_NS/odometry/global_lpi
       color: "#55aaff"
       draw_style: lines
       position_tolerance: 0
@@ -196,7 +196,7 @@ displays:
     config:
       visible: false
       collapsed: true
-      topic: /AUV_NS/odometry/global_isam2
+      topic: /AGENT_NS/odometry/global_isam2
       color: "#ffaa00"
       draw_style: lines
       position_tolerance: 0
@@ -216,7 +216,7 @@ displays:
     config:
       visible: true
       collapsed: true
-      topic: /AUV_NS/base/odometry/global
+      topic: /AGENT_NS/base/odometry/global
       color: "#00ff00"
       draw_style: lines
       position_tolerance: 0
@@ -236,7 +236,7 @@ displays:
     config:
       visible: false
       collapsed: true
-      topic: /AUV_NS/dvl/odometry
+      topic: /AGENT_NS/dvl/odometry
       color: "#55ffff"
       draw_style: lines
       position_tolerance: 0

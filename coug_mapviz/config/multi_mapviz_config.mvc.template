@@ -1,10 +1,10 @@
 displays:
   - type: mapviz_plugins/tf_frame
-    name: AUV_NS
+    name: AGENT_NS
     config:
       visible: true
       collapsed: true
-      frame: AUV_NS/base_link
+      frame: AGENT_NS/base_link
       color: "#00ff00"
       draw_style: arrows
       position_tolerance: 0
@@ -12,11 +12,11 @@ displays:
       static_arrow_sizes: true
       arrow_size: 53
   - type: mapviz_plugins/navsat
-    name: AUV_NS
+    name: AGENT_NS
     config:
       visible: true
       collapsed: true
-      topic: /AUV_NS/gps/fix
+      topic: /AGENT_NS/gps/fix
       color: "#55aaff"
       draw_style: points
       position_tolerance: 0
@@ -26,22 +26,22 @@ displays:
       qos_reliability: 1
       qos_durability: 2
   - type: mapviz_plugins/path
-    name: AUV_NS
+    name: AGENT_NS
     config:
       visible: true
       collapsed: true
-      topic: /AUV_NS/smoothed_path
+      topic: /AGENT_NS/smoothed_path
       color: "#ff55ff"
       qos_depth: 10
       qos_history: 1
       qos_reliability: 1
       qos_durability: 2
   - type: mapviz_plugins/odometry
-    name: AUV_NS, GT
+    name: AGENT_NS, GT
     config:
       visible: true
       collapsed: true
-      topic: /AUV_NS/odometry/truth
+      topic: /AGENT_NS/odometry/truth
       color: "#ffffff"
       draw_style: lines
       position_tolerance: 0
@@ -57,11 +57,11 @@ displays:
       qos_reliability: 1
       qos_durability: 2
   - type: mapviz_plugins/odometry
-    name: AUV_NS, NBR
+    name: AGENT_NS, NBR
     config:
       visible: true
       collapsed: true
-      topic: /AUV_NS/base/odometry/global_nbr
+      topic: /AGENT_NS/base/odometry/global_nbr
       color: "#ffaa00"
       draw_style: lines
       position_tolerance: 0
@@ -77,11 +77,11 @@ displays:
       qos_reliability: 1
       qos_durability: 2
   - type: mapviz_plugins/odometry
-    name: AUV_NS, FGO
+    name: AGENT_NS, FGO
     config:
       visible: true
       collapsed: true
-      topic: /AUV_NS/base/odometry/global
+      topic: /AGENT_NS/base/odometry/global
       color: "#00ff00"
       draw_style: lines
       position_tolerance: 0
