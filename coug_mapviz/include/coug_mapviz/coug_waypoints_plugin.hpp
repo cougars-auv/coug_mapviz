@@ -24,8 +24,9 @@
 #include <QObject>
 #include <QPainter>
 #include <QWidget>
+#include <coug_mapviz/coug_waypoints_parameters.hpp>
 #include <coug_mapviz/utils/agent_interface.hpp>
-#include <coug_mapviz/utils/mission_io.hpp>
+#include <coug_mapviz/utils/waypoint_renderer.hpp>
 #include <map>
 #include <memory>
 #include <rclcpp/rclcpp.hpp>
@@ -38,7 +39,7 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   Q_OBJECT
 
  public:
-  // --- Lifecycle & Mapviz Interface ---
+  // --- Plugin Lifecycle ---
   CougWaypointsPlugin();
   ~CougWaypointsPlugin() override;
 
@@ -52,7 +53,6 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
 
   void Transform() override {}
 
-  // --- Configuration ---
   void LoadConfig(const YAML::Node& node, const std::string& path) override {
     (void)node;
     (void)path;
@@ -68,7 +68,7 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   bool SupportsPainting() override { return true; }
 
  protected:
-  // --- Error Handling ---
+  // --- Logging ---
   void PrintError(const std::string& message) override;
 
   void PrintInfo(const std::string& message) override;
@@ -84,7 +84,6 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
 
   bool handleMouseMove(QMouseEvent* event);
 
-  // --- Thread-Safe Status Updates ---
  Q_SIGNALS:
   void StatusUpdateRequested(int level, const QString& message);
 
@@ -92,7 +91,7 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   void HandleStatusUpdate(int level, const QString& message);
 
  protected Q_SLOTS:
-  // --- UI Slots ---
+  // --- UI Callbacks ---
   void PublishWaypoints();
 
   void Clear();
@@ -103,83 +102,68 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
 
   void AgentChanged(const QString& text);
 
-  // --- Mission Control ---
-  void Start() { callService("start"); }
-
-  void Stop() { callService("stop"); }
-
-  void Surface() { callService("surface"); }
-
-  void Home() { callService("home"); }
-
   void EditorChanged(double value);
 
   void AltitudeModeChanged(bool checked);
 
+  void Start() { callService(utils::AgentInterface::Command::kStart); }
+
+  void Stop() { callService(utils::AgentInterface::Command::kStop); }
+
+  void Surface() { callService(utils::AgentInterface::Command::kSurface); }
+
+  void Home() { callService(utils::AgentInterface::Command::kHome); }
+
  private:
-  // --- Components ---
-  Ui::coug_waypoints_config ui_;
-  QWidget* config_widget_;
-  mapviz::MapCanvas* map_canvas_;
-
-  // --- ROS Interfaces ---
-  utils::AgentInterface interface_;
-  std::map<std::string, std::vector<coug_interfaces::msg::WayPoint>> waypoints_;
-  coug_interfaces::msg::WayPoint default_waypoint_;
-  std::string current_agent_;
-  std::vector<std::string> agent_namespaces_;
-
-  // --- Interaction State ---
-  int selected_idx_;
-  int dragged_idx_;
-  QPointF mouse_down_pos_;
-  qint64 mouse_down_time_;
-
-  // --- Agent Selection ---
+  // --- Helpers ---
   const std::vector<coug_interfaces::msg::WayPoint>& agentWaypoints(const std::string& agent) const;
 
   bool isAgentKnown(const std::string& agent) const;
 
   bool resolveSelectedAgent(std::string& agent);
 
-  int affectedAgentCount(const std::string& agent) const;
-
-  // --- Editor Binding ---
   void applyDefaultsToEditors();
+
+  void setWaypointEditorsEnabled(bool enabled);
+
+  void setDepthEditorRange(bool altitude_mode);
 
   void populateEditors(const coug_interfaces::msg::WayPoint& waypoint);
 
   void deselectWaypoint();
 
-  // --- Agent Actions ---
   void publishAll();
 
-  void callService(const std::string& cmd);
+  void callService(utils::AgentInterface::Command command);
 
   static QString missionDirectory();
-
-  // --- Coordinate Conversion ---
-  static QPointF wgs84ToFixedPoint(const coug_interfaces::msg::WayPoint& waypoint,
-                                   const swri_transform_util::Transform& fixed_T_wgs84);
-
-  QPointF wgs84ToGl(const coug_interfaces::msg::WayPoint& waypoint,
-                    const swri_transform_util::Transform& fixed_T_wgs84);
 
   bool glToWgs84(const QPointF& gl_point, geographic_msgs::msg::GeoPoint& geo_point);
 
   int findClosestWaypoint(const QPointF& point, double& distance);
 
-  // --- Rendering ---
-  void paintWaypointCircles(QPainter* painter,
-                            const std::vector<coug_interfaces::msg::WayPoint>& waypoints,
-                            const swri_transform_util::Transform& fixed_T_wgs84);
+  // --- ROS Interfaces ---
+  utils::AgentInterface interface_;
+  std::unique_ptr<utils::WaypointRenderer> renderer_;
 
-  void paintLabels(QPainter* painter, const std::vector<coug_interfaces::msg::WayPoint>& waypoints,
-                   const swri_transform_util::Transform& fixed_T_wgs84, const QColor& color);
+  // --- Parameters ---
+  std::shared_ptr<coug_waypoints::ParamListener> param_listener_;
+  coug_waypoints::Params params_;
 
-  void paintPath(QPainter* painter, const std::vector<coug_interfaces::msg::WayPoint>& waypoints,
-                 const QColor& color, const swri_transform_util::Transform& fixed_T_wgs84,
-                 int selected_idx = -1);
+  // --- State ---
+  Ui::coug_waypoints_config ui_;
+  QWidget* config_widget_;
+  mapviz::MapCanvas* map_canvas_;
+
+  std::map<std::string, std::vector<coug_interfaces::msg::WayPoint>> waypoints_;
+  coug_interfaces::msg::WayPoint default_waypoint_;
+  std::string current_agent_;
+  std::vector<std::string> agent_namespaces_;
+
+  int selected_idx_;
+  int dragged_idx_;
+  QPointF mouse_down_pos_;
+  qint64 mouse_down_time_;
 };
 
 }  // namespace coug_mapviz

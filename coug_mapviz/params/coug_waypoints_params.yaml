@@ -1,0 +1,59 @@
+coug_waypoints:
+  agent_namespaces:
+    type: string_array
+    default_value: []
+  default_speed_rpm:
+    type: double
+    default_value: 1500.0
+    validation:
+      gt_eq<>: [0.0]
+  default_capture_radius:
+    type: double
+    default_value: 25.0
+    validation:
+      gt_eq<>: [0.0]
+  default_capture_radius_z:
+    type: double
+    default_value: 2.0
+    validation:
+      gt_eq<>: [0.0]
+  default_slip_radius:
+    type: double
+    default_value: 50.0
+    validation:
+      gt_eq<>: [0.0]
+  default_slip_radius_z:
+    type: double
+    default_value: 4.0
+    validation:
+      gt_eq<>: [0.0]
+  waypoint_topic:
+    type: string
+    default_value: waypoints
+    validation:
+      not_empty<>: []
+  waypoint_map_topic:
+    type: string
+    default_value: waypoints_map
+    validation:
+      not_empty<>: []
+  start_service:
+    type: string
+    default_value: base/start
+    validation:
+      not_empty<>: []
+  stop_service:
+    type: string
+    default_value: base/stop
+    validation:
+      not_empty<>: []
+  surface_service:
+    type: string
+    default_value: base/surface
+    validation:
+      not_empty<>: []
+  home_service:
+    type: string
+    default_value: base/home
+    validation:
+      not_empty<>: []

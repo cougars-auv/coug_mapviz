@@ -16,6 +16,11 @@ ament_auto_find_build_dependencies()
 find_package(Qt5 REQUIRED COMPONENTS Core Gui OpenGL Widgets)
 find_package(OpenGL REQUIRED)
 
+generate_parameter_library(
+  coug_waypoints_parameters
+  "params/coug_waypoints_params.yaml"
+)
+
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOUIC_SEARCH_PATHS "${CMAKE_CURRENT_SOURCE_DIR}/ui")
@@ -24,6 +29,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED NO_TARGET_LINK_LIBRARIES
   include/${PROJECT_NAME}/coug_waypoints_plugin.hpp
   src/coug_waypoints_plugin.cpp
   src/utils/agent_interface.cpp
+  src/utils/waypoint_renderer.cpp
 )
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
@@ -34,6 +40,7 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC
 )
 
 target_link_libraries(${PROJECT_NAME}
+  coug_waypoints_parameters
   Qt5::Core
   Qt5::Gui
   Qt5::OpenGL

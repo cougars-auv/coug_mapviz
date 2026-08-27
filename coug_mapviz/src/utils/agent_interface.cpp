@@ -25,36 +25,32 @@ namespace coug_mapviz::utils {
 void AgentInterface::initialize(const std::shared_ptr<rclcpp::Node>& node,
                                 const swri_transform_util::TransformManagerPtr& tf_manager,
                                 const std::vector<std::string>& agent_namespaces,
-                                const std::string& waypoint_topic,
-                                const std::string& waypoint_map_topic,
-                                const std::map<std::string, std::string>& services,
-                                StatusCallback status_callback) {
+                                const Config& config, StatusCallback status_callback) {
   node_ = node;
   tf_manager_ = tf_manager;
+  config_ = config;
   status_ = std::move(status_callback);
-  waypoint_topic_ = waypoint_topic;
-  waypoint_map_topic_ = waypoint_map_topic;
-  services_ = services;
 
-  for (const auto& agent_ns : agent_namespaces) {
-    waypoint_pubs_[agent_ns] = node_->create_publisher<coug_interfaces::msg::WayPointList>(
-        agent_ns + "/" + waypoint_topic_, rclcpp::SystemDefaultsQoS());
-    waypoint_map_pubs_[agent_ns] = node_->create_publisher<geometry_msgs::msg::PoseArray>(
-        agent_ns + "/" + waypoint_map_topic_, rclcpp::SystemDefaultsQoS());
-    for (const auto& [cmd, service] : services) {
-      service_clients_[agent_ns][cmd] =
-          node_->create_client<std_srvs::srv::Trigger>(agent_ns + "/" + service);
+  for (const auto& agent_name : agent_namespaces) {
+    AgentEntry agent;
+    agent.waypoint_pub = node_->create_publisher<coug_interfaces::msg::WayPointList>(
+        agent_name + "/" + config_.waypoint_topic, rclcpp::SystemDefaultsQoS());
+    agent.waypoint_map_pub = node_->create_publisher<geometry_msgs::msg::PoseArray>(
+        agent_name + "/" + config_.waypoint_map_topic, rclcpp::SystemDefaultsQoS());
+    for (size_t i = 0; i < agent.service_clients.size(); ++i) {
+      agent.service_clients[i] =
+          node_->create_client<std_srvs::srv::Trigger>(agent_name + "/" + config_.service_names[i]);
     }
+    agents_[agent_name] = std::move(agent);
   }
 }
 
-void AgentInterface::publishWaypoints(const std::string& agent,
+void AgentInterface::publishWaypoints(const std::string& agent_name,
                                       const std::vector<coug_interfaces::msg::WayPoint>& waypoints,
                                       const std::string& target_frame) {
-  auto publisher_it = waypoint_pubs_.find(agent);
-  auto map_publisher_it = waypoint_map_pubs_.find(agent);
-  if (publisher_it == waypoint_pubs_.end() || map_publisher_it == waypoint_map_pubs_.end()) {
-    status_(Status::kError, "Publisher not registered: " + agent);
+  auto agent_it = agents_.find(agent_name);
+  if (agent_it == agents_.end()) {
+    status_(Status::kError, "Publisher not registered: " + agent_name);
     return;
   }
 
@@ -62,8 +58,7 @@ void AgentInterface::publishWaypoints(const std::string& agent,
   waypoint_list.header.frame_id = swri_transform_util::_wgs84_frame;
   waypoint_list.header.stamp = node_->now();
   waypoint_list.waypoints = waypoints;
-
-  publisher_it->second->publish(waypoint_list);
+  agent_it->second.waypoint_pub->publish(waypoint_list);
 
   swri_transform_util::Transform fixed_T_wgs84;
   if (tf_manager_->GetTransform(target_frame, swri_transform_util::_wgs84_frame, fixed_T_wgs84)) {
@@ -79,95 +74,103 @@ void AgentInterface::publishWaypoints(const std::string& agent,
       pose.orientation.w = 1.0;
       pose_array.poses.push_back(pose);
     }
-    map_publisher_it->second->publish(pose_array);
+    agent_it->second.waypoint_map_pub->publish(pose_array);
   }
 }
 
-void AgentInterface::callService(const std::string& cmd, const std::vector<std::string>& agents,
+void AgentInterface::callService(Command command, const std::vector<std::string>& agents,
                                  bool aggregate) {
-  status_(Status::kInfo, "[" + cmd + "] Calling service...");
+  const std::string prefix = "[" + std::string(commandName(command)) + "] ";
+  status_(Status::kInfo, prefix + "Calling service...");
   if (aggregate) {
     auto state = std::make_shared<CallState>();
     state->total = static_cast<int>(agents.size());
-    state->cmd = cmd;
-    for (const auto& agent_ns : agents) callAgentService(agent_ns, cmd, state);
+    state->command = command;
+    for (const auto& agent_name : agents) callAgentService(agent_name, command, state);
   } else {
-    for (const auto& agent_ns : agents) callAgentService(agent_ns, cmd);
+    for (const auto& agent_name : agents) callAgentService(agent_name, command);
   }
 }
 
-void AgentInterface::callAgentService(const std::string& agent_ns, const std::string& cmd,
+void AgentInterface::callAgentService(const std::string& agent_name, Command command,
                                       std::shared_ptr<CallState> state) {
-  rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr client;
-  auto ns_it = service_clients_.find(agent_ns);
-  if (ns_it != service_clients_.end()) {
-    auto cmd_it = ns_it->second.find(cmd);
-    if (cmd_it != ns_it->second.end()) {
-      client = cmd_it->second;
-    }
-  }
+  const auto agent_it = agents_.find(agent_name);
+  const auto client =
+      agent_it == agents_.end() ? nullptr : agent_it->second.service_clients[commandIndex(command)];
   if (!client || !client->service_is_ready()) {
     if (state)
-      recordResult(state, false, agent_ns);
+      recordResult(state, false, agent_name);
     else
-      status_(Status::kError, "Service not available: " + resolvedName(agent_ns, cmd));
+      status_(Status::kError, "Service not available: " + resolvedName(agent_name, command));
     return;
   }
   auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
   client->async_send_request(
-      request,
-      [this, agent_ns, cmd, state](rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture future) {
+      request, [this, agent_name, command,
+                state](rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture future) {
         auto response = future.get();
         if (!response) {
           if (state)
-            recordResult(state, false, agent_ns);
+            recordResult(state, false, agent_name);
           else
-            status_(Status::kError, "Service call failed: " + resolvedName(agent_ns, cmd));
+            status_(Status::kError, "Service call failed: " + resolvedName(agent_name, command));
           return;
         }
         if (state) {
-          recordResult(state, response->success, agent_ns);
+          recordResult(state, response->success, agent_name);
         } else {
-          std::string prefix = "[" + cmd + "] ";
-          if (response->success)
-            status_(Status::kInfo, prefix + response->message);
-          else
-            status_(Status::kWarning, prefix + response->message);
+          const std::string prefix = "[" + std::string(commandName(command)) + "] ";
+          status_(response->success ? Status::kInfo : Status::kWarning, prefix + response->message);
         }
       });
 }
 
 void AgentInterface::recordResult(std::shared_ptr<CallState> state, bool success,
-                                  const std::string& agent) {
-  std::lock_guard<std::mutex> lock(state->mutex);
-  if (success)
-    state->succeeded++;
-  else
-    state->failed.push_back(agent);
-
-  if (++state->responded < state->total) return;
-
-  int succeeded = state->succeeded;
-  int total = state->total;
-  std::string prefix = "[" + state->cmd + "] ";
-  if (succeeded == total) {
-    status_(Status::kInfo, prefix + "All " + std::to_string(total) + " agent(s) confirmed.");
-  } else {
-    std::string failed_str;
-    for (const auto& failed_agent : state->failed) failed_str += " " + failed_agent;
-    std::string message = prefix + std::to_string(succeeded) + "/" + std::to_string(total) +
-                          " confirmed; failed:" + failed_str + ".";
-    if (succeeded == 0)
-      status_(Status::kError, message);
+                                  const std::string& agent_name) {
+  Status level;
+  std::string message;
+  {
+    std::lock_guard<std::mutex> lock(state->mutex);
+    if (success)
+      ++state->succeeded;
     else
-      status_(Status::kWarning, message);
+      state->failed.push_back(agent_name);
+
+    if (++state->responded < state->total) return;
+
+    const std::string prefix = "[" + std::string(commandName(state->command)) + "] ";
+    if (state->succeeded == state->total) {
+      level = Status::kInfo;
+      message = prefix + "All " + std::to_string(state->total) + " agent(s) confirmed.";
+    } else {
+      std::string failed_agents;
+      for (const auto& failed_agent : state->failed) failed_agents += " " + failed_agent;
+      level = state->succeeded == 0 ? Status::kError : Status::kWarning;
+      message = prefix + std::to_string(state->succeeded) + "/" + std::to_string(state->total) +
+                " confirmed; failed:" + failed_agents + ".";
+    }
   }
+  status_(level, message);
 }
 
-std::string AgentInterface::resolvedName(const std::string& agent_ns,
-                                         const std::string& cmd) const {
-  auto it = services_.find(cmd);
-  return agent_ns + "/" + (it == services_.end() ? cmd : it->second);
+size_t AgentInterface::commandIndex(Command command) { return static_cast<size_t>(command); }
+
+const char* AgentInterface::commandName(Command command) {
+  switch (command) {
+    case Command::kStart:
+      return "START";
+    case Command::kStop:
+      return "STOP";
+    case Command::kSurface:
+      return "SURFACE";
+    case Command::kHome:
+      return "HOME";
+  }
+  return "UNKNOWN";
+}
+
+std::string AgentInterface::resolvedName(const std::string& agent_name, Command command) const {
+  return agent_name + "/" + config_.service_names[commandIndex(command)];
 }
 
 }  // namespace coug_mapviz::utils
