@@ -44,6 +44,7 @@ constexpr double kHitRadiusPx = 15.0;
 constexpr double kClickMaxDistPx = 5.0;
 constexpr qint64 kClickMaxDurationMs = 500;
 constexpr double kDepthEditorLimit = 9999.99;
+
 const QColor kConfigBackgroundColor(Qt::white);
 const QColor kStatusTextColor(Qt::darkGreen);
 const QColor kInactivePathColor(200, 200, 200, 191);

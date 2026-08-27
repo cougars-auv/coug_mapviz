@@ -24,6 +24,7 @@ constexpr int kLabelOffsetXPx = 50;
 constexpr int kDepthLabelOffsetYPx = 15;
 constexpr int kSpeedLabelOffsetYPx = 33;
 constexpr int kIndexLabelSizePx = 40;
+
 const QColor kSlipCircleColor(30, 144, 255, 166);
 const QColor kSlipCircleFillColor(30, 144, 255, 30);
 const QColor kCaptureCircleColor(255, 140, 0, 191);
