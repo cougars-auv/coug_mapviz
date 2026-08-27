@@ -34,7 +34,6 @@
         <number>6</number>
       </property>
 
-      <!-- Row 0: Agent Selection -->
       <item row="0" column="0">
         <widget class="QLabel" name="label_agent">
           <property name="font">
@@ -56,7 +55,6 @@
         </widget>
       </item>
 
-      <!-- Row 1: Latitude Adjustment -->
       <item row="1" column="0">
         <widget class="QLabel" name="label_lat">
           <property name="font">
@@ -93,7 +91,6 @@
         </widget>
       </item>
 
-      <!-- Row 2: Longitude Adjustment -->
       <item row="2" column="0">
         <widget class="QLabel" name="label_lon">
           <property name="font">
@@ -130,7 +127,6 @@
         </widget>
       </item>
 
-      <!-- Row 3: Selected Depth -->
       <item row="3" column="0">
         <widget class="QLabel" name="label_selected">
           <property name="font">
@@ -164,7 +160,6 @@
         </widget>
       </item>
 
-      <!-- Row 4: Altitude Control Checkbox -->
       <item row="4" column="1" colspan="3">
         <widget class="QCheckBox" name="altitude_mode">
           <property name="font">
@@ -182,7 +177,6 @@
         </widget>
       </item>
 
-      <!-- Row 5: Selected Speed -->
       <item row="5" column="0">
         <widget class="QLabel" name="label_speed">
           <property name="font">
@@ -219,7 +213,6 @@
         </widget>
       </item>
 
-      <!-- Row 6: Capture Radius -->
       <item row="6" column="0">
         <widget class="QLabel" name="label_capture">
           <property name="font">
@@ -256,7 +249,6 @@
         </widget>
       </item>
 
-      <!-- Row 7: Capture Radius Z -->
       <item row="7" column="0">
         <widget class="QLabel" name="label_capture_z">
           <property name="font">
@@ -293,7 +285,6 @@
         </widget>
       </item>
 
-      <!-- Row 8: Slip Radius -->
       <item row="8" column="0">
         <widget class="QLabel" name="label_slip">
           <property name="font">
@@ -330,7 +321,6 @@
         </widget>
       </item>
 
-      <!-- Row 9: Slip Radius Z -->
       <item row="9" column="0">
         <widget class="QLabel" name="label_slip_z">
           <property name="font">
@@ -367,7 +357,6 @@
         </widget>
       </item>
 
-      <!-- Row 10: Separator -->
       <item row="10" column="1" colspan="3">
         <widget class="QFrame" name="separator_top">
           <property name="frameShape">
@@ -379,7 +368,6 @@
         </widget>
       </item>
 
-      <!-- Row 11: Publish / Clear -->
       <item row="11" column="1" colspan="3">
         <layout class="QHBoxLayout" name="horizontalLayout_pub_clear">
           <item>
@@ -399,7 +387,6 @@
         </layout>
       </item>
 
-      <!-- Row 12: Load / Save -->
       <item row="12" column="1" colspan="3">
         <layout class="QHBoxLayout" name="horizontalLayout_file">
           <item>
@@ -419,7 +406,6 @@
         </layout>
       </item>
 
-      <!-- Row 13: Separator -->
       <item row="13" column="1" colspan="3">
         <widget class="QFrame" name="separator">
           <property name="frameShape">
@@ -431,7 +417,6 @@
         </widget>
       </item>
 
-      <!-- Row 14: Start / Stop -->
       <item row="14" column="1" colspan="3">
         <layout class="QHBoxLayout" name="horizontalLayout_start_stop">
           <item>
@@ -451,7 +436,6 @@
         </layout>
       </item>
 
-      <!-- Row 15: Surface / Home -->
       <item row="15" column="1" colspan="3">
         <layout class="QHBoxLayout" name="horizontalLayout_surface_home">
           <item>
@@ -471,7 +455,6 @@
         </layout>
       </item>
 
-      <!-- Row 16: Checkbox -->
       <item row="16" column="1" colspan="3">
         <widget class="QCheckBox" name="apply_all">
           <property name="font">
@@ -489,7 +472,6 @@
         </widget>
       </item>
 
-      <!-- Row 17: Status -->
       <item row="17" column="0">
         <widget class="QLabel" name="label_2">
           <property name="font">
