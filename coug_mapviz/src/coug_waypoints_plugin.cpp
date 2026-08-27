@@ -36,7 +36,7 @@ PLUGINLIB_EXPORT_CLASS(coug_mapviz::CougWaypointsPlugin, mapviz::MapvizPlugin)
 
 namespace coug_mapviz {
 
-using utils::AgentInterface;
+using utils::FleetInterface;
 
 namespace {
 
@@ -132,13 +132,13 @@ bool CougWaypointsPlugin::Initialize(QGLWidget* canvas) {
   default_waypoint_.slip_radius_z = params_.default_slip_radius_z;
   applyDefaultsToEditors();
 
-  const AgentInterface::Config interface_config{
+  const FleetInterface::Config interface_config{
       params_.waypoint_topic,
       params_.waypoint_map_topic,
       {params_.start_service, params_.stop_service, params_.surface_service, params_.home_service},
   };
   interface_.initialize(node_, tf_manager_, agent_namespaces_, interface_config,
-                        [this](AgentInterface::Status level, const std::string& message) {
+                        [this](FleetInterface::Status level, const std::string& message) {
                           Q_EMIT StatusUpdateRequested(static_cast<int>(level),
                                                        QString::fromStdString(message));
                         });
@@ -324,14 +324,14 @@ bool CougWaypointsPlugin::handleMouseMove(QMouseEvent* event) {
 }
 
 void CougWaypointsPlugin::HandleStatusUpdate(int level, const QString& message) {
-  switch (static_cast<AgentInterface::Status>(level)) {
-    case AgentInterface::Status::kInfo:
+  switch (static_cast<FleetInterface::Status>(level)) {
+    case FleetInterface::Status::kInfo:
       PrintInfo(message.toStdString());
       break;
-    case AgentInterface::Status::kWarning:
+    case FleetInterface::Status::kWarning:
       PrintWarning(message.toStdString());
       break;
-    case AgentInterface::Status::kError:
+    case FleetInterface::Status::kError:
       PrintError(message.toStdString());
       break;
   }
@@ -641,7 +641,7 @@ void CougWaypointsPlugin::publishAll() {
   PrintInfo("Published to " + std::to_string(agent_namespaces_.size()) + " agent(s).");
 }
 
-void CougWaypointsPlugin::callService(AgentInterface::Command command) {
+void CougWaypointsPlugin::callService(FleetInterface::Command command) {
   if (ui_.apply_all->isChecked()) {
     if (agent_namespaces_.empty()) {
       PrintError("No agents configured.");

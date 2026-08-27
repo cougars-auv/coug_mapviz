@@ -31,7 +31,7 @@
 
 namespace coug_mapviz::utils {
 
-class AgentInterface {
+class FleetInterface {
  public:
   enum class Status { kInfo, kWarning, kError };
   enum class Command { kStart, kStop, kSurface, kHome };
@@ -44,7 +44,7 @@ class AgentInterface {
     std::array<std::string, 4> service_names;
   };
 
-  AgentInterface() = default;
+  FleetInterface() = default;
 
   void initialize(const std::shared_ptr<rclcpp::Node>& node,
                   const swri_transform_util::TransformManagerPtr& tf_manager,

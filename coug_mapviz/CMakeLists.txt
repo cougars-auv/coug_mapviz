@@ -28,7 +28,7 @@ set(CMAKE_AUTOUIC_SEARCH_PATHS "${CMAKE_CURRENT_SOURCE_DIR}/ui")
 ament_auto_add_library(${PROJECT_NAME} SHARED NO_TARGET_LINK_LIBRARIES
   include/${PROJECT_NAME}/coug_waypoints_plugin.hpp
   src/coug_waypoints_plugin.cpp
-  src/utils/agent_interface.cpp
+  src/utils/fleet_interface.cpp
   src/utils/waypoint_renderer.cpp
 )
 

@@ -15,14 +15,14 @@
 #include <swri_transform_util/frames.h>
 #include <swri_transform_util/transform.h>
 
-#include <coug_mapviz/utils/agent_interface.hpp>
+#include <coug_mapviz/utils/fleet_interface.hpp>
 #include <coug_mapviz/utils/geo_conversions.hpp>
 #include <string>
 #include <utility>
 
 namespace coug_mapviz::utils {
 
-void AgentInterface::initialize(const std::shared_ptr<rclcpp::Node>& node,
+void FleetInterface::initialize(const std::shared_ptr<rclcpp::Node>& node,
                                 const swri_transform_util::TransformManagerPtr& tf_manager,
                                 const std::vector<std::string>& agent_namespaces,
                                 const Config& config, StatusCallback status_callback) {
@@ -45,7 +45,7 @@ void AgentInterface::initialize(const std::shared_ptr<rclcpp::Node>& node,
   }
 }
 
-void AgentInterface::publishWaypoints(const std::string& agent_name,
+void FleetInterface::publishWaypoints(const std::string& agent_name,
                                       const std::vector<coug_interfaces::msg::WayPoint>& waypoints,
                                       const std::string& target_frame) {
   auto agent_it = agents_.find(agent_name);
@@ -78,7 +78,7 @@ void AgentInterface::publishWaypoints(const std::string& agent_name,
   }
 }
 
-void AgentInterface::callService(Command command, const std::vector<std::string>& agents,
+void FleetInterface::callService(Command command, const std::vector<std::string>& agents,
                                  bool aggregate) {
   const std::string prefix = "[" + std::string(commandName(command)) + "] ";
   status_(Status::kInfo, prefix + "Calling service...");
@@ -92,7 +92,7 @@ void AgentInterface::callService(Command command, const std::vector<std::string>
   }
 }
 
-void AgentInterface::callAgentService(const std::string& agent_name, Command command,
+void FleetInterface::callAgentService(const std::string& agent_name, Command command,
                                       std::shared_ptr<CallState> state) {
   const auto agent_it = agents_.find(agent_name);
   const auto client =
@@ -125,7 +125,7 @@ void AgentInterface::callAgentService(const std::string& agent_name, Command com
       });
 }
 
-void AgentInterface::recordResult(std::shared_ptr<CallState> state, bool success,
+void FleetInterface::recordResult(std::shared_ptr<CallState> state, bool success,
                                   const std::string& agent_name) {
   Status level;
   std::string message;
@@ -153,9 +153,9 @@ void AgentInterface::recordResult(std::shared_ptr<CallState> state, bool success
   status_(level, message);
 }
 
-size_t AgentInterface::commandIndex(Command command) { return static_cast<size_t>(command); }
+size_t FleetInterface::commandIndex(Command command) { return static_cast<size_t>(command); }
 
-const char* AgentInterface::commandName(Command command) {
+const char* FleetInterface::commandName(Command command) {
   switch (command) {
     case Command::kStart:
       return "start";
@@ -169,7 +169,7 @@ const char* AgentInterface::commandName(Command command) {
   return "UNKNOWN";
 }
 
-std::string AgentInterface::resolvedName(const std::string& agent_name, Command command) const {
+std::string FleetInterface::resolvedName(const std::string& agent_name, Command command) const {
   return agent_name + "/" + config_.service_names[commandIndex(command)];
 }
 

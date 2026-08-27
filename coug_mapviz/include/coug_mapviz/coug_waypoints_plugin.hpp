@@ -25,7 +25,7 @@
 #include <QPainter>
 #include <QWidget>
 #include <coug_mapviz/coug_waypoints_parameters.hpp>
-#include <coug_mapviz/utils/agent_interface.hpp>
+#include <coug_mapviz/utils/fleet_interface.hpp>
 #include <coug_mapviz/utils/waypoint_renderer.hpp>
 #include <map>
 #include <memory>
@@ -106,13 +106,13 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
 
   void AltitudeModeChanged(bool checked);
 
-  void Start() { callService(utils::AgentInterface::Command::kStart); }
+  void Start() { callService(utils::FleetInterface::Command::kStart); }
 
-  void Stop() { callService(utils::AgentInterface::Command::kStop); }
+  void Stop() { callService(utils::FleetInterface::Command::kStop); }
 
-  void Surface() { callService(utils::AgentInterface::Command::kSurface); }
+  void Surface() { callService(utils::FleetInterface::Command::kSurface); }
 
-  void Home() { callService(utils::AgentInterface::Command::kHome); }
+  void Home() { callService(utils::FleetInterface::Command::kHome); }
 
  private:
   // --- Helpers ---
@@ -134,7 +134,7 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
 
   void publishAll();
 
-  void callService(utils::AgentInterface::Command command);
+  void callService(utils::FleetInterface::Command command);
 
   static QString missionDirectory();
 
@@ -143,7 +143,7 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   int findClosestWaypoint(const QPointF& point, double& distance);
 
   // --- ROS Interfaces ---
-  utils::AgentInterface interface_;
+  utils::FleetInterface interface_;
   std::unique_ptr<utils::WaypointRenderer> renderer_;
 
   // --- Parameters ---
