@@ -10,19 +10,16 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-# --- Dependencies ---
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
 find_package(Qt5 REQUIRED COMPONENTS Core Gui OpenGL Widgets)
 find_package(OpenGL REQUIRED)
 
-# --- Qt Setup ---
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOUIC_SEARCH_PATHS "${CMAKE_CURRENT_SOURCE_DIR}/ui")
 
-# --- Plugin Library ---
 ament_auto_add_library(${PROJECT_NAME} SHARED NO_TARGET_LINK_LIBRARIES
   include/${PROJECT_NAME}/coug_waypoints_plugin.hpp
   src/coug_waypoints_plugin.cpp
@@ -44,7 +41,6 @@ target_link_libraries(${PROJECT_NAME}
   OpenGL::GL
 )
 
-# --- Export ---
 pluginlib_export_plugin_description_file(mapviz mapviz_plugins.xml)
 
 ament_export_dependencies(Qt5)
