@@ -29,7 +29,6 @@
 #include <map>
 #include <memory>
 #include <rclcpp/rclcpp.hpp>
-#include <set>
 #include <string>
 #include <vector>
 
@@ -129,7 +128,6 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   coug_interfaces::msg::WayPoint default_waypoint_;
   std::string current_agent_;
   std::vector<std::string> agent_namespaces_;
-  std::set<std::string> known_agents_;
 
   // --- Interaction State ---
   int selected_idx_;
@@ -172,17 +170,9 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   int findClosestWaypoint(const QPointF& point, double& distance);
 
   // --- Rendering ---
-  static void drawPath(const std::vector<coug_interfaces::msg::WayPoint>& waypoints,
-                       const swri_transform_util::Transform& fixed_T_wgs84);
-
-  static void drawWaypointCircles(const std::vector<coug_interfaces::msg::WayPoint>& waypoints,
-                                  const swri_transform_util::Transform& fixed_T_wgs84);
-
-  static void drawFilledCircle(double center_x, double center_y, double radius, float red,
-                               float green, float blue, float alpha);
-
-  static void drawCircleOutline(double center_x, double center_y, double radius, float red,
-                                float green, float blue, float alpha);
+  void paintWaypointCircles(QPainter* painter,
+                            const std::vector<coug_interfaces::msg::WayPoint>& waypoints,
+                            const swri_transform_util::Transform& fixed_T_wgs84);
 
   void paintLabels(QPainter* painter, const std::vector<coug_interfaces::msg::WayPoint>& waypoints,
                    const swri_transform_util::Transform& fixed_T_wgs84, const QColor& color);

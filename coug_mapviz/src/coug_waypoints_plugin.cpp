@@ -41,7 +41,6 @@ using utils::AgentInterface;
 static constexpr double kHitRadiusPx = 15.0;
 static constexpr double kClickMaxDistPx = 5.0;
 static constexpr qint64 kClickMaxDurationMs = 500;
-static constexpr int kCircleSegments = 48;
 static constexpr double kDepthEditorLimit = 9999.99;
 
 static constexpr float kWaypointMarkerPx = 20.0f;
@@ -52,54 +51,8 @@ static constexpr int kLabelOffsetXPx = 50;
 static constexpr int kDepthLabelOffsetYPx = 15;
 static constexpr int kSpeedLabelOffsetYPx = 33;
 static constexpr int kIndexLabelSizePx = 40;
-static constexpr float kPathAlpha = 0.75f;
 
 namespace {
-
-struct EditorBinding {
-  QDoubleSpinBox* Ui::coug_waypoints_config::* editor;
-  double (*get)(const coug_interfaces::msg::WayPoint&);
-  void (*set)(coug_interfaces::msg::WayPoint&, double);
-};
-
-constexpr std::array<EditorBinding, 8> kEditorBindings = {{
-    {&Ui::coug_waypoints_config::lat_editor,
-     [](const coug_interfaces::msg::WayPoint& waypoint) { return waypoint.position.latitude; },
-     [](coug_interfaces::msg::WayPoint& waypoint, double value) {
-       waypoint.position.latitude = value;
-     }},
-    {&Ui::coug_waypoints_config::lon_editor,
-     [](const coug_interfaces::msg::WayPoint& waypoint) { return waypoint.position.longitude; },
-     [](coug_interfaces::msg::WayPoint& waypoint, double value) {
-       waypoint.position.longitude = value;
-     }},
-    {&Ui::coug_waypoints_config::depth_editor,
-     [](const coug_interfaces::msg::WayPoint& waypoint) { return waypoint.position.altitude; },
-     [](coug_interfaces::msg::WayPoint& waypoint, double value) {
-       waypoint.position.altitude = value;
-     }},
-    {&Ui::coug_waypoints_config::speed_editor,
-     [](const coug_interfaces::msg::WayPoint& waypoint) { return waypoint.speed_rpm; },
-     [](coug_interfaces::msg::WayPoint& waypoint, double value) { waypoint.speed_rpm = value; }},
-    {&Ui::coug_waypoints_config::capture_radius_editor,
-     [](const coug_interfaces::msg::WayPoint& waypoint) { return waypoint.capture_radius; },
-     [](coug_interfaces::msg::WayPoint& waypoint, double value) {
-       waypoint.capture_radius = value;
-     }},
-    {&Ui::coug_waypoints_config::capture_radius_z_editor,
-     [](const coug_interfaces::msg::WayPoint& waypoint) { return waypoint.capture_radius_z; },
-     [](coug_interfaces::msg::WayPoint& waypoint, double value) {
-       waypoint.capture_radius_z = value;
-     }},
-    {&Ui::coug_waypoints_config::slip_radius_editor,
-     [](const coug_interfaces::msg::WayPoint& waypoint) { return waypoint.slip_radius; },
-     [](coug_interfaces::msg::WayPoint& waypoint, double value) { waypoint.slip_radius = value; }},
-    {&Ui::coug_waypoints_config::slip_radius_z_editor,
-     [](const coug_interfaces::msg::WayPoint& waypoint) { return waypoint.slip_radius_z; },
-     [](coug_interfaces::msg::WayPoint& waypoint, double value) {
-       waypoint.slip_radius_z = value;
-     }},
-}};
 
 void setEditorValue(QDoubleSpinBox* editor, double value) {
   editor->blockSignals(true);
@@ -197,7 +150,6 @@ bool CougWaypointsPlugin::Initialize(QGLWidget* canvas) {
       {"surface", get_or_declare("surface_service", std::string("base/surface"))},
       {"home", get_or_declare("home_service", std::string("base/home"))},
   };
-  known_agents_ = std::set<std::string>(agent_namespaces_.begin(), agent_namespaces_.end());
   for (const auto& agent_ns : agent_namespaces_) {
     ui_.agent_selector->addItem(QString::fromStdString(agent_ns));
   }
@@ -227,26 +179,6 @@ void CougWaypointsPlugin::Draw(double x, double y, double scale) {
   (void)x;
   (void)y;
   (void)scale;
-
-  swri_transform_util::Transform fixed_T_wgs84;
-  if (!tf_manager_->GetTransform(target_frame_, swri_transform_util::_wgs84_frame, fixed_T_wgs84)) {
-    return;
-  }
-
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-  if (!current_agent_.empty()) {
-    drawWaypointCircles(agentWaypoints(current_agent_), fixed_T_wgs84);
-  }
-
-  glLineWidth(kPathWidthPx);
-
-  for (const auto& [agent, waypoints] : waypoints_) {
-    if (agent != current_agent_ && isAgentKnown(agent)) {
-      drawPath(waypoints, fixed_T_wgs84);
-    }
-  }
 }
 
 void CougWaypointsPlugin::Paint(QPainter* painter, double x, double y, double scale) {
@@ -265,6 +197,7 @@ void CougWaypointsPlugin::Paint(QPainter* painter, double x, double y, double sc
   painter->setFont(QFont("DejaVu Sans Mono", 10, QFont::Bold));
   for (const auto& [agent, waypoints] : waypoints_) {
     if (agent != current_agent_ && isAgentKnown(agent)) {
+      paintPath(painter, waypoints, QColor(200, 200, 200, 191), fixed_T_wgs84);
       paintLabels(painter, waypoints, fixed_T_wgs84, QColor(255, 255, 255, 191));
     }
   }
@@ -272,6 +205,7 @@ void CougWaypointsPlugin::Paint(QPainter* painter, double x, double y, double sc
   if (!current_agent_.empty()) {
     const auto& waypoints = agentWaypoints(current_agent_);
     if (!waypoints.empty()) {
+      paintWaypointCircles(painter, waypoints, fixed_T_wgs84);
       paintPath(painter, waypoints, QColor(Qt::blue), fixed_T_wgs84, selected_idx_);
       paintLabels(painter, waypoints, fixed_T_wgs84, Qt::white);
     }
@@ -535,19 +469,33 @@ void CougWaypointsPlugin::AgentChanged(const QString& text) {
 void CougWaypointsPlugin::EditorChanged(double value) {
   if (selected_idx_ < 0) return;
 
-  const QObject* editor = sender();
-  const auto binding = std::find_if(
-      kEditorBindings.begin(), kEditorBindings.end(),
-      [this, editor](const EditorBinding& candidate) { return ui_.*candidate.editor == editor; });
-  if (binding == kEditorBindings.end()) {
+  auto it = waypoints_.find(current_agent_);
+  if (it == waypoints_.end() || static_cast<size_t>(selected_idx_) >= it->second.size()) {
     return;
   }
+  auto& waypoint = it->second[selected_idx_];
 
-  auto it = waypoints_.find(current_agent_);
-  if (it != waypoints_.end() && static_cast<size_t>(selected_idx_) < it->second.size()) {
-    binding->set(it->second[selected_idx_], value);
-    map_canvas_->update();
+  const QObject* editor = sender();
+  if (editor == ui_.lat_editor) {
+    waypoint.position.latitude = value;
+  } else if (editor == ui_.lon_editor) {
+    waypoint.position.longitude = value;
+  } else if (editor == ui_.depth_editor) {
+    waypoint.position.altitude = value;
+  } else if (editor == ui_.speed_editor) {
+    waypoint.speed_rpm = value;
+  } else if (editor == ui_.capture_radius_editor) {
+    waypoint.capture_radius = value;
+  } else if (editor == ui_.capture_radius_z_editor) {
+    waypoint.capture_radius_z = value;
+  } else if (editor == ui_.slip_radius_editor) {
+    waypoint.slip_radius = value;
+  } else if (editor == ui_.slip_radius_z_editor) {
+    waypoint.slip_radius_z = value;
+  } else {
+    return;
   }
+  map_canvas_->update();
 }
 
 void CougWaypointsPlugin::AltitudeModeChanged(bool checked) {
@@ -585,7 +533,8 @@ const std::vector<coug_interfaces::msg::WayPoint>& CougWaypointsPlugin::agentWay
 }
 
 bool CougWaypointsPlugin::isAgentKnown(const std::string& agent) const {
-  return known_agents_.count(agent) > 0;
+  return std::find(agent_namespaces_.begin(), agent_namespaces_.end(), agent) !=
+         agent_namespaces_.end();
 }
 
 bool CougWaypointsPlugin::resolveSelectedAgent(std::string& agent) {
@@ -606,9 +555,14 @@ int CougWaypointsPlugin::affectedAgentCount(const std::string& agent) const {
 }
 
 void CougWaypointsPlugin::applyDefaultsToEditors() {
-  for (const auto& binding : kEditorBindings) {
-    setEditorValue(ui_.*binding.editor, binding.get(default_waypoint_));
-  }
+  setEditorValue(ui_.lat_editor, default_waypoint_.position.latitude);
+  setEditorValue(ui_.lon_editor, default_waypoint_.position.longitude);
+  setEditorValue(ui_.depth_editor, default_waypoint_.position.altitude);
+  setEditorValue(ui_.speed_editor, default_waypoint_.speed_rpm);
+  setEditorValue(ui_.capture_radius_editor, default_waypoint_.capture_radius);
+  setEditorValue(ui_.capture_radius_z_editor, default_waypoint_.capture_radius_z);
+  setEditorValue(ui_.slip_radius_editor, default_waypoint_.slip_radius);
+  setEditorValue(ui_.slip_radius_z_editor, default_waypoint_.slip_radius_z);
 }
 
 void CougWaypointsPlugin::populateEditors(const coug_interfaces::msg::WayPoint& waypoint) {
@@ -627,19 +581,36 @@ void CougWaypointsPlugin::populateEditors(const coug_interfaces::msg::WayPoint& 
     ui_.depth_editor->setMaximum(0.0);
   }
 
-  for (const auto& binding : kEditorBindings) {
-    QDoubleSpinBox* editor = ui_.*binding.editor;
-    editor->setEnabled(true);
-    setEditorValue(editor, binding.get(waypoint));
-  }
+  ui_.lat_editor->setEnabled(true);
+  ui_.lon_editor->setEnabled(true);
+  ui_.depth_editor->setEnabled(true);
+  ui_.speed_editor->setEnabled(true);
+  ui_.capture_radius_editor->setEnabled(true);
+  ui_.capture_radius_z_editor->setEnabled(true);
+  ui_.slip_radius_editor->setEnabled(true);
+  ui_.slip_radius_z_editor->setEnabled(true);
+
+  setEditorValue(ui_.lat_editor, waypoint.position.latitude);
+  setEditorValue(ui_.lon_editor, waypoint.position.longitude);
+  setEditorValue(ui_.depth_editor, waypoint.position.altitude);
+  setEditorValue(ui_.speed_editor, waypoint.speed_rpm);
+  setEditorValue(ui_.capture_radius_editor, waypoint.capture_radius);
+  setEditorValue(ui_.capture_radius_z_editor, waypoint.capture_radius_z);
+  setEditorValue(ui_.slip_radius_editor, waypoint.slip_radius);
+  setEditorValue(ui_.slip_radius_z_editor, waypoint.slip_radius_z);
 }
 
 void CougWaypointsPlugin::deselectWaypoint() {
   selected_idx_ = -1;
 
-  for (const auto& binding : kEditorBindings) {
-    (ui_.*binding.editor)->setEnabled(false);
-  }
+  ui_.lat_editor->setEnabled(false);
+  ui_.lon_editor->setEnabled(false);
+  ui_.depth_editor->setEnabled(false);
+  ui_.speed_editor->setEnabled(false);
+  ui_.capture_radius_editor->setEnabled(false);
+  ui_.capture_radius_z_editor->setEnabled(false);
+  ui_.slip_radius_editor->setEnabled(false);
+  ui_.slip_radius_z_editor->setEnabled(false);
 
   ui_.altitude_mode->blockSignals(true);
   ui_.altitude_mode->setChecked(false);
@@ -725,68 +696,28 @@ int CougWaypointsPlugin::findClosestWaypoint(const QPointF& point, double& dista
   return closest_idx;
 }
 
-void CougWaypointsPlugin::drawPath(const std::vector<coug_interfaces::msg::WayPoint>& waypoints,
-                                   const swri_transform_util::Transform& fixed_T_wgs84) {
-  std::vector<QPointF> points;
-  points.reserve(waypoints.size());
-  for (const auto& waypoint : waypoints) {
-    points.push_back(wgs84ToFixedPoint(waypoint, fixed_T_wgs84));
-  }
-
-  glColor4f(1.0, 1.0, 1.0, kPathAlpha);
-  glBegin(GL_LINE_STRIP);
-  for (const auto& point : points) {
-    glVertex2d(point.x(), point.y());
-  }
-  glEnd();
-
-  glColor4f(0.5, 0.5, 0.5, kPathAlpha);
-  glPointSize(kWaypointMarkerPx);
-  glBegin(GL_POINTS);
-  for (const auto& point : points) {
-    glVertex2d(point.x(), point.y());
-  }
-  glEnd();
-}
-
-void CougWaypointsPlugin::drawWaypointCircles(
-    const std::vector<coug_interfaces::msg::WayPoint>& waypoints,
+void CougWaypointsPlugin::paintWaypointCircles(
+    QPainter* painter, const std::vector<coug_interfaces::msg::WayPoint>& waypoints,
     const swri_transform_util::Transform& fixed_T_wgs84) {
   for (const auto& waypoint : waypoints) {
-    QPointF center = wgs84ToFixedPoint(waypoint, fixed_T_wgs84);
-    double center_x = center.x();
-    double center_y = center.y();
-    double capture_radius = waypoint.capture_radius;
-    double slip_radius = waypoint.slip_radius;
+    QPointF fixed_center = wgs84ToFixedPoint(waypoint, fixed_T_wgs84);
+    QPointF gl_center = map_canvas_->FixedFrameToMapGlCoord(fixed_center);
+    QPointF gl_slip_edge = map_canvas_->FixedFrameToMapGlCoord(
+        QPointF(fixed_center.x() + waypoint.slip_radius, fixed_center.y()));
+    QPointF gl_cap_edge = map_canvas_->FixedFrameToMapGlCoord(
+        QPointF(fixed_center.x() + waypoint.capture_radius, fixed_center.y()));
 
-    drawFilledCircle(center_x, center_y, slip_radius, 0.118f, 0.565f, 1.0f, 0.12f);
-    drawCircleOutline(center_x, center_y, slip_radius, 0.118f, 0.565f, 1.0f, 0.65f);
-    drawFilledCircle(center_x, center_y, capture_radius, 1.0f, 0.55f, 0.0f, 0.18f);
-    drawCircleOutline(center_x, center_y, capture_radius, 1.0f, 0.55f, 0.0f, 0.75f);
-  }
-}
+    double slip_radius_px = QLineF(gl_center, gl_slip_edge).length();
+    double cap_radius_px = QLineF(gl_center, gl_cap_edge).length();
 
-void CougWaypointsPlugin::drawFilledCircle(double center_x, double center_y, double radius,
-                                           float red, float green, float blue, float alpha) {
-  glColor4f(red, green, blue, alpha);
-  glBegin(GL_TRIANGLE_FAN);
-  glVertex2d(center_x, center_y);
-  for (int i = 0; i <= kCircleSegments; ++i) {
-    double theta = 2.0 * M_PI * static_cast<double>(i) / kCircleSegments;
-    glVertex2d(center_x + radius * std::cos(theta), center_y + radius * std::sin(theta));
-  }
-  glEnd();
-}
+    painter->setPen(QPen(QColor(30, 144, 255, 166), 1.5));
+    painter->setBrush(QBrush(QColor(30, 144, 255, 30)));
+    painter->drawEllipse(gl_center, slip_radius_px, slip_radius_px);
 
-void CougWaypointsPlugin::drawCircleOutline(double center_x, double center_y, double radius,
-                                            float red, float green, float blue, float alpha) {
-  glColor4f(red, green, blue, alpha);
-  glBegin(GL_LINE_LOOP);
-  for (int i = 0; i < kCircleSegments; ++i) {
-    double theta = 2.0 * M_PI * static_cast<double>(i) / kCircleSegments;
-    glVertex2d(center_x + radius * std::cos(theta), center_y + radius * std::sin(theta));
+    painter->setPen(QPen(QColor(255, 140, 0, 191), 1.5));
+    painter->setBrush(QBrush(QColor(255, 140, 0, 46)));
+    painter->drawEllipse(gl_center, cap_radius_px, cap_radius_px);
   }
-  glEnd();
 }
 
 void CougWaypointsPlugin::paintLabels(QPainter* painter,
