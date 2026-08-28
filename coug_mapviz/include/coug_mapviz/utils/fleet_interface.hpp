@@ -49,7 +49,7 @@ class FleetInterface {
   void callService(Service service, const std::vector<std::string>& agents);
 
  private:
-  struct CallState {
+  struct ServiceCallState {
     int total = 0;
     int responded = 0;
     int succeeded = 0;
@@ -67,9 +67,9 @@ class FleetInterface {
   };
 
   void callAgentService(const std::string& agent_name, Service service,
-                        const std::shared_ptr<CallState>& state);
+                        const std::shared_ptr<ServiceCallState>& state);
 
-  void recordResult(const std::shared_ptr<CallState>& state, bool success,
+  void recordResult(const std::shared_ptr<ServiceCallState>& state, bool success,
                     const std::string& agent_name, const std::string& response_message,
                     Status failure_status = Status::kWarning);
 
