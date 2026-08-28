@@ -14,11 +14,10 @@
 
 #pragma once
 
-#include <swri_transform_util/transform_manager.h>
-
 #include <array>
 #include <coug_interfaces/msg/way_point.hpp>
 #include <coug_interfaces/msg/way_point_list.hpp>
+#include <coug_mapviz/coug_waypoints_parameters.hpp>
 #include <functional>
 #include <geometry_msgs/msg/pose_array.hpp>
 #include <map>
@@ -34,61 +33,52 @@ namespace coug_mapviz::utils {
 class FleetInterface {
  public:
   enum class Status { kInfo, kWarning, kError };
-  enum class Command { kStart, kStop, kSurface, kHome };
+  enum class Service { kStart, kStop, kSurface, kHome };
+  static constexpr size_t kServiceCount = 4;
 
   using StatusCallback = std::function<void(Status, const std::string&)>;
 
-  struct Config {
-    std::string waypoint_topic;
-    std::string waypoint_nav2_topic;
-    std::array<std::string, 4> service_names;
-  };
-
   FleetInterface() = default;
 
-  void initialize(const std::shared_ptr<rclcpp::Node>& node,
-                  const swri_transform_util::TransformManagerPtr& tf_manager,
-                  const std::vector<std::string>& agent_list, const Config& config,
+  void initialize(const std::shared_ptr<rclcpp::Node>& node, const coug_waypoints::Params& params,
                   StatusCallback status_callback);
 
   void publishWaypoints(const std::string& agent_name,
-                        const std::vector<coug_interfaces::msg::WayPoint>& waypoints,
-                        const std::string& target_frame);
+                        const std::vector<coug_interfaces::msg::WayPoint>& waypoints);
 
-  void callService(Command command, const std::vector<std::string>& agents, bool aggregate);
+  void callService(Service service, const std::vector<std::string>& agents);
 
  private:
   struct CallState {
     int total = 0;
     int responded = 0;
     int succeeded = 0;
-    Command command;
+    Service service;
     std::vector<std::string> failed;
+    std::string response_message;
+    Status failure_status = Status::kWarning;
     std::mutex mutex;
   };
 
   struct AgentEntry {
     rclcpp::Publisher<coug_interfaces::msg::WayPointList>::SharedPtr waypoint_pub;
     rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr waypoint_nav2_pub;
-    std::array<rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr, 4> service_clients;
+    std::array<rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr, kServiceCount> service_clients;
   };
 
-  void callAgentService(const std::string& agent_name, Command command,
-                        std::shared_ptr<CallState> state = nullptr);
+  void callAgentService(const std::string& agent_name, Service service,
+                        const std::shared_ptr<CallState>& state);
 
-  void recordResult(std::shared_ptr<CallState> state, bool success, const std::string& agent_name);
+  void recordResult(const std::shared_ptr<CallState>& state, bool success,
+                    const std::string& agent_name, const std::string& response_message,
+                    Status failure_status = Status::kWarning);
 
-  static size_t commandIndex(Command command);
-
-  static const char* commandName(Command command);
-
-  std::string resolvedName(const std::string& agent_name, Command command) const;
+  const std::string& serviceName(Service service) const;
 
   std::shared_ptr<rclcpp::Node> node_;
-  swri_transform_util::TransformManagerPtr tf_manager_;
   StatusCallback status_;
 
-  Config config_;
+  coug_waypoints::Params params_;
   std::map<std::string, AgentEntry> agents_;
 };
 

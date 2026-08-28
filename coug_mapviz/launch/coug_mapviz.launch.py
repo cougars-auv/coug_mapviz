@@ -88,6 +88,7 @@ def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Node
                 {
                     "config": mapviz_config_file,
                     "use_sim_time": use_sim_time,
+                    "map_frame": "map",
                     "agent_list": agent_list,
                 },
             ],

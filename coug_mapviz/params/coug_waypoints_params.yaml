@@ -29,31 +29,36 @@ coug_waypoints:
       gt_eq<>: [0.0]
   waypoint_topic:
     type: string
-    default_value: waypoints
+    default_value: "waypoints"
     validation:
       not_empty<>: []
   waypoint_nav2_topic:
     type: string
-    default_value: waypoints_nav2
+    default_value: "waypoints_nav2"
     validation:
       not_empty<>: []
   start_service:
     type: string
-    default_value: base/start
+    default_value: "base/start"
     validation:
       not_empty<>: []
   stop_service:
     type: string
-    default_value: base/stop
+    default_value: "base/stop"
     validation:
       not_empty<>: []
   surface_service:
     type: string
-    default_value: base/surface
+    default_value: "base/surface"
     validation:
       not_empty<>: []
   home_service:
     type: string
-    default_value: base/home
+    default_value: "base/home"
+    validation:
+      not_empty<>: []
+  map_frame:
+    type: string
+    default_value: "map"
     validation:
       not_empty<>: []

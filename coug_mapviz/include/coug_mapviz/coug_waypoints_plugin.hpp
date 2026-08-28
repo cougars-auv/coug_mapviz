@@ -47,23 +47,20 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
 
   void Shutdown() override {}
 
-  void Draw(double x, double y, double scale) override;
+  void Draw(double, double, double) override {}
 
-  void Paint(QPainter* painter, double x, double y, double scale) override;
+  void Paint(QPainter* painter, double, double, double) override;
 
   void Transform() override {}
 
-  void LoadConfig(const YAML::Node& node, const std::string& path) override {
-    (void)node;
-    (void)path;
-  }
+  void LoadConfig(const YAML::Node&, const std::string&) override {}
 
-  void SaveConfig(YAML::Emitter& emitter, const std::string& path) override {
-    (void)emitter;
-    (void)path;
-  }
+  void SaveConfig(YAML::Emitter&, const std::string&) override {}
 
-  QWidget* GetConfigWidget(QWidget* parent) override;
+  QWidget* GetConfigWidget(QWidget* parent) override {
+    config_widget_->setParent(parent);
+    return config_widget_;
+  }
 
   bool SupportsPainting() override { return true; }
 
@@ -88,59 +85,60 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   void StatusUpdateRequested(int level, const QString& message);
 
  public Q_SLOTS:
-  void HandleStatusUpdate(int level, const QString& message);
+  void UpdateStatus(int level, const QString& message);
 
  protected Q_SLOTS:
   // --- UI Callbacks ---
-  void PublishWaypoints();
-
-  void Clear();
-
-  void SaveWaypoints();
-
-  void LoadWaypoints();
-
   void AgentChanged(const QString& text);
 
   void EditorChanged(double value);
 
   void AltitudeModeChanged(bool checked);
 
-  void Start() { callService(utils::FleetInterface::Command::kStart); }
+  void PublishWaypoints();
 
-  void Stop() { callService(utils::FleetInterface::Command::kStop); }
+  void ClearWaypoints();
 
-  void Surface() { callService(utils::FleetInterface::Command::kSurface); }
+  void SaveWaypoints();
 
-  void Home() { callService(utils::FleetInterface::Command::kHome); }
+  void LoadWaypoints();
+
+  void Start() { callFleetService(utils::FleetInterface::Service::kStart); }
+
+  void Stop() { callFleetService(utils::FleetInterface::Service::kStop); }
+
+  void Surface() { callFleetService(utils::FleetInterface::Service::kSurface); }
+
+  void Home() { callFleetService(utils::FleetInterface::Service::kHome); }
 
  private:
   // --- Helpers ---
-  const std::vector<coug_interfaces::msg::WayPoint>& agentWaypoints(const std::string& agent) const;
+  const std::vector<coug_interfaces::msg::WayPoint>& waypointsForAgent(
+      const std::string& agent) const;
 
-  bool isAgentKnown(const std::string& agent) const;
+  std::vector<std::string> targetAgents();
 
-  bool resolveSelectedAgent(std::string& agent);
+  std::vector<coug_interfaces::msg::WayPoint>* currentWaypoints();
 
-  void applyDefaultsToEditors();
+  coug_interfaces::msg::WayPoint* selectedWaypoint();
 
-  void setWaypointEditorsEnabled(bool enabled);
+  int findWaypointAt(const QPointF& point);
+
+  void clearWaypointSelection();
+
+  void setEditorsEnabled(bool enabled);
 
   void setDepthEditorRange(bool altitude_mode);
 
   void populateEditors(const coug_interfaces::msg::WayPoint& waypoint);
 
-  void deselectWaypoint();
-
-  void publishAll();
-
-  void callService(utils::FleetInterface::Command command);
-
   static QString missionDirectory();
 
-  bool glToWgs84(const QPointF& gl_point, geographic_msgs::msg::GeoPoint& geo_point);
+  bool wgs84ToMap(double latitude, double longitude, QPointF& map_point) const;
 
-  int findClosestWaypoint(const QPointF& point, double& distance);
+  bool mapToWgs84(const QPointF& map_point, QPointF& lat_lon) const;
+
+  void callFleetService(utils::FleetInterface::Service service);
 
   // --- ROS Interfaces ---
   utils::FleetInterface interface_;
@@ -156,9 +154,7 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   mapviz::MapCanvas* map_canvas_;
 
   std::map<std::string, std::vector<coug_interfaces::msg::WayPoint>> waypoints_;
-  coug_interfaces::msg::WayPoint default_waypoint_;
   std::string current_agent_;
-  std::vector<std::string> agent_list_;
 
   int selected_idx_;
   int dragged_idx_;

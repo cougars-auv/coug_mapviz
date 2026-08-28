@@ -16,7 +16,6 @@
   <exec_depend>tile_map</exec_depend>
 
   <depend>coug_interfaces</depend>
-  <depend>geographic_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>libqt5-core</depend>
   <depend>libqt5-gui</depend>

@@ -18,121 +18,94 @@
 #include <QPainter>
 #include <QPen>
 #include <QVector>
-#include <coug_mapviz/utils/geo_conversions.hpp>
 #include <coug_mapviz/utils/waypoint_renderer.hpp>
 
 namespace coug_mapviz::utils {
 
 namespace {
 
-constexpr float kWaypointMarkerPx = 20.0F;
+constexpr float kMarkerSizePx = 20.0F;
 constexpr int kPathWidthPx = 2;
+
 constexpr int kLabelWidthPx = 100;
 constexpr int kLabelHeightPx = 20;
 constexpr int kLabelOffsetXPx = 50;
-constexpr int kDepthLabelOffsetYPx = 15;
-constexpr int kSpeedLabelOffsetYPx = 33;
-constexpr int kIndexLabelSizePx = 40;
+constexpr int kDepthOffsetYPx = 15;
+constexpr int kSpeedOffsetYPx = 33;
+constexpr int kIndexSizePx = 40;
 
 const QColor kSlipCircleColor(30, 144, 255, 166);
 const QColor kSlipCircleFillColor(30, 144, 255, 30);
 const QColor kCaptureCircleColor(255, 140, 0, 191);
 const QColor kCaptureCircleFillColor(255, 140, 0, 46);
-const QColor kLightLabelColor(Qt::white);
-const QColor kDarkLabelColor(Qt::black);
-const QColor kActivePathColor(Qt::blue);
-const QColor kSelectedWaypointColor(Qt::yellow);
-const QColor kActiveWaypointColor(Qt::cyan);
-const QColor kInactiveWaypointColor(Qt::gray);
+const QColor kActivePath(Qt::blue);
+const QColor kActiveLabel(Qt::white);
+const QColor kInactivePath(200, 200, 200, 191);
+const QColor kInactiveLabel(255, 255, 255, 191);
+const QColor kActiveMarker(Qt::cyan);
+const QColor kInactiveMarker(Qt::gray);
+const QColor kSelectedMarker(Qt::yellow);
+
+QRectF labelRect(const QPointF& point, int y_offset) {
+  return {QPointF(point.x() - kLabelOffsetXPx, point.y() + y_offset),
+          QSizeF(kLabelWidthPx, kLabelHeightPx)};
+}
 
 }  // namespace
 
 WaypointRenderer::WaypointRenderer(mapviz::MapCanvas* map_canvas) : map_canvas_(map_canvas) {}
 
-QPointF WaypointRenderer::waypointToFixedPoint(
-    const coug_interfaces::msg::WayPoint& waypoint,
-    const swri_transform_util::Transform& fixed_T_wgs84) {
-  const tf2::Vector3 point = wgs84ToFixed(waypoint, fixed_T_wgs84);
-  return QPointF(point.x(), point.y());
+QPointF WaypointRenderer::fixedToGl(const QPointF& fixed_point) const {
+  return map_canvas_->FixedFrameToMapGlCoord(fixed_point);
 }
 
-QPointF WaypointRenderer::waypointToGl(const coug_interfaces::msg::WayPoint& waypoint,
-                                       const swri_transform_util::Transform& fixed_T_wgs84) const {
-  return map_canvas_->FixedFrameToMapGlCoord(waypointToFixedPoint(waypoint, fixed_T_wgs84));
-}
-
-void WaypointRenderer::paintCircles(QPainter* painter,
-                                    const std::vector<coug_interfaces::msg::WayPoint>& waypoints,
-                                    const swri_transform_util::Transform& fixed_T_wgs84) const {
+void WaypointRenderer::paintWaypoints(QPainter* painter,
+                                      const std::vector<coug_interfaces::msg::WayPoint>& waypoints,
+                                      bool active, int selected_idx) const {
+  const QColor& path_color = active ? kActivePath : kInactivePath;
+  const QColor& label_color = active ? kActiveLabel : kInactiveLabel;
+  QVector<QPointF> points;
   for (const auto& waypoint : waypoints) {
-    const QPointF fixed_center = waypointToFixedPoint(waypoint, fixed_T_wgs84);
-    const QPointF gl_center = map_canvas_->FixedFrameToMapGlCoord(fixed_center);
-    const QPointF gl_slip_edge = map_canvas_->FixedFrameToMapGlCoord(
-        QPointF(fixed_center.x() + waypoint.slip_radius, fixed_center.y()));
-    const QPointF gl_capture_edge = map_canvas_->FixedFrameToMapGlCoord(
-        QPointF(fixed_center.x() + waypoint.capture_radius, fixed_center.y()));
-
-    const double slip_radius_px = QLineF(gl_center, gl_slip_edge).length();
-    const double capture_radius_px = QLineF(gl_center, gl_capture_edge).length();
-
-    painter->setPen(QPen(kSlipCircleColor, 1.5));
-    painter->setBrush(QBrush(kSlipCircleFillColor));
-    painter->drawEllipse(gl_center, slip_radius_px, slip_radius_px);
-
-    painter->setPen(QPen(kCaptureCircleColor, 1.5));
-    painter->setBrush(QBrush(kCaptureCircleFillColor));
-    painter->drawEllipse(gl_center, capture_radius_px, capture_radius_px);
+    points.push_back(fixedToGl(QPointF(waypoint.position.x, waypoint.position.y)));
   }
-}
+  painter->setPen(QPen(path_color, kPathWidthPx));
+  painter->drawPolyline(points);
 
-void WaypointRenderer::paintLabels(QPainter* painter,
-                                   const std::vector<coug_interfaces::msg::WayPoint>& waypoints,
-                                   const swri_transform_util::Transform& fixed_T_wgs84,
-                                   const QColor& color) const {
-  for (size_t i = 0; i < waypoints.size(); ++i) {
-    const QPointF gl_point = waypointToGl(waypoints[i], fixed_T_wgs84);
-    painter->setPen(QPen(color));
+  for (int i = 0; i < points.size(); ++i) {
+    const auto& waypoint = waypoints[static_cast<size_t>(i)];
+    if (active) {
+      const QPointF center(waypoint.position.x, waypoint.position.y);
+      const auto radius = [&](double meters) {
+        return QLineF(points[i], fixedToGl(QPointF(center.x() + meters, center.y()))).length();
+      };
+      painter->setPen(QPen(kSlipCircleColor, 1.5));
+      painter->setBrush(QBrush(kSlipCircleFillColor));
+      painter->drawEllipse(points[i], radius(waypoint.slip_radius), radius(waypoint.slip_radius));
+      painter->setPen(QPen(kCaptureCircleColor, 1.5));
+      painter->setBrush(QBrush(kCaptureCircleFillColor));
+      painter->drawEllipse(points[i], radius(waypoint.capture_radius),
+                           radius(waypoint.capture_radius));
+    }
 
-    const QRectF depth_rect(
-        QPointF(gl_point.x() - kLabelOffsetXPx, gl_point.y() + kDepthLabelOffsetYPx),
-        QSizeF(kLabelWidthPx, kLabelHeightPx));
-    const QString depth =
-        waypoints[i].mode == coug_interfaces::msg::WayPoint::ALTITUDE
-            ? "ALT " + QString::number(waypoints[i].position.altitude, 'f', 1) + "m"
-            : QString::number(waypoints[i].position.altitude, 'f', 1) + "m";
-    painter->drawText(depth_rect, Qt::AlignHCenter | Qt::AlignTop, depth);
+    const QColor marker = i == selected_idx ? kSelectedMarker
+                          : active          ? kActiveMarker
+                                            : kInactiveMarker;
+    painter->setPen(QPen(marker, kMarkerSizePx, Qt::SolidLine, Qt::RoundCap));
+    painter->drawPoint(points[i]);
 
-    const QRectF speed_rect(
-        QPointF(gl_point.x() - kLabelOffsetXPx, gl_point.y() + kSpeedLabelOffsetYPx),
-        QSizeF(kLabelWidthPx, kLabelHeightPx));
-    painter->drawText(speed_rect, Qt::AlignHCenter | Qt::AlignTop,
-                      QString::number(waypoints[i].speed_rpm, 'f', 0) + "RPM");
-
-    painter->setPen(QPen(color == kLightLabelColor ? kDarkLabelColor : color));
+    painter->setPen(QPen(label_color));
+    const QString depth = waypoint.mode == coug_interfaces::msg::WayPoint::ALTITUDE
+                              ? "ALT " + QString::number(waypoint.position.z, 'f', 1) + "m"
+                              : QString::number(waypoint.position.z, 'f', 1) + "m";
+    painter->drawText(labelRect(points[i], kDepthOffsetYPx), Qt::AlignHCenter | Qt::AlignTop,
+                      depth);
+    painter->drawText(labelRect(points[i], kSpeedOffsetYPx), Qt::AlignHCenter | Qt::AlignTop,
+                      QString::number(waypoint.speed_rpm, 'f', 0) + "rpm");
+    painter->setPen(QPen(label_color == Qt::white ? Qt::black : label_color));
     const QRectF index_rect(
-        QPointF(gl_point.x() - kIndexLabelSizePx / 2.0, gl_point.y() - kIndexLabelSizePx / 2.0),
-        QSizeF(kIndexLabelSizePx, kIndexLabelSizePx));
+        QPointF(points[i].x() - kIndexSizePx / 2.0, points[i].y() - kIndexSizePx / 2.0),
+        QSizeF(kIndexSizePx, kIndexSizePx));
     painter->drawText(index_rect, Qt::AlignHCenter | Qt::AlignVCenter, QString::number(i + 1));
   }
 }
-
-void WaypointRenderer::paintPath(QPainter* painter,
-                                 const std::vector<coug_interfaces::msg::WayPoint>& waypoints,
-                                 const QColor& color,
-                                 const swri_transform_util::Transform& fixed_T_wgs84,
-                                 int selected_idx) const {
-  QVector<QPointF> points;
-  for (const auto& waypoint : waypoints) points.push_back(waypointToGl(waypoint, fixed_T_wgs84));
-
-  painter->setPen(QPen(color, kPathWidthPx));
-  painter->drawPolyline(points);
-  for (int i = 0; i < points.size(); ++i) {
-    const QColor marker_color = i == selected_idx           ? kSelectedWaypointColor
-                                : color == kActivePathColor ? kActiveWaypointColor
-                                                            : kInactiveWaypointColor;
-    painter->setPen(QPen(marker_color, kWaypointMarkerPx, Qt::SolidLine, Qt::RoundCap));
-    painter->drawPoint(points[i]);
-  }
-}
-
 }  // namespace coug_mapviz::utils
