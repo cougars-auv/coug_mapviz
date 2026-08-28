@@ -22,6 +22,8 @@
 
 namespace coug_mapviz::utils {
 
+using coug_interfaces::msg::WayPoint;
+
 namespace {
 
 constexpr float kMarkerSizePx = 20.0F;
@@ -59,8 +61,7 @@ QPointF WaypointRenderer::fixedToGl(const QPointF& fixed_point) const {
   return map_canvas_->FixedFrameToMapGlCoord(fixed_point);
 }
 
-void WaypointRenderer::paintWaypoints(QPainter* painter,
-                                      const std::vector<coug_interfaces::msg::WayPoint>& waypoints,
+void WaypointRenderer::paintWaypoints(QPainter* painter, const std::vector<WayPoint>& waypoints,
                                       bool active, int selected_idx) const {
   const QColor& path_color = active ? kActivePath : kInactivePath;
   const QColor& label_color = active ? kActiveLabel : kInactiveLabel;
@@ -94,7 +95,7 @@ void WaypointRenderer::paintWaypoints(QPainter* painter,
     painter->drawPoint(points[i]);
 
     painter->setPen(QPen(label_color));
-    const QString depth = waypoint.mode == coug_interfaces::msg::WayPoint::ALTITUDE
+    const QString depth = waypoint.mode == WayPoint::ALTITUDE
                               ? "ALT " + QString::number(waypoint.position.z, 'f', 1) + "m"
                               : QString::number(waypoint.position.z, 'f', 1) + "m";
     painter->drawText(labelRect(points[i], kDepthOffsetYPx), Qt::AlignHCenter | Qt::AlignTop,

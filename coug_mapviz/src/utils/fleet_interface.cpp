@@ -19,6 +19,9 @@
 
 namespace coug_mapviz::utils {
 
+using coug_interfaces::msg::WayPoint;
+using coug_interfaces::msg::WayPointList;
+
 namespace {
 
 const auto build_name = [](const std::string& agent_name, const std::string& name) {
@@ -36,7 +39,7 @@ void FleetInterface::initialize(const std::shared_ptr<rclcpp::Node>& node,
 
   for (const auto& agent_name : params_.agent_list) {
     AgentEntry agent;
-    agent.waypoint_pub = node_->create_publisher<coug_interfaces::msg::WayPointList>(
+    agent.waypoint_pub = node_->create_publisher<WayPointList>(
         build_name(agent_name, params_.waypoint_topic), rclcpp::SystemDefaultsQoS());
     agent.waypoint_nav2_pub = node_->create_publisher<geometry_msgs::msg::PoseArray>(
         build_name(agent_name, params_.waypoint_nav2_topic), rclcpp::SystemDefaultsQoS());
@@ -49,15 +52,15 @@ void FleetInterface::initialize(const std::shared_ptr<rclcpp::Node>& node,
   }
 }
 
-void FleetInterface::publishWaypoints(
-    const std::string& agent_name, const std::vector<coug_interfaces::msg::WayPoint>& waypoints) {
+void FleetInterface::publishWaypoints(const std::string& agent_name,
+                                      const std::vector<WayPoint>& waypoints) {
   auto agent_it = agents_.find(agent_name);
   if (agent_it == agents_.end()) {
     status_(Status::kError, "Publisher not registered: " + agent_name);
     return;
   }
 
-  coug_interfaces::msg::WayPointList waypoint_list;
+  WayPointList waypoint_list;
   waypoint_list.header.frame_id = params_.map_frame;
   waypoint_list.header.stamp = node_->now();
   waypoint_list.waypoints = waypoints;

@@ -36,7 +36,9 @@ PLUGINLIB_EXPORT_CLASS(coug_mapviz::CougWaypointsPlugin, mapviz::MapvizPlugin)
 
 namespace coug_mapviz {
 
+using coug_interfaces::msg::WayPoint;
 using utils::FleetInterface;
+using utils::WaypointRenderer;
 
 namespace {
 
@@ -111,7 +113,7 @@ bool CougWaypointsPlugin::Initialize(QGLWidget* canvas) {
     return false;
   }
   map_canvas_->installEventFilter(this);
-  renderer_ = std::make_unique<utils::WaypointRenderer>(map_canvas_);
+  renderer_ = std::make_unique<WaypointRenderer>(map_canvas_);
 
   param_listener_ = std::make_shared<coug_waypoints::ParamListener>(node_);
   params_ = param_listener_->get_params();
@@ -239,13 +241,12 @@ bool CougWaypointsPlugin::handleMouseRelease(QMouseEvent* event) {
   }
 
   if (event->button() == Qt::LeftButton && is_click) {
-    coug_interfaces::msg::WayPoint waypoint;
+    WayPoint waypoint;
     const QPointF fixed_point = map_canvas_->MapGlCoordToFixedFrame(event->localPos());
     waypoint.position.x = fixed_point.x();
     waypoint.position.y = fixed_point.y();
     waypoint.position.z = ui_.depth_editor->value();
-    waypoint.mode = ui_.altitude_mode->isChecked() ? coug_interfaces::msg::WayPoint::ALTITUDE
-                                                   : coug_interfaces::msg::WayPoint::DEPTH;
+    waypoint.mode = ui_.altitude_mode->isChecked() ? WayPoint::ALTITUDE : WayPoint::DEPTH;
     waypoint.speed_rpm = ui_.speed_editor->value();
     waypoint.capture_radius = ui_.capture_radius_editor->value();
     waypoint.capture_radius_z = ui_.capture_radius_z_editor->value();
@@ -344,8 +345,7 @@ void CougWaypointsPlugin::AltitudeModeChanged(bool checked) {
   auto* waypoint = selectedWaypoint();
   if (!waypoint) return;
 
-  waypoint->mode =
-      checked ? coug_interfaces::msg::WayPoint::ALTITUDE : coug_interfaces::msg::WayPoint::DEPTH;
+  waypoint->mode = checked ? WayPoint::ALTITUDE : WayPoint::DEPTH;
   const double new_altitude =
       checked ? std::abs(waypoint->position.z) : -std::abs(waypoint->position.z);
   waypoint->position.z = new_altitude;
@@ -452,15 +452,15 @@ void CougWaypointsPlugin::LoadWaypoints() {
 
   int loaded_count = 0;
   const QJsonObject mission = document.object();
-  std::map<std::string, std::vector<coug_interfaces::msg::WayPoint>> loaded_waypoints;
+  std::map<std::string, std::vector<WayPoint>> loaded_waypoints;
   for (const auto& agent : agents) {
     const QJsonValue serialized_waypoints = mission[QString::fromStdString(agent)];
     if (!serialized_waypoints.isArray()) continue;
 
-    std::vector<coug_interfaces::msg::WayPoint> waypoints;
+    std::vector<WayPoint> waypoints;
     for (const auto& value : serialized_waypoints.toArray()) {
       const QJsonObject serialized_waypoint = value.toObject();
-      coug_interfaces::msg::WayPoint waypoint;
+      WayPoint waypoint;
       QPointF map_point;
       if (!wgs84ToMap(serialized_waypoint["lat"].toDouble(), serialized_waypoint["lon"].toDouble(),
                       map_point)) {
@@ -494,9 +494,9 @@ void CougWaypointsPlugin::LoadWaypoints() {
   PrintInfo("Loaded " + std::to_string(loaded_count) + " agent(s).");
 }
 
-const std::vector<coug_interfaces::msg::WayPoint>& CougWaypointsPlugin::waypointsForAgent(
+const std::vector<WayPoint>& CougWaypointsPlugin::waypointsForAgent(
     const std::string& agent) const {
-  static const std::vector<coug_interfaces::msg::WayPoint> kNoWaypoints;
+  static const std::vector<WayPoint> kNoWaypoints;
 
   auto it = waypoints_.find(agent);
   return it != waypoints_.end() ? it->second : kNoWaypoints;
@@ -516,12 +516,12 @@ std::vector<std::string> CougWaypointsPlugin::targetAgents() {
   return {current_agent_};
 }
 
-std::vector<coug_interfaces::msg::WayPoint>* CougWaypointsPlugin::currentWaypoints() {
+std::vector<WayPoint>* CougWaypointsPlugin::currentWaypoints() {
   auto it = waypoints_.find(current_agent_);
   return it != waypoints_.end() ? &it->second : nullptr;
 }
 
-coug_interfaces::msg::WayPoint* CougWaypointsPlugin::selectedWaypoint() {
+WayPoint* CougWaypointsPlugin::selectedWaypoint() {
   auto* waypoints = currentWaypoints();
   if (!waypoints || selected_idx_ < 0 || static_cast<size_t>(selected_idx_) >= waypoints->size()) {
     return nullptr;
@@ -575,8 +575,8 @@ void CougWaypointsPlugin::setDepthEditorRange(bool altitude_mode) {
                              altitude_mode ? kDepthEditorLimit : 0.0);
 }
 
-void CougWaypointsPlugin::populateEditors(const coug_interfaces::msg::WayPoint& waypoint) {
-  const bool is_altitude = waypoint.mode == coug_interfaces::msg::WayPoint::ALTITUDE;
+void CougWaypointsPlugin::populateEditors(const WayPoint& waypoint) {
+  const bool is_altitude = waypoint.mode == WayPoint::ALTITUDE;
 
   ui_.altitude_mode->blockSignals(true);
   ui_.altitude_mode->setChecked(is_altitude);
