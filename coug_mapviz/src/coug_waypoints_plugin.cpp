@@ -134,7 +134,7 @@ bool CougWaypointsPlugin::Initialize(QGLWidget* canvas) {
 
   const FleetInterface::Config interface_config{
       params_.waypoint_topic,
-      params_.waypoint_map_topic,
+      params_.waypoint_nav2_topic,
       {params_.start_service, params_.stop_service, params_.surface_service, params_.home_service},
   };
   interface_.initialize(node_, tf_manager_, agent_list_, interface_config,

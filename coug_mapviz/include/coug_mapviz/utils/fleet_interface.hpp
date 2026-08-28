@@ -40,7 +40,7 @@ class FleetInterface {
 
   struct Config {
     std::string waypoint_topic;
-    std::string waypoint_map_topic;
+    std::string waypoint_nav2_topic;
     std::array<std::string, 4> service_names;
   };
 
@@ -69,7 +69,7 @@ class FleetInterface {
 
   struct AgentEntry {
     rclcpp::Publisher<coug_interfaces::msg::WayPointList>::SharedPtr waypoint_pub;
-    rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr waypoint_map_pub;
+    rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr waypoint_nav2_pub;
     std::array<rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr, 4> service_clients;
   };
 

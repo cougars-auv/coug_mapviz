@@ -35,8 +35,8 @@ void FleetInterface::initialize(const std::shared_ptr<rclcpp::Node>& node,
     AgentEntry agent;
     agent.waypoint_pub = node_->create_publisher<coug_interfaces::msg::WayPointList>(
         agent_name + "/" + config_.waypoint_topic, rclcpp::SystemDefaultsQoS());
-    agent.waypoint_map_pub = node_->create_publisher<geometry_msgs::msg::PoseArray>(
-        agent_name + "/" + config_.waypoint_map_topic, rclcpp::SystemDefaultsQoS());
+    agent.waypoint_nav2_pub = node_->create_publisher<geometry_msgs::msg::PoseArray>(
+        agent_name + "/" + config_.waypoint_nav2_topic, rclcpp::SystemDefaultsQoS());
     for (size_t i = 0; i < agent.service_clients.size(); ++i) {
       agent.service_clients[i] =
           node_->create_client<std_srvs::srv::Trigger>(agent_name + "/" + config_.service_names[i]);
@@ -74,7 +74,7 @@ void FleetInterface::publishWaypoints(const std::string& agent_name,
       pose.orientation.w = 1.0;
       pose_array.poses.push_back(pose);
     }
-    agent_it->second.waypoint_map_pub->publish(pose_array);
+    agent_it->second.waypoint_nav2_pub->publish(pose_array);
   }
 }
 

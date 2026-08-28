@@ -32,9 +32,9 @@ coug_waypoints:
     default_value: waypoints
     validation:
       not_empty<>: []
-  waypoint_map_topic:
+  waypoint_nav2_topic:
     type: string
-    default_value: waypoints_map
+    default_value: waypoints_nav2
     validation:
       not_empty<>: []
   start_service:
