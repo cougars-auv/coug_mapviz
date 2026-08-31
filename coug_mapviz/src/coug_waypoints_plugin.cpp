@@ -24,7 +24,6 @@
 #include <QMouseEvent>
 #include <QPainter>
 #include <QSignalBlocker>
-#include <QStandardPaths>
 #include <cmath>
 #include <coug_mapviz/coug_waypoints_plugin.hpp>
 #include <cstdlib>
@@ -383,9 +382,13 @@ void CougWaypointsPlugin::SaveWaypoints() {
   if (agents.empty()) return;
 
   const QString directory = missionDirectory();
-  QDir dir(directory);
-  if (!dir.exists()) {
-    dir.mkpath(".");
+  if (directory.isEmpty()) {
+    PrintError("CONFIG_DIR is not set.");
+  } else {
+    QDir dir(directory);
+    if (!dir.exists()) {
+      dir.mkpath(".");
+    }
   }
 
   QString filename = QFileDialog::getSaveFileName(config_widget_, "Save Mission", directory,
@@ -432,8 +435,13 @@ void CougWaypointsPlugin::LoadWaypoints() {
   const auto agents = targetAgents();
   if (agents.empty()) return;
 
-  const QString filename = QFileDialog::getOpenFileName(config_widget_, "Load Mission",
-                                                        missionDirectory(), "JSON Files (*.json)");
+  const QString directory = missionDirectory();
+  if (directory.isEmpty()) {
+    PrintError("CONFIG_DIR is not set.");
+  }
+
+  const QString filename = QFileDialog::getOpenFileName(config_widget_, "Load Mission", directory,
+                                                        "JSON Files (*.json)");
   if (filename.isEmpty()) {
     return;
   }
@@ -600,10 +608,10 @@ void CougWaypointsPlugin::populateEditors(const WayPoint& waypoint) {
 }
 
 QString CougWaypointsPlugin::missionDirectory() {
-  if (const char* overlay_ws = std::getenv("OVERLAY_WS")) {
-    return QString::fromUtf8(overlay_ws) + "/src/coug_mapviz/coug_mapviz/missions";
+  if (const char* config_dir = std::getenv("CONFIG_DIR")) {
+    return QString::fromUtf8(config_dir) + "/missions";
   }
-  return QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/missions";
+  return QString();
 }
 
 bool CougWaypointsPlugin::wgs84ToMap(double latitude, double longitude, QPointF& map_point) const {
