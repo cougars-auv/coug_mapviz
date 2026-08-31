@@ -157,15 +157,15 @@ void CougWaypointsPlugin::Paint(QPainter* painter, double, double, double) {
 }
 
 void CougWaypointsPlugin::PrintError(const std::string& message) {
-  PrintErrorHelper(ui_.status, message, 1.0);
+  PrintErrorHelper(ui_.status, message);
 }
 
 void CougWaypointsPlugin::PrintInfo(const std::string& message) {
-  PrintInfoHelper(ui_.status, message, 1.0);
+  PrintInfoHelper(ui_.status, message);
 }
 
 void CougWaypointsPlugin::PrintWarning(const std::string& message) {
-  PrintWarningHelper(ui_.status, message, 1.0);
+  PrintWarningHelper(ui_.status, message);
 }
 
 bool CougWaypointsPlugin::eventFilter(QObject*, QEvent* event) {
