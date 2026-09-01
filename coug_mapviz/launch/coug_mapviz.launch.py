@@ -67,7 +67,7 @@ def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Node
     agent_list = yaml.safe_load(agent_list_str)
     config_dir = os.environ["CONFIG_DIR"]
 
-    fleet_params = PathJoinSubstitution(
+    fleet_param_file = PathJoinSubstitution(
         [
             EnvironmentVariable("CONFIG_DIR"),
             "fleet",
@@ -84,7 +84,7 @@ def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Node
             executable="mapviz",
             name="mapviz",
             parameters=[
-                fleet_params,
+                fleet_param_file,
                 {
                     "config": mapviz_config_file,
                     "use_sim_time": use_sim_time,
@@ -101,7 +101,7 @@ def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Node
                 ("fix", "/origin"),
             ],
             parameters=[
-                fleet_params,
+                fleet_param_file,
                 {"use_sim_time": use_sim_time},
             ],
         ),
