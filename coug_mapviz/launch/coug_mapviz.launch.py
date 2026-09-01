@@ -17,7 +17,6 @@ import tempfile
 from typing import Any
 
 import yaml
-from ament_index_python.packages import get_package_share_directory
 from launch import LaunchContext, LaunchDescription
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.substitutions import (
@@ -28,14 +27,46 @@ from launch.substitutions import (
 from launch_ros.actions import Node
 
 
+def create_mapviz_config(agent_list: list[str], gui_dir: str) -> str:
+    with open(os.path.join(gui_dir, "mapviz.mvc.template")) as template:
+        content = template.read()
+
+    if len(agent_list) == 1:
+        config_content = content.replace("AGENT_NS", agent_list[0])
+    else:
+        config = yaml.safe_load(content)
+        displays = config["displays"]
+        displays[:] = [
+            display
+            for display in displays
+            if display["type"]
+            in {"mapviz_plugins/tile_map", "coug_mapviz/coug_waypoints"}
+        ]
+        with open(os.path.join(gui_dir, "multi_mapviz.mvc.template")) as template:
+            agent_template = template.read()
+        displays.extend(
+            display
+            for agent_ns in agent_list
+            for display in yaml.safe_load(agent_template.replace("AGENT_NS", agent_ns))[
+                "displays"
+            ]
+        )
+        config_content = yaml.safe_dump(config)
+
+    with tempfile.NamedTemporaryFile(
+        mode="w", delete=False, suffix=".mvc"
+    ) as rendered_config:
+        rendered_config.write(config_content)
+        return rendered_config.name
+
+
 def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Node]:
     use_sim_time = LaunchConfiguration("use_sim_time")
     agent_list_str = LaunchConfiguration("agent_list").perform(context)
 
     agent_list = yaml.safe_load(agent_list_str)
-    is_multiagent = len(agent_list) > 1
+    config_dir = os.environ["CONFIG_DIR"]
 
-    pkg_share = get_package_share_directory("coug_mapviz")
     fleet_params = PathJoinSubstitution(
         [
             EnvironmentVariable("CONFIG_DIR"),
@@ -43,40 +74,9 @@ def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Node
             "coug_mapviz_params.yaml",
         ]
     )
-    full_template_path = os.path.join(pkg_share, "config", "mapviz_config.mvc.template")
-
-    if is_multiagent:
-        with open(full_template_path, "r") as f:
-            base = yaml.safe_load(f.read())
-
-        global_display_types = {
-            "mapviz_plugins/tile_map",
-            "coug_mapviz/coug_waypoints",
-        }
-        base["displays"] = [
-            d for d in base["displays"] if d["type"] in global_display_types
-        ]
-
-        per_agent_template_path = os.path.join(
-            pkg_share, "config", "multi_mapviz_config.mvc.template"
-        )
-        with open(per_agent_template_path, "r") as f:
-            per_agent_template = f.read()
-
-        for ns in agent_list:
-            per_agent = yaml.safe_load(per_agent_template.replace("AGENT_NS", ns))
-            base["displays"].extend(per_agent["displays"])
-
-        config_content = yaml.safe_dump(base)
-    else:
-        with open(full_template_path, "r") as f:
-            config_content = f.read().replace("AGENT_NS", agent_list[0])
-
-    with tempfile.NamedTemporaryFile(
-        mode="w", delete=False, suffix=".mvc"
-    ) as temp_config:
-        temp_config.write(config_content)
-        mapviz_config_file = temp_config.name
+    mapviz_config_file = create_mapviz_config(
+        agent_list, os.path.join(config_dir, "gui")
+    )
 
     return [
         Node(
