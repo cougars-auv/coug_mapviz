@@ -54,7 +54,7 @@ ament_export_dependencies(Qt5)
 
 ament_auto_package(
   INSTALL_TO_SHARE
-  launch
   config
+  launch
   USE_SCOPED_HEADER_INSTALL_DIR
 )
