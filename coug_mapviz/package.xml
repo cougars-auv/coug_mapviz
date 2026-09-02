@@ -15,8 +15,8 @@
   <exec_depend>launch_ros</exec_depend>
   <exec_depend>mapviz_plugins</exec_depend>
   <exec_depend>python3-yaml</exec_depend>
-  <exec_depend>tile_map</exec_depend>
   <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>tile_map</exec_depend>
 
   <depend>coug_interfaces</depend>
   <depend>geometry_msgs</depend>
