@@ -48,10 +48,10 @@
 #include <QMouseEvent>
 #include <QPainter>
 #include <QSignalBlocker>
+#include <QtGlobal>
 #include <cmath>
 #include <coug_mapviz/coug_waypoints_plugin.hpp>
 #include <cstdint>
-#include <cstdlib>
 #include <map>
 #include <memory>
 #include <pluginlib/class_list_macros.hpp>
@@ -662,10 +662,11 @@ void CougWaypointsPlugin::populateEditors(const WayPoint& waypoint) {
 }
 
 auto CougWaypointsPlugin::missionDirectory() -> QString {
-  if (const char* config_dir = std::getenv("CONFIG_DIR")) {
-    return QString::fromUtf8(config_dir) + "/missions";
+  const QString config_dir = qEnvironmentVariable("CONFIG_DIR");
+  if (config_dir.isEmpty()) {
+    return {};
   }
-  return {};
+  return config_dir + "/missions";
 }
 
 auto CougWaypointsPlugin::wgs84ToMap(double latitude, double longitude, QPointF& map_point) const

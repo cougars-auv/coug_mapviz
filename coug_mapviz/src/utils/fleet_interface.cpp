@@ -121,6 +121,7 @@ void FleetInterface::callAgentService(const std::string& agent_name, Service ser
   auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
   client->async_send_request(
       request, [this, agent_name, service,
+                // NOLINTNEXTLINE(performance-unnecessary-value-param)
                 state](rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture future) {
         const auto& response = future.get();
         if (!response) {
