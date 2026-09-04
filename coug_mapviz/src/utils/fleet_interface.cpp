@@ -13,9 +13,22 @@
 // limitations under the License.
 
 #include <coug_mapviz/utils/fleet_interface.hpp>
+#include <cstddef>
+#include <memory>
+#include <mutex>
+#include <rclcpp/client.hpp>
+#include <rclcpp/node.hpp>
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <vector>
+
+#include "coug_interfaces/msg/way_point.hpp"
+#include "coug_interfaces/msg/way_point_list.hpp"
+#include "coug_mapviz/coug_waypoints_parameters.hpp"
+#include "geometry_msgs/msg/pose.hpp"
+#include "geometry_msgs/msg/pose_array.hpp"
+#include "std_srvs/srv/trigger.hpp"
 
 namespace coug_mapviz::utils {
 
@@ -88,7 +101,9 @@ void FleetInterface::callService(Service service, const std::vector<std::string>
   auto state = std::make_shared<ServiceCallState>();
   state->total = static_cast<int>(agents.size());
   state->service = service;
-  for (const auto& agent_name : agents) callAgentService(agent_name, service, state);
+  for (const auto& agent_name : agents) {
+    callAgentService(agent_name, service, state);
+  }
 }
 
 void FleetInterface::callAgentService(const std::string& agent_name, Service service,
@@ -107,7 +122,7 @@ void FleetInterface::callAgentService(const std::string& agent_name, Service ser
   client->async_send_request(
       request, [this, agent_name, service,
                 state](rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture future) {
-        auto response = future.get();
+        const auto& response = future.get();
         if (!response) {
           recordResult(state, false, agent_name,
                        "Service call failed: " + build_name(agent_name, serviceName(service)),
@@ -124,7 +139,7 @@ void FleetInterface::recordResult(const std::shared_ptr<ServiceCallState>& state
   Status level;
   std::string message;
   {
-    std::lock_guard<std::mutex> lock(state->mutex);
+    std::lock_guard<std::mutex> const lock(state->mutex);
     if (success) {
       ++state->succeeded;
     } else {
@@ -133,7 +148,9 @@ void FleetInterface::recordResult(const std::shared_ptr<ServiceCallState>& state
     }
     state->response_message = response_message;
 
-    if (++state->responded < state->total) return;
+    if (++state->responded < state->total) {
+      return;
+    }
 
     const std::string prefix = "[" + serviceName(state->service) + "] ";
     if (state->total == 1) {
@@ -144,7 +161,9 @@ void FleetInterface::recordResult(const std::shared_ptr<ServiceCallState>& state
       message = prefix + "All " + std::to_string(state->total) + " agent(s) confirmed.";
     } else {
       std::string failed_agents;
-      for (const auto& failed_agent : state->failed) failed_agents += " " + failed_agent;
+      for (const auto& failed_agent : state->failed) {
+        failed_agents += " " + failed_agent;
+      }
       level = state->succeeded == 0 ? Status::kError : Status::kWarning;
       message = prefix + std::to_string(state->succeeded) + "/" + std::to_string(state->total) +
                 " confirmed; failed:" + failed_agents + ".";
@@ -153,7 +172,7 @@ void FleetInterface::recordResult(const std::shared_ptr<ServiceCallState>& state
   status_(level, message);
 }
 
-const std::string& FleetInterface::serviceName(Service service) const {
+auto FleetInterface::serviceName(Service service) const -> const std::string& {
   switch (service) {
     case Service::kStart:
       return params_.start_service;
