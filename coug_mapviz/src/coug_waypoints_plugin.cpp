@@ -42,6 +42,7 @@
 #include <QDir>
 #include <QFile>
 #include <QFileDialog>
+#include <QIODevice>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -51,6 +52,7 @@
 #include <QtGlobal>
 #include <cmath>
 #include <coug_mapviz/coug_waypoints_plugin.hpp>
+#include <cstddef>
 #include <cstdint>
 #include <map>
 #include <memory>
