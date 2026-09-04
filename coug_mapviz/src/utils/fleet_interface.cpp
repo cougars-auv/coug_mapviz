@@ -137,7 +137,7 @@ void FleetInterface::callAgentService(const std::string& agent_name, Service ser
 void FleetInterface::recordResult(const std::shared_ptr<ServiceCallState>& state, bool success,
                                   const std::string& agent_name,
                                   const std::string& response_message, Status failure_status) {
-  Status level;
+  Status level = Status::kInfo;
   std::string message;
   {
     std::lock_guard<std::mutex> const lock(state->mutex);

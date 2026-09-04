@@ -98,9 +98,12 @@ void WaypointRenderer::paintWaypoints(QPainter* painter, const std::vector<WayPo
                            radius(waypoint.capture_radius));
     }
 
-    const QColor marker = i == selected_idx ? kSelectedMarker
-                          : active          ? kActiveMarker
-                                            : kInactiveMarker;
+    QColor marker = kInactiveMarker;
+    if (i == selected_idx) {
+      marker = kSelectedMarker;
+    } else if (active) {
+      marker = kActiveMarker;
+    }
     painter->setPen(QPen(marker, kMarkerSizePx, Qt::SolidLine, Qt::RoundCap));
     painter->drawPoint(points[i]);
 
