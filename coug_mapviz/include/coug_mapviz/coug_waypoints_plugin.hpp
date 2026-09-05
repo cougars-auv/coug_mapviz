@@ -52,15 +52,15 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
 
   void Shutdown() override {}
 
-  void Draw(double, double, double) override {}
+  void Draw(double /*x*/, double /*y*/, double /*scale*/) override {}
 
-  void Paint(QPainter* painter, double, double, double) override;
+  void Paint(QPainter* painter, double /*x*/, double /*y*/, double /*scale*/) override;
 
   void Transform() override {}
 
-  void LoadConfig(const YAML::Node&, const std::string&) override {}
+  void LoadConfig(const YAML::Node& /*node*/, const std::string& /*path*/) override {}
 
-  void SaveConfig(YAML::Emitter&, const std::string&) override {}
+  void SaveConfig(YAML::Emitter& /*emitter*/, const std::string& /*path*/) override {}
 
   auto GetConfigWidget(QWidget* parent) -> QWidget* override {
     config_widget_->setParent(parent);

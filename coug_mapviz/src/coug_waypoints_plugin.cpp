@@ -25,6 +25,7 @@
 #include <qfileinfo.h>
 #include <qgl.h>
 #include <qglobal.h>
+#include <qiodevice.h>
 #include <qjsonarray.h>
 #include <qjsonobject.h>
 #include <qnamespace.h>
@@ -165,7 +166,7 @@ auto CougWaypointsPlugin::Initialize(QGLWidget* canvas) -> bool {
   return true;
 }
 
-void CougWaypointsPlugin::Paint(QPainter* painter, double, double, double) {
+void CougWaypointsPlugin::Paint(QPainter* painter, double /*x*/, double /*y*/, double /*scale*/) {
   painter->save();
   painter->resetTransform();
 
@@ -203,10 +204,13 @@ auto CougWaypointsPlugin::eventFilter(QObject* /*watched*/, QEvent* event) -> bo
   }
   switch (event->type()) {
     case QEvent::MouseButtonPress:
+      // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
       return handleMousePress(static_cast<QMouseEvent*>(event));
     case QEvent::MouseButtonRelease:
+      // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
       return handleMouseRelease(static_cast<QMouseEvent*>(event));
     case QEvent::MouseMove:
+      // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
       return handleMouseMove(static_cast<QMouseEvent*>(event));
     default:
       return false;
