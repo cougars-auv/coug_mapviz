@@ -37,27 +37,27 @@ using coug_interfaces::msg::WayPointList;
 
 namespace {
 
-auto const build_name = [](std::string const& agent_name, std::string const& name) {
+const auto build_name = [](const std::string& agent_name, const std::string& name) {
   return "/" + agent_name + "/" + name;
 };
 
 }  // namespace
 
-void FleetInterface::initialize(std::shared_ptr<rclcpp::Node> const& node,
-                                coug_waypoints::Params const& params,
+void FleetInterface::initialize(const std::shared_ptr<rclcpp::Node>& node,
+                                const coug_waypoints::Params& params,
                                 StatusCallback status_callback) {
   node_ = node;
   params_ = params;
   status_ = std::move(status_callback);
 
-  for (auto const& agent_name : params_.agent_list) {
+  for (const auto& agent_name : params_.agent_list) {
     AgentEntry agent;
     agent.waypoint_pub = node_->create_publisher<WayPointList>(
         build_name(agent_name, params_.waypoint_topic), rclcpp::SystemDefaultsQoS());
     agent.waypoint_nav2_pub = node_->create_publisher<geometry_msgs::msg::PoseArray>(
         build_name(agent_name, params_.waypoint_nav2_topic), rclcpp::SystemDefaultsQoS());
     for (size_t i = 0; i < agent.service_clients.size(); ++i) {
-      auto const service = static_cast<Service>(i);
+      const auto service = static_cast<Service>(i);
       agent.service_clients[i] = node_->create_client<std_srvs::srv::Trigger>(
           build_name(agent_name, serviceName(service)));
     }
@@ -65,8 +65,8 @@ void FleetInterface::initialize(std::shared_ptr<rclcpp::Node> const& node,
   }
 }
 
-void FleetInterface::publishWaypoints(std::string const& agent_name,
-                                      std::vector<WayPoint> const& waypoints) {
+void FleetInterface::publishWaypoints(const std::string& agent_name,
+                                      const std::vector<WayPoint>& waypoints) {
   auto agent_it = agents_.find(agent_name);
   if (agent_it == agents_.end()) {
     status_(Status::kError, "Publisher not registered: " + agent_name);
@@ -82,7 +82,7 @@ void FleetInterface::publishWaypoints(std::string const& agent_name,
   geometry_msgs::msg::PoseArray pose_array;
   pose_array.header.frame_id = params_.map_frame;
   pose_array.header.stamp = node_->now();
-  for (auto const& waypoint : waypoints) {
+  for (const auto& waypoint : waypoints) {
     geometry_msgs::msg::Pose pose;
     pose.position = waypoint.position;
     pose.orientation.w = 1.0;
@@ -91,25 +91,25 @@ void FleetInterface::publishWaypoints(std::string const& agent_name,
   agent_it->second.waypoint_nav2_pub->publish(pose_array);
 }
 
-void FleetInterface::callService(Service service, std::vector<std::string> const& agents) {
+void FleetInterface::callService(Service service, const std::vector<std::string>& agents) {
   if (agents.empty()) {
     status_(Status::kError, "No agents selected.");
     return;
   }
-  std::string const prefix = "[" + serviceName(service) + "] ";
+  const std::string prefix = "[" + serviceName(service) + "] ";
   status_(Status::kInfo, prefix + "Calling service...");
   auto state = std::make_shared<ServiceCallState>();
   state->total = static_cast<int>(agents.size());
   state->service = service;
-  for (auto const& agent_name : agents) {
+  for (const auto& agent_name : agents) {
     callAgentService(agent_name, service, state);
   }
 }
 
-void FleetInterface::callAgentService(std::string const& agent_name, Service service,
-                                      std::shared_ptr<ServiceCallState> const& state) {
-  auto const agent_it = agents_.find(agent_name);
-  auto const client = agent_it == agents_.end()
+void FleetInterface::callAgentService(const std::string& agent_name, Service service,
+                                      const std::shared_ptr<ServiceCallState>& state) {
+  const auto agent_it = agents_.find(agent_name);
+  const auto client = agent_it == agents_.end()
                           ? nullptr
                           : agent_it->second.service_clients[static_cast<size_t>(service)];
   if (!client || !client->service_is_ready()) {
@@ -123,7 +123,7 @@ void FleetInterface::callAgentService(std::string const& agent_name, Service ser
       request, [this, agent_name, service,
                 // NOLINTNEXTLINE(performance-unnecessary-value-param)
                 state](rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture future) {
-        auto const& response = future.get();
+        const auto& response = future.get();
         if (!response) {
           recordResult(state, false, agent_name,
                        "Service call failed: " + build_name(agent_name, serviceName(service)),
@@ -134,13 +134,13 @@ void FleetInterface::callAgentService(std::string const& agent_name, Service ser
       });
 }
 
-void FleetInterface::recordResult(std::shared_ptr<ServiceCallState> const& state, bool success,
-                                  std::string const& agent_name,
-                                  std::string const& response_message, Status failure_status) {
+void FleetInterface::recordResult(const std::shared_ptr<ServiceCallState>& state, bool success,
+                                  const std::string& agent_name,
+                                  const std::string& response_message, Status failure_status) {
   Status level = Status::kInfo;
   std::string message;
   {
-    std::lock_guard<std::mutex> const lock(state->mutex);
+    const std::lock_guard<std::mutex> lock(state->mutex);
     if (success) {
       ++state->succeeded;
     } else {
@@ -153,7 +153,7 @@ void FleetInterface::recordResult(std::shared_ptr<ServiceCallState> const& state
       return;
     }
 
-    std::string const prefix = "[" + serviceName(state->service) + "] ";
+    const std::string prefix = "[" + serviceName(state->service) + "] ";
     if (state->total == 1) {
       level = success ? Status::kInfo : state->failure_status;
       message = prefix + (response_message.empty() ? "Service call completed." : response_message);
@@ -162,7 +162,7 @@ void FleetInterface::recordResult(std::shared_ptr<ServiceCallState> const& state
       message = prefix + "All " + std::to_string(state->total) + " agent(s) confirmed.";
     } else {
       std::string failed_agents;
-      for (auto const& failed_agent : state->failed) {
+      for (const auto& failed_agent : state->failed) {
         failed_agents += " " + failed_agent;
       }
       level = state->succeeded == 0 ? Status::kError : Status::kWarning;
@@ -173,7 +173,7 @@ void FleetInterface::recordResult(std::shared_ptr<ServiceCallState> const& state
   status_(level, message);
 }
 
-auto FleetInterface::serviceName(Service service) const -> std::string const& {
+auto FleetInterface::serviceName(Service service) const -> const std::string& {
   switch (service) {
     case Service::kStart:
       return params_.start_service;

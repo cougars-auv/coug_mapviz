@@ -37,17 +37,17 @@ class FleetInterface {
   enum class Service : std::uint8_t { kStart, kStop, kSurface, kHome };
   static constexpr size_t kServiceCount = 4;
 
-  using StatusCallback = std::function<void(Status, std::string const&)>;
+  using StatusCallback = std::function<void(Status, const std::string&)>;
 
   FleetInterface() = default;
 
-  void initialize(std::shared_ptr<rclcpp::Node> const& node, coug_waypoints::Params const& params,
+  void initialize(const std::shared_ptr<rclcpp::Node>& node, const coug_waypoints::Params& params,
                   StatusCallback status_callback);
 
-  void publishWaypoints(std::string const& agent_name,
-                        std::vector<coug_interfaces::msg::WayPoint> const& waypoints);
+  void publishWaypoints(const std::string& agent_name,
+                        const std::vector<coug_interfaces::msg::WayPoint>& waypoints);
 
-  void callService(Service service, std::vector<std::string> const& agents);
+  void callService(Service service, const std::vector<std::string>& agents);
 
  private:
   struct ServiceCallState {
@@ -67,14 +67,14 @@ class FleetInterface {
     std::array<rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr, kServiceCount> service_clients;
   };
 
-  void callAgentService(std::string const& agent_name, Service service,
-                        std::shared_ptr<ServiceCallState> const& state);
+  void callAgentService(const std::string& agent_name, Service service,
+                        const std::shared_ptr<ServiceCallState>& state);
 
-  void recordResult(std::shared_ptr<ServiceCallState> const& state, bool success,
-                    std::string const& agent_name, std::string const& response_message,
+  void recordResult(const std::shared_ptr<ServiceCallState>& state, bool success,
+                    const std::string& agent_name, const std::string& response_message,
                     Status failure_status = Status::kWarning);
 
-  [[nodiscard]] auto serviceName(Service service) const -> std::string const&;
+  [[nodiscard]] auto serviceName(Service service) const -> const std::string&;
 
   std::shared_ptr<rclcpp::Node> node_;
   StatusCallback status_;

@@ -43,8 +43,8 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   CougWaypointsPlugin();
   ~CougWaypointsPlugin() override;
 
-  CougWaypointsPlugin(CougWaypointsPlugin const&) = delete;
-  auto operator=(CougWaypointsPlugin const&) -> CougWaypointsPlugin& = delete;
+  CougWaypointsPlugin(const CougWaypointsPlugin&) = delete;
+  auto operator=(const CougWaypointsPlugin&) -> CougWaypointsPlugin& = delete;
   CougWaypointsPlugin(CougWaypointsPlugin&&) = delete;
   auto operator=(CougWaypointsPlugin&&) -> CougWaypointsPlugin& = delete;
 
@@ -58,9 +58,9 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
 
   void Transform() override {}
 
-  void LoadConfig(YAML::Node const&, std::string const&) override {}
+  void LoadConfig(const YAML::Node&, const std::string&) override {}
 
-  void SaveConfig(YAML::Emitter&, std::string const&) override {}
+  void SaveConfig(YAML::Emitter&, const std::string&) override {}
 
   auto GetConfigWidget(QWidget* parent) -> QWidget* override {
     config_widget_->setParent(parent);
@@ -71,11 +71,11 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
 
  protected:
   // --- Logging ---
-  void PrintError(std::string const& message) override;
+  void PrintError(const std::string& message) override;
 
-  void PrintInfo(std::string const& message) override;
+  void PrintInfo(const std::string& message) override;
 
-  void PrintWarning(std::string const& message) override;
+  void PrintWarning(const std::string& message) override;
 
   // --- Event Handling ---
   auto eventFilter(QObject* object, QEvent* event) -> bool override;
@@ -87,14 +87,14 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   auto handleMouseMove(QMouseEvent* event) -> bool;
 
  Q_SIGNALS:
-  void StatusUpdateRequested(int level, QString const& message);
+  void StatusUpdateRequested(int level, const QString& message);
 
  public Q_SLOTS:
-  void UpdateStatus(int level, QString const& message);
+  void UpdateStatus(int level, const QString& message);
 
  protected Q_SLOTS:
   // --- UI Callbacks ---
-  void AgentChanged(QString const& text);
+  void AgentChanged(const QString& text);
 
   void EditorChanged(double value);
 
@@ -118,8 +118,8 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
 
  private:
   // --- Helpers ---
-  [[nodiscard]] auto waypointsForAgent(std::string const& agent) const
-      -> std::vector<coug_interfaces::msg::WayPoint> const&;
+  [[nodiscard]] auto waypointsForAgent(const std::string& agent) const
+      -> const std::vector<coug_interfaces::msg::WayPoint>&;
 
   auto targetAgents() -> std::vector<std::string>;
 
@@ -127,7 +127,7 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
 
   auto selectedWaypoint() -> coug_interfaces::msg::WayPoint*;
 
-  auto findWaypointAt(QPointF const& point) -> int;
+  auto findWaypointAt(const QPointF& point) -> int;
 
   void clearWaypointSelection();
 
@@ -135,13 +135,13 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
 
   void setDepthEditorRange(bool altitude_mode);
 
-  void populateEditors(coug_interfaces::msg::WayPoint const& waypoint);
+  void populateEditors(const coug_interfaces::msg::WayPoint& waypoint);
 
   static auto missionDirectory() -> QString;
 
   auto wgs84ToMap(double latitude, double longitude, QPointF& map_point) const -> bool;
 
-  auto mapToWgs84(QPointF const& map_point, QPointF& lat_lon) const -> bool;
+  auto mapToWgs84(const QPointF& map_point, QPointF& lat_lon) const -> bool;
 
   void callFleetService(utils::FleetInterface::Service service);
 
