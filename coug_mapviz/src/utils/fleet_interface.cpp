@@ -140,7 +140,7 @@ void FleetInterface::recordResult(const std::shared_ptr<ServiceCallState>& state
   Status level = Status::kInfo;
   std::string message;
   {
-    std::lock_guard<std::mutex> const lock(state->mutex);
+    const std::lock_guard<std::mutex> lock(state->mutex);
     if (success) {
       ++state->succeeded;
     } else {
@@ -173,7 +173,7 @@ void FleetInterface::recordResult(const std::shared_ptr<ServiceCallState>& state
   status_(level, message);
 }
 
-auto FleetInterface::serviceName(Service service) const -> const std::string& {
+const std::string& FleetInterface::serviceName(Service service) const {
   switch (service) {
     case Service::kStart:
       return params_.start_service;

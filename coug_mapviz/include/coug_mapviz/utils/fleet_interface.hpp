@@ -18,6 +18,7 @@
 #include <coug_interfaces/msg/way_point.hpp>
 #include <coug_interfaces/msg/way_point_list.hpp>
 #include <coug_mapviz/coug_waypoints_parameters.hpp>
+#include <cstdint>
 #include <functional>
 #include <geometry_msgs/msg/pose_array.hpp>
 #include <map>
@@ -32,8 +33,8 @@ namespace coug_mapviz::utils {
 
 class FleetInterface {
  public:
-  enum class Status { kInfo, kWarning, kError };
-  enum class Service { kStart, kStop, kSurface, kHome };
+  enum class Status : std::uint8_t { kInfo, kWarning, kError };
+  enum class Service : std::uint8_t { kStart, kStop, kSurface, kHome };
   static constexpr size_t kServiceCount = 4;
 
   using StatusCallback = std::function<void(Status, const std::string&)>;
@@ -53,7 +54,7 @@ class FleetInterface {
     int total = 0;
     int responded = 0;
     int succeeded = 0;
-    Service service;
+    Service service = Service::kStart;
     std::vector<std::string> failed;
     std::string response_message;
     Status failure_status = Status::kWarning;
@@ -73,7 +74,7 @@ class FleetInterface {
                     const std::string& agent_name, const std::string& response_message,
                     Status failure_status = Status::kWarning);
 
-  const std::string& serviceName(Service service) const;
+  [[nodiscard]] const std::string& serviceName(Service service) const;
 
   std::shared_ptr<rclcpp::Node> node_;
   StatusCallback status_;

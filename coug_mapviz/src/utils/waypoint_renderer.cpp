@@ -58,7 +58,7 @@ const QColor kActiveMarker(Qt::cyan);
 const QColor kInactiveMarker(Qt::gray);
 const QColor kSelectedMarker(Qt::yellow);
 
-auto labelRect(const QPointF& point, int y_offset) -> QRectF {
+QRectF labelRect(const QPointF& point, int y_offset) {
   return {QPointF(point.x() - kLabelOffsetXPx, point.y() + y_offset),
           QSizeF(kLabelWidthPx, kLabelHeightPx)};
 }
@@ -67,7 +67,7 @@ auto labelRect(const QPointF& point, int y_offset) -> QRectF {
 
 WaypointRenderer::WaypointRenderer(mapviz::MapCanvas* map_canvas) : map_canvas_(map_canvas) {}
 
-auto WaypointRenderer::fixedToGl(const QPointF& fixed_point) const -> QPointF {
+QPointF WaypointRenderer::fixedToGl(const QPointF& fixed_point) const {
   return map_canvas_->FixedFrameToMapGlCoord(fixed_point);
 }
 

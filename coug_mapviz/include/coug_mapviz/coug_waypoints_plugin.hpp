@@ -43,6 +43,11 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   CougWaypointsPlugin();
   ~CougWaypointsPlugin() override;
 
+  CougWaypointsPlugin(const CougWaypointsPlugin&) = delete;
+  CougWaypointsPlugin& operator=(const CougWaypointsPlugin&) = delete;
+  CougWaypointsPlugin(CougWaypointsPlugin&&) = delete;
+  CougWaypointsPlugin& operator=(CougWaypointsPlugin&&) = delete;
+
   bool Initialize(QGLWidget* canvas) override;
 
   void Shutdown() override {}
@@ -113,7 +118,7 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
 
  private:
   // --- Helpers ---
-  const std::vector<coug_interfaces::msg::WayPoint>& waypointsForAgent(
+  [[nodiscard]] const std::vector<coug_interfaces::msg::WayPoint>& waypointsForAgent(
       const std::string& agent) const;
 
   std::vector<std::string> targetAgents();
@@ -151,15 +156,15 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   // --- State ---
   Ui::coug_waypoints_config ui_;
   QWidget* config_widget_;
-  mapviz::MapCanvas* map_canvas_;
+  mapviz::MapCanvas* map_canvas_{nullptr};
 
   std::map<std::string, std::vector<coug_interfaces::msg::WayPoint>> waypoints_;
   std::string current_agent_;
 
-  int selected_idx_;
-  int dragged_idx_;
+  int selected_idx_{-1};
+  int dragged_idx_{-1};
   QPointF mouse_down_pos_;
-  qint64 mouse_down_time_;
+  qint64 mouse_down_time_{0};
 };
 
 }  // namespace coug_mapviz
