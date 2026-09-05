@@ -46,19 +46,19 @@ constexpr int kDepthOffsetYPx = 15;
 constexpr int kSpeedOffsetYPx = 33;
 constexpr int kIndexSizePx = 40;
 
-const QColor kSlipCircleColor(30, 144, 255, 166);
-const QColor kSlipCircleFillColor(30, 144, 255, 30);
-const QColor kCaptureCircleColor(255, 140, 0, 191);
-const QColor kCaptureCircleFillColor(255, 140, 0, 46);
-const QColor kActivePath(Qt::blue);
-const QColor kActiveLabel(Qt::white);
-const QColor kInactivePath(200, 200, 200, 191);
-const QColor kInactiveLabel(255, 255, 255, 191);
-const QColor kActiveMarker(Qt::cyan);
-const QColor kInactiveMarker(Qt::gray);
-const QColor kSelectedMarker(Qt::yellow);
+QColor const kSlipCircleColor(30, 144, 255, 166);
+QColor const kSlipCircleFillColor(30, 144, 255, 30);
+QColor const kCaptureCircleColor(255, 140, 0, 191);
+QColor const kCaptureCircleFillColor(255, 140, 0, 46);
+QColor const kActivePath(Qt::blue);
+QColor const kActiveLabel(Qt::white);
+QColor const kInactivePath(200, 200, 200, 191);
+QColor const kInactiveLabel(255, 255, 255, 191);
+QColor const kActiveMarker(Qt::cyan);
+QColor const kInactiveMarker(Qt::gray);
+QColor const kSelectedMarker(Qt::yellow);
 
-auto labelRect(const QPointF& point, int y_offset) -> QRectF {
+auto labelRect(QPointF const& point, int y_offset) -> QRectF {
   return {QPointF(point.x() - kLabelOffsetXPx, point.y() + y_offset),
           QSizeF(kLabelWidthPx, kLabelHeightPx)};
 }
@@ -67,26 +67,26 @@ auto labelRect(const QPointF& point, int y_offset) -> QRectF {
 
 WaypointRenderer::WaypointRenderer(mapviz::MapCanvas* map_canvas) : map_canvas_(map_canvas) {}
 
-auto WaypointRenderer::fixedToGl(const QPointF& fixed_point) const -> QPointF {
+auto WaypointRenderer::fixedToGl(QPointF const& fixed_point) const -> QPointF {
   return map_canvas_->FixedFrameToMapGlCoord(fixed_point);
 }
 
-void WaypointRenderer::paintWaypoints(QPainter* painter, const std::vector<WayPoint>& waypoints,
+void WaypointRenderer::paintWaypoints(QPainter* painter, std::vector<WayPoint> const& waypoints,
                                       bool active, int selected_idx) const {
-  const QColor& path_color = active ? kActivePath : kInactivePath;
-  const QColor& label_color = active ? kActiveLabel : kInactiveLabel;
+  QColor const& path_color = active ? kActivePath : kInactivePath;
+  QColor const& label_color = active ? kActiveLabel : kInactiveLabel;
   QVector<QPointF> points;
-  for (const auto& waypoint : waypoints) {
+  for (auto const& waypoint : waypoints) {
     points.push_back(fixedToGl(QPointF(waypoint.position.x, waypoint.position.y)));
   }
   painter->setPen(QPen(path_color, kPathWidthPx));
   painter->drawPolyline(points);
 
   for (int i = 0; i < points.size(); ++i) {
-    const auto& waypoint = waypoints[static_cast<size_t>(i)];
+    auto const& waypoint = waypoints[static_cast<size_t>(i)];
     if (active) {
-      const QPointF center(waypoint.position.x, waypoint.position.y);
-      const auto radius = [&](double meters) {
+      QPointF const center(waypoint.position.x, waypoint.position.y);
+      auto const radius = [&](double meters) {
         return QLineF(points[i], fixedToGl(QPointF(center.x() + meters, center.y()))).length();
       };
       painter->setPen(QPen(kSlipCircleColor, 1.5));
@@ -108,7 +108,7 @@ void WaypointRenderer::paintWaypoints(QPainter* painter, const std::vector<WayPo
     painter->drawPoint(points[i]);
 
     painter->setPen(QPen(label_color));
-    const QString depth = waypoint.mode == WayPoint::ALTITUDE
+    QString const depth = waypoint.mode == WayPoint::ALTITUDE
                               ? "ALT " + QString::number(waypoint.position.z, 'f', 1) + "m"
                               : QString::number(waypoint.position.z, 'f', 1) + "m";
     painter->drawText(labelRect(points[i], kDepthOffsetYPx), Qt::AlignHCenter | Qt::AlignTop,
@@ -116,7 +116,7 @@ void WaypointRenderer::paintWaypoints(QPainter* painter, const std::vector<WayPo
     painter->drawText(labelRect(points[i], kSpeedOffsetYPx), Qt::AlignHCenter | Qt::AlignTop,
                       QString::number(waypoint.speed_rpm, 'f', 0) + "rpm");
     painter->setPen(QPen(label_color == Qt::white ? Qt::black : label_color));
-    const QRectF index_rect(
+    QRectF const index_rect(
         QPointF(points[i].x() - kIndexSizePx / 2.0, points[i].y() - kIndexSizePx / 2.0),
         QSizeF(kIndexSizePx, kIndexSizePx));
     painter->drawText(index_rect, Qt::AlignHCenter | Qt::AlignVCenter, QString::number(i + 1));

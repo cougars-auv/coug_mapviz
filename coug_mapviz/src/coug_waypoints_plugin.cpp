@@ -82,8 +82,8 @@ constexpr double kClickMaxDistPx = 5.0;
 constexpr qint64 kClickMaxDurationMs = 500;
 constexpr double kDepthEditorLimit = 9999.99;
 
-const QColor kConfigBackgroundColor(Qt::white);
-const QColor kStatusTextColor(Qt::darkGreen);
+QColor const kConfigBackgroundColor(Qt::white);
+QColor const kStatusTextColor(Qt::darkGreen);
 
 void setEditorValue(QDoubleSpinBox* editor, double value) {
   editor->blockSignals(true);
@@ -114,7 +114,7 @@ CougWaypointsPlugin::CougWaypointsPlugin() : ui_(), config_widget_(new QWidget()
   connect(ui_.save, &QPushButton::clicked, this, &CougWaypointsPlugin::SaveWaypoints);
   connect(ui_.load, &QPushButton::clicked, this, &CougWaypointsPlugin::LoadWaypoints);
 
-  const auto editor_changed = QOverload<double>::of(&QDoubleSpinBox::valueChanged);
+  auto const editor_changed = QOverload<double>::of(&QDoubleSpinBox::valueChanged);
   connect(ui_.lat_editor, editor_changed, this, &CougWaypointsPlugin::EditorChanged);
   connect(ui_.lon_editor, editor_changed, this, &CougWaypointsPlugin::EditorChanged);
   connect(ui_.depth_editor, editor_changed, this, &CougWaypointsPlugin::EditorChanged);
@@ -146,7 +146,7 @@ auto CougWaypointsPlugin::Initialize(QGLWidget* canvas) -> bool {
   param_listener_ = std::make_shared<coug_waypoints::ParamListener>(node_);
   params_ = param_listener_->get_params();
 
-  for (const auto& agent_ns : params_.agent_list) {
+  for (auto const& agent_ns : params_.agent_list) {
     ui_.agent_selector->addItem(QString::fromStdString(agent_ns));
   }
 
@@ -157,7 +157,7 @@ auto CougWaypointsPlugin::Initialize(QGLWidget* canvas) -> bool {
   setEditorValue(ui_.slip_radius_z_editor, params_.default_slip_radius_z);
 
   interface_.initialize(
-      node_, params_, [this](FleetInterface::Status level, const std::string& message) {
+      node_, params_, [this](FleetInterface::Status level, std::string const& message) {
         Q_EMIT StatusUpdateRequested(static_cast<int>(level), QString::fromStdString(message));
       });
 
@@ -170,14 +170,14 @@ void CougWaypointsPlugin::Paint(QPainter* painter, double, double, double) {
   painter->resetTransform();
 
   painter->setFont(QFont("DejaVu Sans Mono", 10, QFont::Bold));
-  for (const auto& [agent, waypoints] : waypoints_) {
+  for (auto const& [agent, waypoints] : waypoints_) {
     if (agent != current_agent_) {
       renderer_->paintWaypoints(painter, waypoints, false);
     }
   }
 
   if (!current_agent_.empty()) {
-    const auto& waypoints = waypointsForAgent(current_agent_);
+    auto const& waypoints = waypointsForAgent(current_agent_);
     if (!waypoints.empty()) {
       renderer_->paintWaypoints(painter, waypoints, true, selected_idx_);
     }
@@ -185,15 +185,15 @@ void CougWaypointsPlugin::Paint(QPainter* painter, double, double, double) {
   painter->restore();
 }
 
-void CougWaypointsPlugin::PrintError(const std::string& message) {
+void CougWaypointsPlugin::PrintError(std::string const& message) {
   PrintErrorHelper(ui_.status, message);
 }
 
-void CougWaypointsPlugin::PrintInfo(const std::string& message) {
+void CougWaypointsPlugin::PrintInfo(std::string const& message) {
   PrintInfoHelper(ui_.status, message);
 }
 
-void CougWaypointsPlugin::PrintWarning(const std::string& message) {
+void CougWaypointsPlugin::PrintWarning(std::string const& message) {
   PrintWarningHelper(ui_.status, message);
 }
 
@@ -219,7 +219,7 @@ auto CougWaypointsPlugin::handleMousePress(QMouseEvent* event) -> bool {
   }
 
   dragged_idx_ = -1;
-  const int closest_idx = findWaypointAt(event->localPos());
+  int const closest_idx = findWaypointAt(event->localPos());
 
   if (event->button() == Qt::LeftButton) {
     mouse_down_pos_ = event->localPos();
@@ -252,14 +252,14 @@ auto CougWaypointsPlugin::handleMouseRelease(QMouseEvent* event) -> bool {
     return false;
   }
 
-  const qreal distance = QLineF(mouse_down_pos_, event->localPos()).length();
-  const qint64 press_duration_ms = QDateTime::currentMSecsSinceEpoch() - mouse_down_time_;
+  qreal const distance = QLineF(mouse_down_pos_, event->localPos()).length();
+  qint64 const press_duration_ms = QDateTime::currentMSecsSinceEpoch() - mouse_down_time_;
 
-  const bool is_click = distance <= kClickMaxDistPx && press_duration_ms < kClickMaxDurationMs;
+  bool const is_click = distance <= kClickMaxDistPx && press_duration_ms < kClickMaxDurationMs;
 
   if (dragged_idx_ != -1) {
     if (is_click) {
-      const auto& waypoints = waypointsForAgent(current_agent_);
+      auto const& waypoints = waypointsForAgent(current_agent_);
       if (static_cast<size_t>(dragged_idx_) < waypoints.size()) {
         selected_idx_ = dragged_idx_;
         populateEditors(waypoints[selected_idx_]);
@@ -271,7 +271,7 @@ auto CougWaypointsPlugin::handleMouseRelease(QMouseEvent* event) -> bool {
 
   if (event->button() == Qt::LeftButton && is_click) {
     WayPoint waypoint;
-    const QPointF fixed_point = map_canvas_->MapGlCoordToFixedFrame(event->localPos());
+    QPointF const fixed_point = map_canvas_->MapGlCoordToFixedFrame(event->localPos());
     waypoint.position.x = fixed_point.x();
     waypoint.position.y = fixed_point.y();
     waypoint.position.z = ui_.depth_editor->value();
@@ -303,7 +303,7 @@ auto CougWaypointsPlugin::handleMouseMove(QMouseEvent* event) -> bool {
     auto* waypoints = currentWaypoints();
     if ((waypoints != nullptr) && static_cast<size_t>(dragged_idx_) < waypoints->size()) {
       auto& waypoint = (*waypoints)[dragged_idx_];
-      const QPointF fixed_point = map_canvas_->MapGlCoordToFixedFrame(event->localPos());
+      QPointF const fixed_point = map_canvas_->MapGlCoordToFixedFrame(event->localPos());
       waypoint.position.x = fixed_point.x();
       waypoint.position.y = fixed_point.y();
       map_canvas_->update();
@@ -313,7 +313,7 @@ auto CougWaypointsPlugin::handleMouseMove(QMouseEvent* event) -> bool {
   return false;
 }
 
-void CougWaypointsPlugin::UpdateStatus(int level, const QString& message) {
+void CougWaypointsPlugin::UpdateStatus(int level, QString const& message) {
   switch (static_cast<FleetInterface::Status>(level)) {
     case FleetInterface::Status::kInfo:
       PrintInfo(message.toStdString());
@@ -327,11 +327,11 @@ void CougWaypointsPlugin::UpdateStatus(int level, const QString& message) {
   }
 }
 
-void CougWaypointsPlugin::AgentChanged(const QString& text) {
+void CougWaypointsPlugin::AgentChanged(QString const& text) {
   current_agent_ = text.toStdString();
   clearWaypointSelection();
 
-  const auto& waypoints = waypointsForAgent(current_agent_);
+  auto const& waypoints = waypointsForAgent(current_agent_);
   map_canvas_->update();
   if (waypoints.empty()) {
     PrintInfo("Click to add waypoints.");
@@ -346,7 +346,7 @@ void CougWaypointsPlugin::EditorChanged(double value) {
     return;
   }
 
-  const QObject* editor = sender();
+  QObject const* editor = sender();
   if (editor == ui_.lat_editor || editor == ui_.lon_editor) {
     QPointF map_point;
     if (!wgs84ToMap(ui_.lat_editor->value(), ui_.lon_editor->value(), map_point)) {
@@ -379,7 +379,7 @@ void CougWaypointsPlugin::AltitudeModeChanged(bool checked) {
   }
 
   waypoint->mode = checked ? WayPoint::ALTITUDE : WayPoint::DEPTH;
-  const double new_altitude =
+  double const new_altitude =
       checked ? std::abs(waypoint->position.z) : -std::abs(waypoint->position.z);
   waypoint->position.z = new_altitude;
 
@@ -389,24 +389,24 @@ void CougWaypointsPlugin::AltitudeModeChanged(bool checked) {
 }
 
 void CougWaypointsPlugin::PublishWaypoints() {
-  const auto agents = targetAgents();
+  auto const agents = targetAgents();
   if (agents.empty()) {
     return;
   }
 
-  for (const auto& agent : agents) {
+  for (auto const& agent : agents) {
     interface_.publishWaypoints(agent, waypointsForAgent(agent));
   }
   PrintInfo("Published to " + std::to_string(agents.size()) + " agent(s).");
 }
 
 void CougWaypointsPlugin::ClearWaypoints() {
-  const auto agents = targetAgents();
+  auto const agents = targetAgents();
   if (agents.empty()) {
     return;
   }
 
-  for (const auto& agent : agents) {
+  for (auto const& agent : agents) {
     waypoints_[agent].clear();
   }
 
@@ -420,16 +420,16 @@ void CougWaypointsPlugin::ClearWaypoints() {
 }
 
 void CougWaypointsPlugin::SaveWaypoints() {
-  const auto agents = targetAgents();
+  auto const agents = targetAgents();
   if (agents.empty()) {
     return;
   }
 
-  const QString directory = missionDirectory();
+  QString const directory = missionDirectory();
   if (directory.isEmpty()) {
     PrintError("CONFIG_DIR is not set.");
   } else {
-    const QDir dir(directory);
+    QDir const dir(directory);
     if (!dir.exists()) {
       dir.mkpath(".");
     }
@@ -445,10 +445,10 @@ void CougWaypointsPlugin::SaveWaypoints() {
   }
 
   QJsonObject mission;
-  for (const auto& agent : agents) {
-    const auto& waypoints = waypointsForAgent(agent);
+  for (auto const& agent : agents) {
+    auto const& waypoints = waypointsForAgent(agent);
     QJsonArray serialized_waypoints;
-    for (const auto& waypoint : waypoints) {
+    for (auto const& waypoint : waypoints) {
       QPointF lat_lon;
       if (!mapToWgs84(QPointF(waypoint.position.x, waypoint.position.y), lat_lon)) {
         PrintError("No transform between " + params_.map_frame + " and WGS84.");
@@ -476,17 +476,17 @@ void CougWaypointsPlugin::SaveWaypoints() {
 }
 
 void CougWaypointsPlugin::LoadWaypoints() {
-  const auto agents = targetAgents();
+  auto const agents = targetAgents();
   if (agents.empty()) {
     return;
   }
 
-  const QString directory = missionDirectory();
+  QString const directory = missionDirectory();
   if (directory.isEmpty()) {
     PrintError("CONFIG_DIR is not set.");
   }
 
-  const QString filename = QFileDialog::getOpenFileName(config_widget_, "Load Mission", directory,
+  QString const filename = QFileDialog::getOpenFileName(config_widget_, "Load Mission", directory,
                                                         "JSON Files (*.json)");
   if (filename.isEmpty()) {
     return;
@@ -498,24 +498,24 @@ void CougWaypointsPlugin::LoadWaypoints() {
     return;
   }
 
-  const QJsonDocument document = QJsonDocument::fromJson(file.readAll());
+  QJsonDocument const document = QJsonDocument::fromJson(file.readAll());
   if (!document.isObject()) {
     PrintError("Failed to load.");
     return;
   }
 
   int loaded_count = 0;
-  const QJsonObject mission = document.object();
+  QJsonObject const mission = document.object();
   std::map<std::string, std::vector<WayPoint>> loaded_waypoints;
-  for (const auto& agent : agents) {
-    const QJsonValue serialized_waypoints = mission[QString::fromStdString(agent)];
+  for (auto const& agent : agents) {
+    QJsonValue const serialized_waypoints = mission[QString::fromStdString(agent)];
     if (!serialized_waypoints.isArray()) {
       continue;
     }
 
     std::vector<WayPoint> waypoints;
-    for (const auto& value : serialized_waypoints.toArray()) {
-      const QJsonObject serialized_waypoint = value.toObject();
+    for (auto const& value : serialized_waypoints.toArray()) {
+      QJsonObject const serialized_waypoint = value.toObject();
       WayPoint waypoint;
       QPointF map_point;
       if (!wgs84ToMap(serialized_waypoint["lat"].toDouble(), serialized_waypoint["lon"].toDouble(),
@@ -550,9 +550,9 @@ void CougWaypointsPlugin::LoadWaypoints() {
   PrintInfo("Loaded " + std::to_string(loaded_count) + " agent(s).");
 }
 
-auto CougWaypointsPlugin::waypointsForAgent(const std::string& agent) const
-    -> const std::vector<WayPoint>& {
-  static const std::vector<WayPoint> kNoWaypoints;
+auto CougWaypointsPlugin::waypointsForAgent(std::string const& agent) const
+    -> std::vector<WayPoint> const& {
+  static std::vector<WayPoint> const kNoWaypoints;
 
   auto it = waypoints_.find(agent);
   return it != waypoints_.end() ? it->second : kNoWaypoints;
@@ -586,15 +586,15 @@ auto CougWaypointsPlugin::selectedWaypoint() -> WayPoint* {
   return &(*waypoints)[selected_idx_];
 }
 
-auto CougWaypointsPlugin::findWaypointAt(const QPointF& point) -> int {
+auto CougWaypointsPlugin::findWaypointAt(QPointF const& point) -> int {
   int closest_idx = -1;
   double closest_distance = kHitRadiusPx;
-  const auto& waypoints = waypointsForAgent(current_agent_);
+  auto const& waypoints = waypointsForAgent(current_agent_);
 
   for (size_t i = 0; i < waypoints.size(); i++) {
-    const QPointF transformed =
+    QPointF const transformed =
         renderer_->fixedToGl(QPointF(waypoints[i].position.x, waypoints[i].position.y));
-    const double distance = QLineF(transformed, point).length();
+    double const distance = QLineF(transformed, point).length();
     if (distance < closest_distance) {
       closest_distance = distance;
       closest_idx = static_cast<int>(i);
@@ -627,13 +627,13 @@ void CougWaypointsPlugin::setEditorsEnabled(bool enabled) {
 }
 
 void CougWaypointsPlugin::setDepthEditorRange(bool altitude_mode) {
-  const QSignalBlocker blocker(ui_.depth_editor);
+  QSignalBlocker const blocker(ui_.depth_editor);
   ui_.depth_editor->setRange(altitude_mode ? 0.0 : -kDepthEditorLimit,
                              altitude_mode ? kDepthEditorLimit : 0.0);
 }
 
-void CougWaypointsPlugin::populateEditors(const WayPoint& waypoint) {
-  const bool is_altitude = waypoint.mode == WayPoint::ALTITUDE;
+void CougWaypointsPlugin::populateEditors(WayPoint const& waypoint) {
+  bool const is_altitude = waypoint.mode == WayPoint::ALTITUDE;
 
   ui_.altitude_mode->blockSignals(true);
   ui_.altitude_mode->setChecked(is_altitude);
@@ -657,7 +657,7 @@ void CougWaypointsPlugin::populateEditors(const WayPoint& waypoint) {
 }
 
 auto CougWaypointsPlugin::missionDirectory() -> QString {
-  const QString config_dir = qEnvironmentVariable("CONFIG_DIR");
+  QString const config_dir = qEnvironmentVariable("CONFIG_DIR");
   if (config_dir.isEmpty()) {
     return {};
   }
@@ -671,25 +671,25 @@ auto CougWaypointsPlugin::wgs84ToMap(double latitude, double longitude, QPointF&
                                  map_T_wgs84)) {
     return false;
   }
-  const tf2::Vector3 wgs84_point(longitude, latitude, 0.0);
-  const tf2::Vector3 map_coordinates = map_T_wgs84 * wgs84_point;
+  tf2::Vector3 const wgs84_point(longitude, latitude, 0.0);
+  tf2::Vector3 const map_coordinates = map_T_wgs84 * wgs84_point;
   map_point = QPointF(map_coordinates.x(), map_coordinates.y());
   return true;
 }
 
-auto CougWaypointsPlugin::mapToWgs84(const QPointF& map_point, QPointF& lat_lon) const -> bool {
+auto CougWaypointsPlugin::mapToWgs84(QPointF const& map_point, QPointF& lat_lon) const -> bool {
   swri_transform_util::Transform wgs84_T_map;
   if (!tf_manager_->GetTransform(swri_transform_util::_wgs84_frame, params_.map_frame,
                                  wgs84_T_map)) {
     return false;
   }
-  const tf2::Vector3 wgs84_point = wgs84_T_map * tf2::Vector3(map_point.x(), map_point.y(), 0.0);
+  tf2::Vector3 const wgs84_point = wgs84_T_map * tf2::Vector3(map_point.x(), map_point.y(), 0.0);
   lat_lon = QPointF(wgs84_point.y(), wgs84_point.x());
   return true;
 }
 
 void CougWaypointsPlugin::callFleetService(FleetInterface::Service service) {
-  const auto agents = targetAgents();
+  auto const agents = targetAgents();
   if (!agents.empty()) {
     interface_.callService(service, agents);
   }
