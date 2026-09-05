@@ -32,7 +32,7 @@ class WaypointRenderer {
  public:
   explicit WaypointRenderer(mapviz::MapCanvas* map_canvas);
 
-  [[nodiscard]] QPointF fixedToGl(const QPointF& fixed_point) const;
+  [[nodiscard]] auto fixedToGl(const QPointF& fixed_point) const -> QPointF;
 
   void paintWaypoints(QPainter* painter,
                       const std::vector<coug_interfaces::msg::WayPoint>& waypoints, bool active,

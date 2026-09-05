@@ -173,7 +173,7 @@ void FleetInterface::recordResult(const std::shared_ptr<ServiceCallState>& state
   status_(level, message);
 }
 
-const std::string& FleetInterface::serviceName(Service service) const {
+auto FleetInterface::serviceName(Service service) const -> const std::string& {
   switch (service) {
     case Service::kStart:
       return params_.start_service;

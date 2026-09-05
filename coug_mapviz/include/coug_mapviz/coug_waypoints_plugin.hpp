@@ -44,11 +44,11 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   ~CougWaypointsPlugin() override;
 
   CougWaypointsPlugin(const CougWaypointsPlugin&) = delete;
-  CougWaypointsPlugin& operator=(const CougWaypointsPlugin&) = delete;
+  auto operator=(const CougWaypointsPlugin&) -> CougWaypointsPlugin& = delete;
   CougWaypointsPlugin(CougWaypointsPlugin&&) = delete;
-  CougWaypointsPlugin& operator=(CougWaypointsPlugin&&) = delete;
+  auto operator=(CougWaypointsPlugin&&) -> CougWaypointsPlugin& = delete;
 
-  bool Initialize(QGLWidget* canvas) override;
+  auto Initialize(QGLWidget* canvas) -> bool override;
 
   void Shutdown() override {}
 
@@ -62,12 +62,12 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
 
   void SaveConfig(YAML::Emitter&, const std::string&) override {}
 
-  QWidget* GetConfigWidget(QWidget* parent) override {
+  auto GetConfigWidget(QWidget* parent) -> QWidget* override {
     config_widget_->setParent(parent);
     return config_widget_;
   }
 
-  bool SupportsPainting() override { return true; }
+  auto SupportsPainting() -> bool override { return true; }
 
  protected:
   // --- Logging ---
@@ -78,13 +78,13 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   void PrintWarning(const std::string& message) override;
 
   // --- Event Handling ---
-  bool eventFilter(QObject* object, QEvent* event) override;
+  auto eventFilter(QObject* object, QEvent* event) -> bool override;
 
-  bool handleMousePress(QMouseEvent* event);
+  auto handleMousePress(QMouseEvent* event) -> bool;
 
-  bool handleMouseRelease(QMouseEvent* event);
+  auto handleMouseRelease(QMouseEvent* event) -> bool;
 
-  bool handleMouseMove(QMouseEvent* event);
+  auto handleMouseMove(QMouseEvent* event) -> bool;
 
  Q_SIGNALS:
   void StatusUpdateRequested(int level, const QString& message);
@@ -118,16 +118,16 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
 
  private:
   // --- Helpers ---
-  [[nodiscard]] const std::vector<coug_interfaces::msg::WayPoint>& waypointsForAgent(
-      const std::string& agent) const;
+  [[nodiscard]] auto waypointsForAgent(const std::string& agent) const
+      -> const std::vector<coug_interfaces::msg::WayPoint>&;
 
-  std::vector<std::string> targetAgents();
+  auto targetAgents() -> std::vector<std::string>;
 
-  std::vector<coug_interfaces::msg::WayPoint>* currentWaypoints();
+  auto currentWaypoints() -> std::vector<coug_interfaces::msg::WayPoint>*;
 
-  coug_interfaces::msg::WayPoint* selectedWaypoint();
+  auto selectedWaypoint() -> coug_interfaces::msg::WayPoint*;
 
-  int findWaypointAt(const QPointF& point);
+  auto findWaypointAt(const QPointF& point) -> int;
 
   void clearWaypointSelection();
 
@@ -137,11 +137,11 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
 
   void populateEditors(const coug_interfaces::msg::WayPoint& waypoint);
 
-  static QString missionDirectory();
+  static auto missionDirectory() -> QString;
 
-  bool wgs84ToMap(double latitude, double longitude, QPointF& map_point) const;
+  auto wgs84ToMap(double latitude, double longitude, QPointF& map_point) const -> bool;
 
-  bool mapToWgs84(const QPointF& map_point, QPointF& lat_lon) const;
+  auto mapToWgs84(const QPointF& map_point, QPointF& lat_lon) const -> bool;
 
   void callFleetService(utils::FleetInterface::Service service);
 

@@ -135,7 +135,7 @@ CougWaypointsPlugin::~CougWaypointsPlugin() {
   }
 }
 
-bool CougWaypointsPlugin::Initialize(QGLWidget* canvas) {
+auto CougWaypointsPlugin::Initialize(QGLWidget* canvas) -> bool {
   map_canvas_ = dynamic_cast<mapviz::MapCanvas*>(canvas);
   if (map_canvas_ == nullptr) {
     return false;
@@ -197,7 +197,7 @@ void CougWaypointsPlugin::PrintWarning(const std::string& message) {
   PrintWarningHelper(ui_.status, message);
 }
 
-bool CougWaypointsPlugin::eventFilter(QObject* /*watched*/, QEvent* event) {
+auto CougWaypointsPlugin::eventFilter(QObject* /*watched*/, QEvent* event) -> bool {
   if (!Visible()) {
     return false;
   }
@@ -213,7 +213,7 @@ bool CougWaypointsPlugin::eventFilter(QObject* /*watched*/, QEvent* event) {
   }
 }
 
-bool CougWaypointsPlugin::handleMousePress(QMouseEvent* event) {
+auto CougWaypointsPlugin::handleMousePress(QMouseEvent* event) -> bool {
   if (current_agent_.empty()) {
     return false;
   }
@@ -247,7 +247,7 @@ bool CougWaypointsPlugin::handleMousePress(QMouseEvent* event) {
   return false;
 }
 
-bool CougWaypointsPlugin::handleMouseRelease(QMouseEvent* event) {
+auto CougWaypointsPlugin::handleMouseRelease(QMouseEvent* event) -> bool {
   if (current_agent_.empty()) {
     return false;
   }
@@ -290,7 +290,7 @@ bool CougWaypointsPlugin::handleMouseRelease(QMouseEvent* event) {
   return false;
 }
 
-bool CougWaypointsPlugin::handleMouseMove(QMouseEvent* event) {
+auto CougWaypointsPlugin::handleMouseMove(QMouseEvent* event) -> bool {
   if (current_agent_.empty()) {
     return false;
   }
@@ -550,15 +550,15 @@ void CougWaypointsPlugin::LoadWaypoints() {
   PrintInfo("Loaded " + std::to_string(loaded_count) + " agent(s).");
 }
 
-const std::vector<WayPoint>& CougWaypointsPlugin::waypointsForAgent(
-    const std::string& agent) const {
+auto CougWaypointsPlugin::waypointsForAgent(const std::string& agent) const
+    -> const std::vector<WayPoint>& {
   static const std::vector<WayPoint> kNoWaypoints;
 
   auto it = waypoints_.find(agent);
   return it != waypoints_.end() ? it->second : kNoWaypoints;
 }
 
-std::vector<std::string> CougWaypointsPlugin::targetAgents() {
+auto CougWaypointsPlugin::targetAgents() -> std::vector<std::string> {
   if (ui_.apply_all->isChecked()) {
     if (params_.agent_list.empty()) {
       PrintError("No agents configured.");
@@ -572,12 +572,12 @@ std::vector<std::string> CougWaypointsPlugin::targetAgents() {
   return {current_agent_};
 }
 
-std::vector<WayPoint>* CougWaypointsPlugin::currentWaypoints() {
+auto CougWaypointsPlugin::currentWaypoints() -> std::vector<WayPoint>* {
   auto it = waypoints_.find(current_agent_);
   return it != waypoints_.end() ? &it->second : nullptr;
 }
 
-WayPoint* CougWaypointsPlugin::selectedWaypoint() {
+auto CougWaypointsPlugin::selectedWaypoint() -> WayPoint* {
   auto* waypoints = currentWaypoints();
   if ((waypoints == nullptr) || selected_idx_ < 0 ||
       static_cast<size_t>(selected_idx_) >= waypoints->size()) {
@@ -586,7 +586,7 @@ WayPoint* CougWaypointsPlugin::selectedWaypoint() {
   return &(*waypoints)[selected_idx_];
 }
 
-int CougWaypointsPlugin::findWaypointAt(const QPointF& point) {
+auto CougWaypointsPlugin::findWaypointAt(const QPointF& point) -> int {
   int closest_idx = -1;
   double closest_distance = kHitRadiusPx;
   const auto& waypoints = waypointsForAgent(current_agent_);
@@ -656,7 +656,7 @@ void CougWaypointsPlugin::populateEditors(const WayPoint& waypoint) {
   setEditorValue(ui_.slip_radius_z_editor, waypoint.slip_radius_z);
 }
 
-QString CougWaypointsPlugin::missionDirectory() {
+auto CougWaypointsPlugin::missionDirectory() -> QString {
   const QString config_dir = qEnvironmentVariable("CONFIG_DIR");
   if (config_dir.isEmpty()) {
     return {};
@@ -664,7 +664,8 @@ QString CougWaypointsPlugin::missionDirectory() {
   return config_dir + "/missions";
 }
 
-bool CougWaypointsPlugin::wgs84ToMap(double latitude, double longitude, QPointF& map_point) const {
+auto CougWaypointsPlugin::wgs84ToMap(double latitude, double longitude, QPointF& map_point) const
+    -> bool {
   swri_transform_util::Transform map_T_wgs84;
   if (!tf_manager_->GetTransform(params_.map_frame, swri_transform_util::_wgs84_frame,
                                  map_T_wgs84)) {
@@ -676,7 +677,7 @@ bool CougWaypointsPlugin::wgs84ToMap(double latitude, double longitude, QPointF&
   return true;
 }
 
-bool CougWaypointsPlugin::mapToWgs84(const QPointF& map_point, QPointF& lat_lon) const {
+auto CougWaypointsPlugin::mapToWgs84(const QPointF& map_point, QPointF& lat_lon) const -> bool {
   swri_transform_util::Transform wgs84_T_map;
   if (!tf_manager_->GetTransform(swri_transform_util::_wgs84_frame, params_.map_frame,
                                  wgs84_T_map)) {

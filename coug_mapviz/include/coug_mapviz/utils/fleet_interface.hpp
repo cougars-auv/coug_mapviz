@@ -74,7 +74,7 @@ class FleetInterface {
                     const std::string& agent_name, const std::string& response_message,
                     Status failure_status = Status::kWarning);
 
-  [[nodiscard]] const std::string& serviceName(Service service) const;
+  [[nodiscard]] auto serviceName(Service service) const -> const std::string&;
 
   std::shared_ptr<rclcpp::Node> node_;
   StatusCallback status_;
