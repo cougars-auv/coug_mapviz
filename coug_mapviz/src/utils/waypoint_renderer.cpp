@@ -119,7 +119,8 @@ void WaypointRenderer::paintWaypoints(QPainter* painter, const std::vector<WayPo
     const QRectF index_rect(
         QPointF(points[i].x() - kIndexSizePx / 2.0, points[i].y() - kIndexSizePx / 2.0),
         QSizeF(kIndexSizePx, kIndexSizePx));
-    painter->drawText(index_rect, Qt::AlignHCenter | Qt::AlignVCenter, QString::number(i + 1));
+    const QString index_text = (i == 0) ? "H" : QString::number(i + 1);
+    painter->drawText(index_rect, Qt::AlignHCenter | Qt::AlignVCenter, index_text);
   }
 }
 }  // namespace coug_mapviz::utils
