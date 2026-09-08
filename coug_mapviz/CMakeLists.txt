@@ -48,12 +48,13 @@ ament_auto_add_library(${PROJECT_NAME} SHARED NO_TARGET_LINK_LIBRARIES
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 
-target_compile_definitions(${PROJECT_NAME} PUBLIC
-  "PLUGINLIB__DISABLE_BOOST_FUNCTIONS"
-  "WFlags=WindowFlags"
+target_compile_definitions(
+  ${PROJECT_NAME}
+  PUBLIC "PLUGINLIB__DISABLE_BOOST_FUNCTIONS" "WFlags=WindowFlags"
 )
 
-target_link_libraries(${PROJECT_NAME}
+target_link_libraries(
+  ${PROJECT_NAME}
   coug_waypoints_parameters
   Qt5::Core
   Qt5::Gui

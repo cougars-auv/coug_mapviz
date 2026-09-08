@@ -39,23 +39,18 @@ def create_mapviz_config(agent_list: list[str], gui_dir: str) -> str:
         displays[:] = [
             display
             for display in displays
-            if display["type"]
-            in {"mapviz_plugins/tile_map", "coug_mapviz/coug_waypoints"}
+            if display["type"] in {"mapviz_plugins/tile_map", "coug_mapviz/coug_waypoints"}
         ]
         with open(os.path.join(gui_dir, "multi_mapviz.mvc.template")) as template:
             agent_template = template.read()
         displays.extend(
             display
             for agent_ns in agent_list
-            for display in yaml.safe_load(agent_template.replace("AGENT_NS", agent_ns))[
-                "displays"
-            ]
+            for display in yaml.safe_load(agent_template.replace("AGENT_NS", agent_ns))["displays"]
         )
         config_content = yaml.safe_dump(config)
 
-    with tempfile.NamedTemporaryFile(
-        mode="w", delete=False, suffix=".mvc"
-    ) as rendered_config:
+    with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".mvc") as rendered_config:
         rendered_config.write(config_content)
         return rendered_config.name
 
@@ -74,9 +69,7 @@ def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Node
             "coug_mapviz_params.yaml",
         ]
     )
-    mapviz_config_file = create_mapviz_config(
-        agent_list, os.path.join(config_dir, "gui")
-    )
+    mapviz_config_file = create_mapviz_config(agent_list, os.path.join(config_dir, "gui"))
 
     return [
         Node(
@@ -132,8 +125,7 @@ def generate_launch_description() -> LaunchDescription:
                 "agent_list",
                 default_value="[auv0]",
                 description=(
-                    "YAML list of agent namespaces "
-                    "(e.g. '[coug1sim]' or '[coug1sim, coug2sim]')"
+                    "YAML list of agent namespaces (e.g. '[coug1sim]' or '[coug1sim, coug2sim]')"
                 ),
             ),
             OpaqueFunction(function=launch_setup),
