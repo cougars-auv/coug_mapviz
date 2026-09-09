@@ -17,7 +17,7 @@
 #include <mapviz/map_canvas.h>
 #include <mapviz/mapviz_plugin.h>
 #include <swri_transform_util/transform.h>
-#include <ui_coug_waypoints_config.h>
+#include <ui_coug_waypoints.h>
 
 #include <QGLWidget>
 #include <QMouseEvent>
@@ -154,7 +154,7 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   coug_waypoints::Params params_;
 
   // --- State ---
-  Ui::coug_waypoints_config ui_;
+  Ui::coug_waypoints ui_;
   QWidget* config_widget_;
   mapviz::MapCanvas* map_canvas_{nullptr};
 
