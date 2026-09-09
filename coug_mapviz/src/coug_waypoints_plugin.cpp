@@ -431,7 +431,7 @@ void CougWaypointsPlugin::SaveWaypoints() {
 
   const QString directory = missionDirectory();
   if (directory.isEmpty()) {
-    PrintError("CONFIG_DIR is not set.");
+    PrintWarning("CONFIG_DIR is not set, using the default directory.");
   } else {
     const QDir dir(directory);
     if (!dir.exists()) {
@@ -487,7 +487,7 @@ void CougWaypointsPlugin::LoadWaypoints() {
 
   const QString directory = missionDirectory();
   if (directory.isEmpty()) {
-    PrintError("CONFIG_DIR is not set.");
+    PrintWarning("CONFIG_DIR is not set, using the default directory.");
   }
 
   const QString filename = QFileDialog::getOpenFileName(config_widget_, "Load Mission", directory,
@@ -498,13 +498,13 @@ void CougWaypointsPlugin::LoadWaypoints() {
 
   QFile file(filename);
   if (!file.open(QIODevice::ReadOnly)) {
-    PrintError("Failed to load.");
+    PrintError("Failed to open file.");
     return;
   }
 
   const QJsonDocument document = QJsonDocument::fromJson(file.readAll());
   if (!document.isObject()) {
-    PrintError("Failed to load.");
+    PrintError("Invalid mission file.");
     return;
   }
 
