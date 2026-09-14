@@ -19,6 +19,7 @@ from typing import Any
 import yaml
 from launch import LaunchContext, LaunchDescription
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
+from launch.conditions import IfCondition
 from launch.substitutions import (
     EnvironmentVariable,
     LaunchConfiguration,
@@ -57,6 +58,7 @@ def create_mapviz_config(agent_list: list[str], gui_dir: str) -> str:
 
 def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Node]:
     use_sim_time = LaunchConfiguration("use_sim_time")
+    initialize_origin = LaunchConfiguration("initialize_origin")
     agent_list_str = LaunchConfiguration("agent_list").perform(context)
 
     agent_list = yaml.safe_load(agent_list_str)
@@ -90,6 +92,7 @@ def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Node
             package="swri_transform_util",
             executable="initialize_origin.py",
             name="initialize_origin",
+            condition=IfCondition(initialize_origin),
             remappings=[
                 ("fix", "/origin"),
             ],
@@ -123,6 +126,10 @@ def generate_launch_description() -> LaunchDescription:
             DeclareLaunchArgument(
                 "agent_list",
                 default_value="[auv0]",
+            ),
+            DeclareLaunchArgument(
+                "initialize_origin",
+                default_value="true",
             ),
             OpaqueFunction(function=launch_setup),
         ]
