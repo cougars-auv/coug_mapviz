@@ -64,6 +64,7 @@ def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Node
     agent_list_str = LaunchConfiguration("agent_list").perform(context)
 
     agent_list = yaml.safe_load(agent_list_str)
+
     config_dir = os.environ["CONFIG_DIR"]
 
     fleet_param_file = PathJoinSubstitution(
@@ -73,6 +74,7 @@ def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Node
             "coug_mapviz_params.yaml",
         ]
     )
+
     mapviz_config_file = create_mapviz_config(agent_list, os.path.join(config_dir, "gui"))
 
     return [
