@@ -33,7 +33,7 @@ def create_mapviz_config(agent_list: list[str], gui_dir: str) -> str:
         content = template.read()
 
     if len(agent_list) == 1:
-        config_content = content.replace("AGENT_NS", agent_list[0])
+        config_content = content.replace("<agent_ns>", agent_list[0])
     else:
         config = yaml.safe_load(content)
         displays = config["displays"]
@@ -47,7 +47,9 @@ def create_mapviz_config(agent_list: list[str], gui_dir: str) -> str:
         displays.extend(
             display
             for agent_ns in agent_list
-            for display in yaml.safe_load(agent_template.replace("AGENT_NS", agent_ns))["displays"]
+            for display in yaml.safe_load(agent_template.replace("<agent_ns>", agent_ns))[
+                "displays"
+            ]
         )
         config_content = yaml.safe_dump(config)
 
