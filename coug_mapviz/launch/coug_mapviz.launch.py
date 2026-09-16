@@ -74,6 +74,9 @@ def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Node
             "coug_mapviz_params.yaml",
         ]
     )
+    scenario_param_file = (
+        LaunchConfiguration("scenario_param_file").perform(context) or fleet_param_file
+    )
 
     mapviz_config_file = create_mapviz_config(agent_list, os.path.join(config_dir, "gui"))
 
@@ -84,6 +87,7 @@ def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Node
             name="mapviz",
             parameters=[
                 fleet_param_file,
+                scenario_param_file,
                 {
                     "config": mapviz_config_file,
                     "use_sim_time": use_sim_time,
@@ -102,6 +106,7 @@ def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Node
             ],
             parameters=[
                 fleet_param_file,
+                scenario_param_file,
                 {"use_sim_time": use_sim_time},
             ],
         ),
@@ -130,6 +135,10 @@ def generate_launch_description() -> LaunchDescription:
             DeclareLaunchArgument(
                 "agent_list",
                 default_value="[auv0]",
+            ),
+            DeclareLaunchArgument(
+                "scenario_param_file",
+                default_value="",
             ),
             DeclareLaunchArgument(
                 "initialize_origin",
