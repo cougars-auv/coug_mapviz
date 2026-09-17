@@ -30,31 +30,33 @@ from launch_ros.actions import Node
 
 def create_mapviz_config(agent_list: list[str], gui_dir: str) -> str:
     with open(os.path.join(gui_dir, "mapviz.mvc.template")) as template:
-        content = template.read()
+        content = template.read().replace("<agent_ns>", agent_list[0])
 
     if len(agent_list) == 1:
-        config_content = content.replace("<agent_ns>", agent_list[0])
-    else:
-        config = yaml.safe_load(content)
-        displays = config["displays"]
-        displays[:] = [
-            display
-            for display in displays
-            if display["type"] in {"mapviz_plugins/tile_map", "coug_mapviz/coug_waypoints"}
-        ]
-        with open(os.path.join(gui_dir, "multi_mapviz.mvc.template")) as template:
-            agent_template = template.read()
-        displays.extend(
-            display
-            for agent_ns in agent_list
-            for display in yaml.safe_load(agent_template.replace("<agent_ns>", agent_ns))[
-                "displays"
-            ]
-        )
-        config_content = yaml.safe_dump(config)
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".mvc") as rendered_config:
+            rendered_config.write(content)
+            return rendered_config.name
 
+    config = yaml.safe_load(content)
+    displays = config["displays"]
+    displays[:] = [
+        display
+        for display in displays
+        if display.get("type")
+        in {
+            "mapviz_plugins/tile_map",
+            "coug_mapviz/coug_waypoints",
+        }
+    ]
+    with open(os.path.join(gui_dir, "multi_mapviz.mvc.template")) as template:
+        agent_template = template.read()
+    displays.extend(
+        display
+        for agent_ns in agent_list
+        for display in yaml.safe_load(agent_template.replace("<agent_ns>", agent_ns))["displays"]
+    )
     with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".mvc") as rendered_config:
-        rendered_config.write(config_content)
+        yaml.safe_dump(config, rendered_config, sort_keys=False)
         return rendered_config.name
 
 
@@ -68,11 +70,7 @@ def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Node
     config_dir = os.environ["CONFIG_DIR"]
 
     fleet_param_file = PathJoinSubstitution(
-        [
-            EnvironmentVariable("CONFIG_DIR"),
-            "fleet",
-            "coug_mapviz_params.yaml",
-        ]
+        [EnvironmentVariable("CONFIG_DIR"), "fleet", "coug_mapviz_params.yaml"]
     )
     scenario_param_file = (
         LaunchConfiguration("scenario_param_file").perform(context) or fleet_param_file
