@@ -445,6 +445,7 @@ void CougWaypointsPlugin::TypeChanged(int index) {
     }
   } else {
     waypoint->type = WayPoint::GPS;
+    waypoint->tag_id = 0;
     waypoint->subwaypoints.clear();
   }
   setEditorValue(ui_.tag_editor, waypoint->tag_id, waypoint->type == WayPoint::ARUCO);
