@@ -293,13 +293,11 @@ auto CougWaypointsPlugin::handleMouseRelease(QMouseEvent* event) -> bool {
   if (dragged_hit_.valid()) {
     const WaypointHit hit = dragged_hit_;
     dragged_hit_ = {};
-    if (!is_click) {
+    if (!is_click || hit.subwaypoint_idx >= 0) {
       return true;
     }
 
-    if (hit.subwaypoint_idx >= 0) {
-      eraseHit(hit);
-    } else if (selected_waypoint_idx_ == hit.waypoint_idx) {
+    if (selected_waypoint_idx_ == hit.waypoint_idx) {
       clearWaypointSelection();
     } else {
       const auto& waypoints = waypointsForAgent(current_agent_);
