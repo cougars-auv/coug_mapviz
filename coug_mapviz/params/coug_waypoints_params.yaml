@@ -11,22 +11,22 @@ coug_waypoints:
     type: double
     default_value: 25.0
     validation:
-      gt_eq<>: [0.0]
+      gt<>: [0.0]
   default_capture_radius_z:
     type: double
     default_value: 2.0
     validation:
-      gt_eq<>: [0.0]
+      gt<>: [0.0]
   default_slip_radius:
     type: double
     default_value: 50.0
     validation:
-      gt_eq<>: [0.0]
+      gt<>: [0.0]
   default_slip_radius_z:
     type: double
     default_value: 4.0
     validation:
-      gt_eq<>: [0.0]
+      gt<>: [0.0]
   default_search_radii:
     type: double_array
     default_value: [9.0, 15.588]
