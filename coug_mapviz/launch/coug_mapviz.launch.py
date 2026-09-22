@@ -18,6 +18,7 @@ from typing import Any
 
 import yaml
 from launch import LaunchContext, LaunchDescription
+from launch.action import Action
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.conditions import IfCondition
 from launch.substitutions import (
@@ -49,7 +50,7 @@ def create_mapviz_config(agent_list: list[str], gui_dir: str) -> str:
         return rendered_config.name
 
 
-def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Node]:
+def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Action]:
     use_sim_time = LaunchConfiguration("use_sim_time")
     initialize_origin = LaunchConfiguration("initialize_origin")
     agent_list_str = LaunchConfiguration("agent_list").perform(context)
@@ -76,8 +77,8 @@ def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Node
                 fleet_param_file,
                 scenario_param_file,
                 {
-                    "config": mapviz_config_file,
                     "use_sim_time": use_sim_time,
+                    "config": mapviz_config_file,
                     "map_frame": "map",
                     "agent_list": agent_list,
                 },
@@ -88,13 +89,13 @@ def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Node
             executable="initialize_origin.py",
             name="initialize_origin",
             condition=IfCondition(initialize_origin),
-            remappings=[
-                ("fix", "/origin"),
-            ],
             parameters=[
                 fleet_param_file,
                 scenario_param_file,
                 {"use_sim_time": use_sim_time},
+            ],
+            remappings=[
+                ("fix", "/origin"),
             ],
         ),
         Node(
