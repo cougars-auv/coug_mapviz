@@ -30,31 +30,20 @@ from launch_ros.actions import Node
 
 def create_mapviz_config(agent_list: list[str], gui_dir: str) -> str:
     with open(os.path.join(gui_dir, "mapviz.mvc.template")) as template:
-        content = template.read().replace("<agent_ns>", agent_list[0])
+        config = yaml.safe_load(template)
 
-    if len(agent_list) == 1:
-        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".mvc") as rendered_config:
-            rendered_config.write(content)
-            return rendered_config.name
+    templates = [yaml.safe_dump(display, sort_keys=False) for display in config["displays"]]
+    shared = [text for text in templates if "<agent_ns>" not in text]
+    per_agent = [text for text in templates if "<agent_ns>" in text]
 
-    config = yaml.safe_load(content)
-    displays = config["displays"]
-    displays[:] = [
-        display
-        for display in displays
-        if display.get("type")
-        in {
-            "mapviz_plugins/tile_map",
-            "coug_mapviz/coug_waypoints",
-        }
-    ]
-    with open(os.path.join(gui_dir, "multi_mapviz.mvc.template")) as template:
-        agent_template = template.read()
-    displays.extend(
-        display
-        for agent_ns in agent_list
-        for display in yaml.safe_load(agent_template.replace("<agent_ns>", agent_ns))["displays"]
-    )
+    config["displays"] = [yaml.safe_load(text) for text in shared]
+    for agent_ns in agent_list:
+        for text in per_agent:
+            display = yaml.safe_load(text.replace("<agent_ns>", agent_ns))
+            if len(agent_list) > 1:
+                display["name"] = f"{agent_ns}, {display['name']}"
+            config["displays"].append(display)
+
     with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".mvc") as rendered_config:
         yaml.safe_dump(config, rendered_config, sort_keys=False)
         return rendered_config.name
