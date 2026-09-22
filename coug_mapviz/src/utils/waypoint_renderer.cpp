@@ -37,6 +37,7 @@ using coug_interfaces::msg::WayPoint;
 namespace {
 
 constexpr float kMarkerSizePx = 20.0F;
+constexpr float kSubMarkerSizePx = 10.0F;
 constexpr int kPathWidthPx = 2;
 
 constexpr int kLabelWidthPx = 100;
@@ -57,6 +58,8 @@ const QColor kInactiveLabel(255, 255, 255, 191);
 const QColor kActiveMarker(Qt::cyan);
 const QColor kInactiveMarker(Qt::gray);
 const QColor kSelectedMarker(Qt::yellow);
+const QColor kActiveSubMarker(Qt::yellow);
+const QColor kInactiveSubMarker(128, 128, 128, 191);
 
 auto labelRect(const QPointF& point, int y_offset) -> QRectF {
   return {QPointF(point.x() - kLabelOffsetXPx, point.y() + y_offset),
@@ -72,19 +75,26 @@ auto WaypointRenderer::fixedToGl(const QPointF& fixed_point) const -> QPointF {
 }
 
 void WaypointRenderer::paintWaypoints(QPainter* painter, const std::vector<WayPoint>& waypoints,
-                                      bool active, int selected_idx) const {
+                                      bool active, int selected_waypoint_idx) const {
   const QColor& path_color = active ? kActivePath : kInactivePath;
   const QColor& label_color = active ? kActiveLabel : kInactiveLabel;
+
   QVector<QPointF> points;
+  QVector<QPointF> path_points;
   for (const auto& waypoint : waypoints) {
-    points.push_back(fixedToGl(QPointF(waypoint.position.x, waypoint.position.y)));
+    const QPointF point = fixedToGl(QPointF(waypoint.position.x, waypoint.position.y));
+    points.push_back(point);
+    path_points.push_back(point);
+    for (const auto& subwaypoint : waypoint.subwaypoints) {
+      path_points.push_back(fixedToGl(QPointF(subwaypoint.x, subwaypoint.y)));
+    }
   }
   painter->setPen(QPen(path_color, kPathWidthPx));
-  painter->drawPolyline(points);
+  painter->drawPolyline(path_points);
 
-  for (int i = 0; i < points.size(); ++i) {
-    const auto& waypoint = waypoints[static_cast<size_t>(i)];
-    if (active) {
+  if (active) {
+    for (int i = 0; i < points.size(); ++i) {
+      const auto& waypoint = waypoints[static_cast<size_t>(i)];
       const QPointF center(waypoint.position.x, waypoint.position.y);
       const auto radius = [&](double meters) {
         return QLineF(points[i], fixedToGl(QPointF(center.x() + meters, center.y()))).length();
@@ -97,14 +107,26 @@ void WaypointRenderer::paintWaypoints(QPainter* painter, const std::vector<WayPo
       painter->drawEllipse(points[i], radius(waypoint.capture_radius),
                            radius(waypoint.capture_radius));
     }
+  }
 
+  painter->setPen(QPen(active ? kActiveSubMarker : kInactiveSubMarker, kSubMarkerSizePx,
+                       Qt::SolidLine, Qt::RoundCap));
+  for (const auto& waypoint : waypoints) {
+    for (const auto& subwaypoint : waypoint.subwaypoints) {
+      painter->drawPoint(fixedToGl(QPointF(subwaypoint.x, subwaypoint.y)));
+    }
+  }
+
+  for (int i = 0; i < points.size(); ++i) {
+    const auto& waypoint = waypoints[static_cast<size_t>(i)];
     QColor marker = kInactiveMarker;
-    if (i == selected_idx) {
+    if (i == selected_waypoint_idx) {
       marker = kSelectedMarker;
     } else if (active) {
       marker = kActiveMarker;
     }
-    painter->setPen(QPen(marker, kMarkerSizePx, Qt::SolidLine, Qt::RoundCap));
+    const Qt::PenCapStyle cap = waypoint.type == WayPoint::ARUCO ? Qt::SquareCap : Qt::RoundCap;
+    painter->setPen(QPen(marker, kMarkerSizePx, Qt::SolidLine, cap));
     painter->drawPoint(points[i]);
 
     painter->setPen(QPen(label_color));

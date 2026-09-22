@@ -27,6 +27,17 @@ coug_waypoints:
     default_value: 4.0
     validation:
       gt_eq<>: [0.0]
+  default_search_radii:
+    type: double_array
+    default_value: [9.0, 15.588]
+    validation:
+      not_empty<>: []
+      lower_element_bounds<>: [0.0]
+  default_search_points:
+    type: int
+    default_value: 6
+    validation:
+      gt_eq<>: [3]
   waypoint_topic:
     type: string
     default_value: "waypoints"

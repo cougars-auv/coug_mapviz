@@ -36,7 +36,7 @@ class WaypointRenderer {
 
   void paintWaypoints(QPainter* painter,
                       const std::vector<coug_interfaces::msg::WayPoint>& waypoints, bool active,
-                      int selected_idx = -1) const;
+                      int selected_waypoint_idx = -1) const;
 
  private:
   mapviz::MapCanvas* map_canvas_;

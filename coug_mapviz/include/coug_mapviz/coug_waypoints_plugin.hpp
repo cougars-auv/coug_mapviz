@@ -27,6 +27,7 @@
 #include <coug_mapviz/coug_waypoints_parameters.hpp>
 #include <coug_mapviz/utils/fleet_interface.hpp>
 #include <coug_mapviz/utils/waypoint_renderer.hpp>
+#include <geometry_msgs/msg/point.hpp>
 #include <map>
 #include <memory>
 #include <rclcpp/rclcpp.hpp>
@@ -98,26 +99,37 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
 
   void EditorChanged(double value);
 
+  void TypeChanged(int index);
+
+  void TagChanged(int value);
+
   void AltitudeModeChanged(bool checked);
 
   void PublishWaypoints();
 
   void ClearWaypoints();
 
-  void SaveWaypoints();
-
   void LoadWaypoints();
+
+  void SaveWaypoints();
 
   void Start() { callFleetService(utils::FleetInterface::Service::kStart); }
 
   void Stop() { callFleetService(utils::FleetInterface::Service::kStop); }
 
-  void Surface() { callFleetService(utils::FleetInterface::Service::kSurface); }
-
   void Home() { callFleetService(utils::FleetInterface::Service::kHome); }
+
+  void Surface() { callFleetService(utils::FleetInterface::Service::kSurface); }
 
  private:
   // --- Helpers ---
+  struct WaypointHit {
+    int waypoint_idx{-1};
+    int subwaypoint_idx{-1};
+
+    [[nodiscard]] auto valid() const -> bool { return waypoint_idx >= 0; }
+  };
+
   [[nodiscard]] auto waypointsForAgent(const std::string& agent) const
       -> const std::vector<coug_interfaces::msg::WayPoint>&;
 
@@ -127,7 +139,14 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
 
   auto selectedWaypoint() -> coug_interfaces::msg::WayPoint*;
 
-  auto findWaypointAt(const QPointF& point) -> int;
+  auto findHitAt(const QPointF& point) -> WaypointHit;
+
+  auto eraseHit(const WaypointHit& hit) -> bool;
+
+  [[nodiscard]] auto buildSearchPattern(const coug_interfaces::msg::WayPoint& waypoint) const
+      -> std::vector<geometry_msgs::msg::Point>;
+
+  static void moveWaypoint(coug_interfaces::msg::WayPoint& waypoint, const QPointF& map_point);
 
   void clearWaypointSelection();
 
@@ -161,8 +180,8 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   std::map<std::string, std::vector<coug_interfaces::msg::WayPoint>> waypoints_;
   std::string current_agent_;
 
-  int selected_idx_{-1};
-  int dragged_idx_{-1};
+  int selected_waypoint_idx_{-1};
+  WaypointHit dragged_hit_;
   QPointF mouse_down_pos_;
   qint64 mouse_down_time_{0};
 };

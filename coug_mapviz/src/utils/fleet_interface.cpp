@@ -86,6 +86,12 @@ void FleetInterface::publishWaypoints(const std::string& agent_name,
     geometry_msgs::msg::Pose pose;
     pose.position = waypoint.position;
     pose_array.poses.push_back(pose);
+
+    for (const auto& subwaypoint : waypoint.subwaypoints) {
+      geometry_msgs::msg::Pose sub_pose;
+      sub_pose.position = subwaypoint;
+      pose_array.poses.push_back(sub_pose);
+    }
   }
   agent_it->second.waypoint_nav2_pub->publish(pose_array);
 }
