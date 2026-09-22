@@ -40,22 +40,22 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOUIC_SEARCH_PATHS "${CMAKE_CURRENT_SOURCE_DIR}/ui")
 
-ament_auto_add_library(${PROJECT_NAME} SHARED NO_TARGET_LINK_LIBRARIES
-  include/${PROJECT_NAME}/coug_waypoints_plugin.hpp
+ament_auto_add_library(coug_mapviz_plugins SHARED NO_TARGET_LINK_LIBRARIES
+  include/coug_mapviz/coug_waypoints_plugin.hpp
   src/coug_waypoints_plugin.cpp
   src/utils/fleet_interface.cpp
   src/utils/waypoint_renderer.cpp
 )
 
-target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
+target_compile_features(coug_mapviz_plugins PUBLIC cxx_std_17)
 
 target_compile_definitions(
-  ${PROJECT_NAME}
+  coug_mapviz_plugins
   PUBLIC "PLUGINLIB__DISABLE_BOOST_FUNCTIONS" "WFlags=WindowFlags"
 )
 
 target_link_libraries(
-  ${PROJECT_NAME}
+  coug_mapviz_plugins
   coug_waypoints_parameters
   Qt5::Core
   Qt5::Gui

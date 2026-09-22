@@ -14,7 +14,7 @@
  limitations under the License.
 -->
 
-<library path="coug_mapviz">
+<library path="coug_mapviz_plugins">
   <class name="coug_mapviz/coug_waypoints" type="coug_mapviz::CougWaypointsPlugin"
     base_class_type="mapviz::MapvizPlugin">
     <description></description>
