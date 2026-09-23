@@ -134,6 +134,8 @@ CougWaypointsPlugin::CougWaypointsPlugin() : ui_(), config_widget_(new QWidget()
   QPalette status_palette(ui_.status->palette());
   status_palette.setColor(QPalette::Text, kStatusTextColor);
   ui_.status->setPalette(status_palette);
+  ui_.status->installEventFilter(this);
+  config_widget_->installEventFilter(this);
 
   connect(ui_.agent_selector, &QComboBox::currentTextChanged, this,
           &CougWaypointsPlugin::AgentChanged);
@@ -239,7 +241,18 @@ void CougWaypointsPlugin::PrintWarning(const std::string& message) {
   PrintWarningHelper(ui_.status, message);
 }
 
-auto CougWaypointsPlugin::eventFilter(QObject* /*watched*/, QEvent* event) -> bool {
+auto CougWaypointsPlugin::eventFilter(QObject* watched, QEvent* event) -> bool {
+  if (watched == ui_.status || watched == config_widget_) {
+    const int width = ui_.status->width();
+    if ((event->type() == QEvent::Resize || event->type() == QEvent::LayoutRequest) && width > 0) {
+      const int height = ui_.status->heightForWidth(width);
+      if (height != ui_.status->minimumHeight()) {
+        ui_.status->setMinimumHeight(height);
+        Q_EMIT SizeChanged();
+      }
+    }
+    return false;
+  }
   if (!Visible()) {
     return false;
   }
