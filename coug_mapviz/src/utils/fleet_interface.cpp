@@ -69,7 +69,7 @@ void FleetInterface::publishWaypoints(const std::string& agent_name,
                                       const std::vector<WayPoint>& waypoints) {
   auto agent_it = agents_.find(agent_name);
   if (agent_it == agents_.end()) {
-    status_(Status::kError, "Publisher not registered: " + agent_name);
+    status_(Status::kError, "No waypoint publisher registered for '" + agent_name + "'.");
     return;
   }
 
@@ -102,7 +102,8 @@ void FleetInterface::callService(Service service, const std::vector<std::string>
     return;
   }
   const std::string prefix = "[" + serviceName(service) + "] ";
-  status_(Status::kInfo, prefix + "Calling service...");
+  status_(Status::kInfo,
+          prefix + "Calling service on " + std::to_string(agents.size()) + " agent(s)...");
   auto state = std::make_shared<ServiceCallState>();
   state->total = static_cast<int>(agents.size());
   state->service = service;
@@ -119,7 +120,7 @@ void FleetInterface::callAgentService(const std::string& agent_name, Service ser
                           : agent_it->second.service_clients[static_cast<size_t>(service)];
   if (!client || !client->service_is_ready()) {
     recordResult(state, false, agent_name,
-                 "Service not available: " + build_name(agent_name, serviceName(service)),
+                 "Service '" + build_name(agent_name, serviceName(service)) + "' not available.",
                  Status::kError);
     return;
   }
@@ -131,7 +132,7 @@ void FleetInterface::callAgentService(const std::string& agent_name, Service ser
         const auto& response = future.get();
         if (!response) {
           recordResult(state, false, agent_name,
-                       "Service call failed: " + build_name(agent_name, serviceName(service)),
+                       "Failed to call '" + build_name(agent_name, serviceName(service)) + "'.",
                        Status::kError);
           return;
         }
@@ -168,11 +169,11 @@ void FleetInterface::recordResult(const std::shared_ptr<ServiceCallState>& state
     } else {
       std::string failed_agents;
       for (const auto& failed_agent : state->failed) {
-        failed_agents += " " + failed_agent;
+        failed_agents += (failed_agents.empty() ? "" : ", ") + failed_agent;
       }
       level = state->succeeded == 0 ? Status::kError : Status::kWarning;
       message = prefix + std::to_string(state->succeeded) + "/" + std::to_string(state->total) +
-                " confirmed; failed:" + failed_agents + ".";
+                " agent(s) confirmed; failed: " + failed_agents + ".";
     }
   }
   status_(level, message);

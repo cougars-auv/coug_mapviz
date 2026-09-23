@@ -43,6 +43,7 @@
 #include <QDir>
 #include <QFile>
 #include <QFileDialog>
+#include <QFileInfo>
 #include <QIODevice>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -526,13 +527,13 @@ void CougWaypointsPlugin::LoadWaypoints() {
 
   QFile file(filename);
   if (!file.open(QIODevice::ReadOnly)) {
-    PrintError("Failed to open file.");
+    PrintError("Failed to open '" + QFileInfo(filename).fileName().toStdString() + "'.");
     return;
   }
 
   const QJsonDocument document = QJsonDocument::fromJson(file.readAll());
   if (!document.isObject()) {
-    PrintError("Invalid mission file.");
+    PrintError("Invalid mission file: '" + QFileInfo(filename).fileName().toStdString() + "'.");
     return;
   }
 
@@ -586,7 +587,7 @@ void CougWaypointsPlugin::LoadWaypoints() {
     ++loaded_count;
   }
   if (loaded_count == 0) {
-    PrintError("No matched agents.");
+    PrintError("No agents in the mission file match the selection.");
     return;
   }
 
@@ -663,7 +664,7 @@ void CougWaypointsPlugin::SaveWaypoints() {
 
   QFile file(filename);
   if (!file.open(QIODevice::WriteOnly) || file.write(QJsonDocument(mission).toJson()) < 0) {
-    PrintError("Failed to save.");
+    PrintError("Failed to save '" + QFileInfo(filename).fileName().toStdString() + "'.");
     return;
   }
   PrintInfo("Saved " + std::to_string(agents.size()) + " agent(s).");
