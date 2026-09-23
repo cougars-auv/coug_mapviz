@@ -18,6 +18,7 @@
 #include <coug_interfaces/msg/way_point.hpp>
 #include <coug_interfaces/msg/way_point_list.hpp>
 #include <coug_mapviz/coug_waypoints_parameters.hpp>
+#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <geometry_msgs/msg/pose_array.hpp>
@@ -51,9 +52,8 @@ class FleetInterface {
 
  private:
   struct ServiceCallState {
-    int total = 0;
-    int responded = 0;
-    int succeeded = 0;
+    size_t responded = 0;
+    size_t succeeded = 0;
     Service service = Service::kStart;
     std::vector<std::string> agents;
     std::map<std::string, std::string> responses;

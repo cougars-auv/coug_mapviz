@@ -107,7 +107,6 @@ void FleetInterface::callService(Service service, const std::vector<std::string>
   status_(Status::kInfo,
           prefix + "Calling service on " + std::to_string(agents.size()) + " agent(s)...");
   auto state = std::make_shared<ServiceCallState>();
-  state->total = static_cast<int>(agents.size());
   state->agents = agents;
   state->service = service;
   for (const auto& agent_name : agents) {
@@ -160,11 +159,11 @@ void FleetInterface::recordResult(const std::shared_ptr<ServiceCallState>& state
         "[" + agent_name + "] " +
         (response_message.empty() ? "Service call completed." : response_message);
 
-    if (++state->responded < state->total) {
+    if (++state->responded < state->agents.size()) {
       return;
     }
 
-    if (state->succeeded != state->total) {
+    if (state->succeeded != state->agents.size()) {
       level = state->succeeded == 0 ? Status::kError : Status::kWarning;
     }
     message = "[" + serviceName(state->service) + "]";
