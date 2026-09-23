@@ -63,7 +63,7 @@ class FleetInterface {
 
   struct AgentEntry {
     rclcpp::Publisher<coug_interfaces::msg::WayPointList>::SharedPtr waypoint_pub;
-    rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr waypoint_nav2_pub;
+    rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr waypoint_viz_pub;
     std::array<rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr, kServiceCount> service_clients;
   };
 

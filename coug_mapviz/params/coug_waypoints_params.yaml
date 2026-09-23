@@ -43,9 +43,9 @@ coug_waypoints:
     default_value: "waypoints"
     validation:
       not_empty<>: []
-  waypoint_nav2_topic:
+  waypoint_viz_topic:
     type: string
-    default_value: "waypoints_nav2"
+    default_value: "waypoints_viz"
     validation:
       not_empty<>: []
   start_service:
