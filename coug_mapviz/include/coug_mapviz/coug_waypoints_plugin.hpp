@@ -79,7 +79,7 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   void PrintWarning(const std::string& message) override;
 
   // --- Event Handling ---
-  auto eventFilter(QObject* object, QEvent* event) -> bool override;
+  auto eventFilter(QObject* watched, QEvent* event) -> bool override;
 
   auto handleMousePress(QMouseEvent* event) -> bool;
 
