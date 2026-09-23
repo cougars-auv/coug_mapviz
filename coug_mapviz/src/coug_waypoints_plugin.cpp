@@ -51,6 +51,7 @@
 #include <QMouseEvent>
 #include <QPainter>
 #include <QSignalBlocker>
+#include <QTimer>
 #include <QtGlobal>
 #include <cmath>
 #include <coug_mapviz/coug_waypoints_plugin.hpp>
@@ -231,25 +232,37 @@ void CougWaypointsPlugin::Paint(QPainter* painter, double /*x*/, double /*y*/, d
 
 void CougWaypointsPlugin::PrintError(const std::string& message) {
   PrintErrorHelper(ui_.status, message);
+  updateStatusHeight();
 }
 
 void CougWaypointsPlugin::PrintInfo(const std::string& message) {
   PrintInfoHelper(ui_.status, message);
+  updateStatusHeight();
 }
 
 void CougWaypointsPlugin::PrintWarning(const std::string& message) {
   PrintWarningHelper(ui_.status, message);
+  updateStatusHeight();
+}
+
+void CougWaypointsPlugin::updateStatusHeight() {
+  const int width = ui_.status->width();
+  if (width <= 0) {
+    return;
+  }
+  const int old_height = ui_.status->maximumHeight();
+  ui_.status->setMinimumHeight(0);
+  const int height = ui_.status->heightForWidth(width);
+  ui_.status->setFixedHeight(height);
+  if (height != old_height) {
+    QTimer::singleShot(0, this, [this] { Q_EMIT SizeChanged(); });
+  }
 }
 
 auto CougWaypointsPlugin::eventFilter(QObject* watched, QEvent* event) -> bool {
   if (watched == ui_.status || watched == config_widget_) {
-    const int width = ui_.status->width();
-    if ((event->type() == QEvent::Resize || event->type() == QEvent::LayoutRequest) && width > 0) {
-      const int height = ui_.status->heightForWidth(width);
-      if (height != ui_.status->minimumHeight()) {
-        ui_.status->setMinimumHeight(height);
-        Q_EMIT SizeChanged();
-      }
+    if (event->type() == QEvent::Resize) {
+      updateStatusHeight();
     }
     return false;
   }
@@ -318,7 +331,6 @@ auto CougWaypointsPlugin::handleMouseRelease(QMouseEvent* event) -> bool {
       if (static_cast<size_t>(hit.waypoint_idx) < waypoints.size()) {
         selected_waypoint_idx_ = hit.waypoint_idx;
         populateEditors(waypoints[selected_waypoint_idx_]);
-        PrintInfo("Click again to deselect.");
       }
     }
     map_canvas_->update();
@@ -411,7 +423,7 @@ void CougWaypointsPlugin::AgentChanged(const QString& text) {
   if (waypoints.empty()) {
     PrintInfo("Click to add waypoints.");
   } else {
-    PrintInfo(current_agent_ + " (" + std::to_string(waypoints.size()) + " waypoints).");
+    PrintInfo("'" + current_agent_ + "' has " + std::to_string(waypoints.size()) + " waypoint(s).");
   }
 }
 
@@ -496,10 +508,13 @@ void CougWaypointsPlugin::PublishWaypoints() {
     return;
   }
 
+  size_t waypoint_count = 0;
   for (const auto& agent : agents) {
     interface_.publishWaypoints(agent, waypointsForAgent(agent));
+    waypoint_count += waypointsForAgent(agent).size();
   }
-  PrintInfo("Published to " + std::to_string(agents.size()) + " agent(s).");
+  PrintInfo("Published " + std::to_string(waypoint_count) + " waypoint(s) to " +
+            std::to_string(agents.size()) + " agent(s).");
 }
 
 void CougWaypointsPlugin::ClearWaypoints() {
@@ -508,7 +523,9 @@ void CougWaypointsPlugin::ClearWaypoints() {
     return;
   }
 
+  size_t waypoint_count = 0;
   for (const auto& agent : agents) {
+    waypoint_count += waypoints_[agent].size();
     waypoints_[agent].clear();
   }
 
@@ -518,7 +535,8 @@ void CougWaypointsPlugin::ClearWaypoints() {
   dragged_hit_ = {};
   clearWaypointSelection();
   map_canvas_->update();
-  PrintInfo("Cleared " + std::to_string(agents.size()) + " agent(s).");
+  PrintInfo("Cleared " + std::to_string(waypoint_count) + " waypoint(s) from " +
+            std::to_string(agents.size()) + " agent(s).");
 }
 
 void CougWaypointsPlugin::LoadWaypoints() {
@@ -553,11 +571,13 @@ void CougWaypointsPlugin::LoadWaypoints() {
   swri_transform_util::Transform map_T_wgs84;
   if (!tf_manager_->GetTransform(params_.map_frame, swri_transform_util::_wgs84_frame,
                                  map_T_wgs84)) {
-    PrintError("No transform between WGS84 and " + params_.map_frame + ".");
+    PrintError("No transform between '" + swri_transform_util::_wgs84_frame + "' and '" +
+               params_.map_frame + "'.");
     return;
   }
 
   int loaded_count = 0;
+  size_t waypoint_count = 0;
   const QJsonObject mission = document.object();
   std::map<std::string, std::vector<WayPoint>> loaded_waypoints;
   for (const auto& agent : agents) {
@@ -596,6 +616,7 @@ void CougWaypointsPlugin::LoadWaypoints() {
       }
       waypoints.push_back(waypoint);
     }
+    waypoint_count += waypoints.size();
     loaded_waypoints[agent] = std::move(waypoints);
     ++loaded_count;
   }
@@ -609,7 +630,9 @@ void CougWaypointsPlugin::LoadWaypoints() {
   }
 
   AgentChanged(QString::fromStdString(current_agent_));
-  PrintInfo("Loaded " + std::to_string(loaded_count) + " agent(s).");
+  PrintInfo("Loaded " + std::to_string(waypoint_count) + " waypoint(s) for " +
+            std::to_string(loaded_count) + " agent(s) from '" +
+            QFileInfo(filename).fileName().toStdString() + "'.");
 }
 
 void CougWaypointsPlugin::SaveWaypoints() {
@@ -640,13 +663,16 @@ void CougWaypointsPlugin::SaveWaypoints() {
   swri_transform_util::Transform wgs84_T_map;
   if (!tf_manager_->GetTransform(swri_transform_util::_wgs84_frame, params_.map_frame,
                                  wgs84_T_map)) {
-    PrintError("No transform between " + params_.map_frame + " and WGS84.");
+    PrintError("No transform between '" + params_.map_frame + "' and '" +
+               swri_transform_util::_wgs84_frame + "'.");
     return;
   }
 
   QJsonObject mission;
+  size_t waypoint_count = 0;
   for (const auto& agent : agents) {
     const auto& waypoints = waypointsForAgent(agent);
+    waypoint_count += waypoints.size();
     QJsonArray serialized_waypoints;
     for (const auto& waypoint : waypoints) {
       const QPointF lat_lon =
@@ -680,7 +706,9 @@ void CougWaypointsPlugin::SaveWaypoints() {
     PrintError("Failed to save '" + QFileInfo(filename).fileName().toStdString() + "'.");
     return;
   }
-  PrintInfo("Saved " + std::to_string(agents.size()) + " agent(s).");
+  PrintInfo("Saved " + std::to_string(waypoint_count) + " waypoint(s) for " +
+            std::to_string(agents.size()) + " agent(s) to '" +
+            QFileInfo(filename).fileName().toStdString() + "'.");
 }
 
 auto CougWaypointsPlugin::waypointsForAgent(const std::string& agent) const

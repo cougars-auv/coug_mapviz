@@ -14,6 +14,8 @@
 
 #include <coug_mapviz/utils/fleet_interface.hpp>
 #include <cstddef>
+#include <exception>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <rclcpp/client.hpp>
@@ -106,6 +108,7 @@ void FleetInterface::callService(Service service, const std::vector<std::string>
           prefix + "Calling service on " + std::to_string(agents.size()) + " agent(s)...");
   auto state = std::make_shared<ServiceCallState>();
   state->total = static_cast<int>(agents.size());
+  state->agents = agents;
   state->service = service;
   for (const auto& agent_name : agents) {
     callAgentService(agent_name, service, state);
@@ -120,8 +123,7 @@ void FleetInterface::callAgentService(const std::string& agent_name, Service ser
                           : agent_it->second.service_clients[static_cast<size_t>(service)];
   if (!client || !client->service_is_ready()) {
     recordResult(state, false, agent_name,
-                 "Service '" + build_name(agent_name, serviceName(service)) + "' not available.",
-                 Status::kError);
+                 "Service '" + build_name(agent_name, serviceName(service)) + "' not available.");
     return;
   }
   auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
@@ -129,51 +131,45 @@ void FleetInterface::callAgentService(const std::string& agent_name, Service ser
       request, [this, agent_name, service,
                 // NOLINTNEXTLINE(performance-unnecessary-value-param)
                 state](rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture future) {
-        const auto& response = future.get();
-        if (!response) {
-          recordResult(state, false, agent_name,
-                       "Failed to call '" + build_name(agent_name, serviceName(service)) + "'.",
-                       Status::kError);
-          return;
+        const std::string failed =
+            "Failed to call '" + build_name(agent_name, serviceName(service)) + "'";
+        try {
+          const auto response = future.get();
+          if (!response) {
+            recordResult(state, false, agent_name, failed + ".");
+            return;
+          }
+          recordResult(state, response->success, agent_name, response->message);
+        } catch (const std::exception& e) {
+          recordResult(state, false, agent_name, failed + ": " + e.what());
         }
-        recordResult(state, response->success, agent_name, response->message);
       });
 }
 
 void FleetInterface::recordResult(const std::shared_ptr<ServiceCallState>& state, bool success,
                                   const std::string& agent_name,
-                                  const std::string& response_message, Status failure_status) {
+                                  const std::string& response_message) {
   Status level = Status::kInfo;
   std::string message;
   {
     const std::lock_guard<std::mutex> lock(state->mutex);
     if (success) {
       ++state->succeeded;
-    } else {
-      state->failed.push_back(agent_name);
-      state->failure_status = failure_status;
     }
-    state->response_message = response_message;
+    state->responses[agent_name] =
+        "[" + agent_name + "] " +
+        (response_message.empty() ? "Service call completed." : response_message);
 
     if (++state->responded < state->total) {
       return;
     }
 
-    const std::string prefix = "[" + serviceName(state->service) + "] ";
-    if (state->total == 1) {
-      level = success ? Status::kInfo : state->failure_status;
-      message = prefix + (response_message.empty() ? "Service call completed." : response_message);
-    } else if (state->succeeded == state->total) {
-      level = Status::kInfo;
-      message = prefix + "All " + std::to_string(state->total) + " agent(s) confirmed.";
-    } else {
-      std::string failed_agents;
-      for (const auto& failed_agent : state->failed) {
-        failed_agents += (failed_agents.empty() ? "" : ", ") + failed_agent;
-      }
+    if (state->succeeded != state->total) {
       level = state->succeeded == 0 ? Status::kError : Status::kWarning;
-      message = prefix + std::to_string(state->succeeded) + "/" + std::to_string(state->total) +
-                " agent(s) confirmed; failed: " + failed_agents + ".";
+    }
+    message = "[" + serviceName(state->service) + "]";
+    for (const auto& agent : state->agents) {
+      message += " " + state->responses[agent];
     }
   }
   status_(level, message);

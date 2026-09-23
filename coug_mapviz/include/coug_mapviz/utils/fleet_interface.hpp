@@ -55,9 +55,8 @@ class FleetInterface {
     int responded = 0;
     int succeeded = 0;
     Service service = Service::kStart;
-    std::vector<std::string> failed;
-    std::string response_message;
-    Status failure_status = Status::kWarning;
+    std::vector<std::string> agents;
+    std::map<std::string, std::string> responses;
     std::mutex mutex;
   };
 
@@ -71,8 +70,7 @@ class FleetInterface {
                         const std::shared_ptr<ServiceCallState>& state);
 
   void recordResult(const std::shared_ptr<ServiceCallState>& state, bool success,
-                    const std::string& agent_name, const std::string& response_message,
-                    Status failure_status = Status::kWarning);
+                    const std::string& agent_name, const std::string& response_message);
 
   [[nodiscard]] auto serviceName(Service service) const -> const std::string&;
 

@@ -78,6 +78,8 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
 
   void PrintWarning(const std::string& message) override;
 
+  void updateStatusHeight();
+
   // --- Event Handling ---
   auto eventFilter(QObject* watched, QEvent* event) -> bool override;
 
