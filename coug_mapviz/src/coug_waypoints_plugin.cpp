@@ -364,6 +364,9 @@ auto CougWaypointsPlugin::handleMouseRelease(QMouseEvent* event) -> bool {
       waypoint.type = WayPoint::GPS;
 
       waypoints_[current_agent_].push_back(waypoint);
+      if (selected_waypoint_idx_ != -1) {
+        clearWaypointSelection();
+      }
     }
     map_canvas_->update();
   }
@@ -860,14 +863,13 @@ void CougWaypointsPlugin::clearWaypointSelection() {
   setSelectorValue(ui_.type_selector, WayPoint::GPS, false);
   setEditorValue(ui_.tag_editor, 0, false);
   setToggleValue(ui_.flash_toggle, false, false);
-  setDepthEditorRange(false);
-  setToggleValue(ui_.altitude_mode, false, false);
 }
 
 void CougWaypointsPlugin::setEditorsEnabled(bool enabled) {
   ui_.lat_editor->setEnabled(enabled);
   ui_.lon_editor->setEnabled(enabled);
   ui_.depth_editor->setEnabled(enabled);
+  ui_.altitude_mode->setEnabled(enabled);
   ui_.speed_editor->setEnabled(enabled);
   ui_.capture_radius_editor->setEnabled(enabled);
   ui_.capture_radius_z_editor->setEnabled(enabled);
