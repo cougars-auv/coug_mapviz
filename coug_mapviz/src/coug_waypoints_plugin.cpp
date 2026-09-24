@@ -500,6 +500,7 @@ void CougWaypointsPlugin::FlashChanged(bool checked) {
     return;
   }
   waypoint->arrival_flash = checked;
+  map_canvas_->update();
 }
 
 void CougWaypointsPlugin::AltitudeModeChanged(bool checked) {

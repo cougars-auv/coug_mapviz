@@ -38,6 +38,8 @@ namespace {
 
 constexpr float kMarkerSizePx = 20.0F;
 constexpr float kSubMarkerSizePx = 10.0F;
+constexpr double kFlashRingRadiusPx = 17.0;
+constexpr float kFlashRingWidthPx = 2.5F;
 constexpr int kPathWidthPx = 2;
 
 constexpr int kLabelWidthPx = 100;
@@ -60,6 +62,7 @@ const QColor kInactiveMarker(Qt::gray);
 const QColor kSelectedMarker(Qt::yellow);
 const QColor kActiveSubMarker(Qt::yellow);
 const QColor kInactiveSubMarker(128, 128, 128, 191);
+const QColor kFlashRing(0, 255, 0);
 
 auto labelRect(const QPointF& point, int y_offset) -> QRectF {
   return {QPointF(point.x() - kLabelOffsetXPx, point.y() + y_offset),
@@ -125,6 +128,12 @@ void WaypointRenderer::paintWaypoints(QPainter* painter, const std::vector<WayPo
     } else if (active) {
       marker = kActiveMarker;
     }
+    if (active && waypoint.arrival_flash) {
+      painter->setPen(QPen(kFlashRing, kFlashRingWidthPx));
+      painter->setBrush(Qt::NoBrush);
+      painter->drawEllipse(points[i], kFlashRingRadiusPx, kFlashRingRadiusPx);
+    }
+
     const Qt::PenCapStyle cap = waypoint.type == WayPoint::ARUCO ? Qt::SquareCap : Qt::RoundCap;
     painter->setPen(QPen(marker, kMarkerSizePx, Qt::SolidLine, cap));
     painter->drawPoint(points[i]);
