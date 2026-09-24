@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <mapviz/mapviz_plugin.h>
 #include <qcheckbox.h>
 #include <qcolor.h>
 #include <qcombobox.h>
@@ -59,6 +58,7 @@
 #include <cstdint>
 #include <geometry_msgs/msg/point.hpp>
 #include <map>
+#include <mapviz/mapviz_plugin.hpp>
 #include <memory>
 #include <pluginlib/class_list_macros.hpp>
 #include <string>
@@ -148,6 +148,7 @@ CougWaypointsPlugin::CougWaypointsPlugin() : ui_(), config_widget_(new QWidget()
           &CougWaypointsPlugin::TypeChanged);
   connect(ui_.tag_editor, QOverload<int>::of(&QSpinBox::valueChanged), this,
           &CougWaypointsPlugin::TagChanged);
+  connect(ui_.flash_toggle, &QCheckBox::toggled, this, &CougWaypointsPlugin::FlashChanged);
   connect(ui_.depth_editor, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
           &CougWaypointsPlugin::EditorChanged);
   connect(ui_.altitude_mode, &QCheckBox::toggled, this, &CougWaypointsPlugin::AltitudeModeChanged);
@@ -180,7 +181,7 @@ CougWaypointsPlugin::~CougWaypointsPlugin() {
   }
 }
 
-auto CougWaypointsPlugin::Initialize(QGLWidget* canvas) -> bool {
+auto CougWaypointsPlugin::Initialize(QOpenGLWidget* canvas) -> bool {
   map_canvas_ = dynamic_cast<mapviz::MapCanvas*>(canvas);
   if (map_canvas_ == nullptr) {
     return false;
@@ -188,7 +189,7 @@ auto CougWaypointsPlugin::Initialize(QGLWidget* canvas) -> bool {
   map_canvas_->installEventFilter(this);
   renderer_ = std::make_unique<WaypointRenderer>(map_canvas_);
 
-  param_listener_ = std::make_shared<coug_waypoints::ParamListener>(node_);
+  param_listener_ = std::make_shared<coug_waypoints::ParamListener>(NodeUnsafe());
   params_ = param_listener_->get_params();
 
   for (const auto& agent_ns : params_.agent_list) {
@@ -202,7 +203,7 @@ auto CougWaypointsPlugin::Initialize(QGLWidget* canvas) -> bool {
   setEditorValue(ui_.slip_radius_z_editor, params_.default_slip_radius_z);
 
   interface_.initialize(
-      node_, params_, [this](FleetInterface::Status level, const std::string& message) {
+      NodeUnsafe(), params_, [this](FleetInterface::Status level, const std::string& message) {
         Q_EMIT StatusUpdateRequested(static_cast<int>(level), QString::fromStdString(message));
       });
 
@@ -260,6 +261,7 @@ void CougWaypointsPlugin::updateStatusHeight() {
 }
 
 auto CougWaypointsPlugin::eventFilter(QObject* watched, QEvent* event) -> bool {
+  MAPVIZ_ASSERT_GUI_THREAD();
   if (watched == ui_.status || watched == config_widget_) {
     if (event->type() == QEvent::Resize) {
       updateStatusHeight();
@@ -351,13 +353,15 @@ auto CougWaypointsPlugin::handleMouseRelease(QMouseEvent* event) -> bool {
       waypoint.position.x = fixed_point.x();
       waypoint.position.y = fixed_point.y();
       waypoint.position.z = ui_.depth_editor->value();
-      waypoint.type = WayPoint::GPS;
-      waypoint.mode = ui_.altitude_mode->isChecked() ? WayPoint::ALTITUDE : WayPoint::DEPTH;
+
       waypoint.speed_rpm = ui_.speed_editor->value();
       waypoint.capture_radius = ui_.capture_radius_editor->value();
       waypoint.capture_radius_z = ui_.capture_radius_z_editor->value();
       waypoint.slip_radius = ui_.slip_radius_editor->value();
       waypoint.slip_radius_z = ui_.slip_radius_z_editor->value();
+
+      waypoint.mode = ui_.altitude_mode->isChecked() ? WayPoint::ALTITUDE : WayPoint::DEPTH;
+      waypoint.type = WayPoint::GPS;
 
       waypoints_[current_agent_].push_back(waypoint);
     }
@@ -401,6 +405,7 @@ auto CougWaypointsPlugin::handleMouseMove(QMouseEvent* event) -> bool {
 }
 
 void CougWaypointsPlugin::UpdateStatus(int level, const QString& message) {
+  MAPVIZ_ASSERT_GUI_THREAD();
   switch (static_cast<FleetInterface::Status>(level)) {
     case FleetInterface::Status::kInfo:
       PrintInfo(message.toStdString());
@@ -466,15 +471,18 @@ void CougWaypointsPlugin::TypeChanged(int index) {
 
   if (index == WayPoint::ARUCO) {
     waypoint->type = WayPoint::ARUCO;
+    waypoint->arrival_flash = true;
     if (waypoint->subwaypoints.empty()) {
       waypoint->subwaypoints = buildSearchPattern(*waypoint);
     }
   } else {
     waypoint->type = WayPoint::GPS;
+    waypoint->arrival_flash = false;
     waypoint->tag_id = 0;
     waypoint->subwaypoints.clear();
   }
   setEditorValue(ui_.tag_editor, waypoint->tag_id, waypoint->type == WayPoint::ARUCO);
+  setToggleValue(ui_.flash_toggle, waypoint->arrival_flash, waypoint->type == WayPoint::GPS);
   map_canvas_->update();
 }
 
@@ -484,6 +492,14 @@ void CougWaypointsPlugin::TagChanged(int value) {
     return;
   }
   waypoint->tag_id = static_cast<uint16_t>(value);
+}
+
+void CougWaypointsPlugin::FlashChanged(bool checked) {
+  auto* waypoint = selectedWaypoint();
+  if (waypoint == nullptr) {
+    return;
+  }
+  waypoint->arrival_flash = checked;
 }
 
 void CougWaypointsPlugin::AltitudeModeChanged(bool checked) {
@@ -595,14 +611,14 @@ void CougWaypointsPlugin::LoadWaypoints() {
       waypoint.position.x = map_point.x();
       waypoint.position.y = map_point.y();
       waypoint.position.z = serialized_waypoint["z"].toDouble();
-      waypoint.type = static_cast<uint8_t>(serialized_waypoint["type"].toInt());
-      waypoint.tag_id = static_cast<uint16_t>(serialized_waypoint["tag_id"].toInt());
-      waypoint.mode = static_cast<uint8_t>(serialized_waypoint["mode"].toInt());
+
       waypoint.speed_rpm = serialized_waypoint["speed_rpm"].toDouble();
       waypoint.capture_radius = serialized_waypoint["capture_radius"].toDouble();
       waypoint.capture_radius_z = serialized_waypoint["capture_radius_z"].toDouble();
       waypoint.slip_radius = serialized_waypoint["slip_radius"].toDouble();
       waypoint.slip_radius_z = serialized_waypoint["slip_radius_z"].toDouble();
+
+      waypoint.mode = static_cast<uint8_t>(serialized_waypoint["mode"].toInt());
 
       for (const auto& sub_value : serialized_waypoint["subwaypoints"].toArray()) {
         const QJsonObject serialized_subwaypoint = sub_value.toObject();
@@ -614,6 +630,12 @@ void CougWaypointsPlugin::LoadWaypoints() {
         subwaypoint.y = sub_map_point.y();
         waypoint.subwaypoints.push_back(subwaypoint);
       }
+      waypoint.tag_id = static_cast<uint16_t>(serialized_waypoint["tag_id"].toInt());
+      waypoint.arrival_flash = serialized_waypoint["arrival_flash"].toBool() ||
+                               serialized_waypoint["type"].toInt() == WayPoint::ARUCO;
+
+      waypoint.type = static_cast<uint8_t>(serialized_waypoint["type"].toInt());
+
       waypoints.push_back(waypoint);
     }
     waypoint_count += waypoints.size();
@@ -688,15 +710,16 @@ void CougWaypointsPlugin::SaveWaypoints() {
       serialized_waypoints.append(QJsonObject{{"lat", lat_lon.x()},
                                               {"lon", lat_lon.y()},
                                               {"z", waypoint.position.z},
-                                              {"type", static_cast<int>(waypoint.type)},
-                                              {"tag_id", static_cast<int>(waypoint.tag_id)},
-                                              {"mode", static_cast<int>(waypoint.mode)},
                                               {"speed_rpm", waypoint.speed_rpm},
                                               {"capture_radius", waypoint.capture_radius},
                                               {"capture_radius_z", waypoint.capture_radius_z},
                                               {"slip_radius", waypoint.slip_radius},
                                               {"slip_radius_z", waypoint.slip_radius_z},
-                                              {"subwaypoints", serialized_subwaypoints}});
+                                              {"mode", static_cast<int>(waypoint.mode)},
+                                              {"subwaypoints", serialized_subwaypoints},
+                                              {"tag_id", static_cast<int>(waypoint.tag_id)},
+                                              {"arrival_flash", waypoint.arrival_flash},
+                                              {"type", static_cast<int>(waypoint.type)}});
     }
     mission[QString::fromStdString(agent)] = serialized_waypoints;
   }
@@ -835,6 +858,7 @@ void CougWaypointsPlugin::clearWaypointSelection() {
   setEditorsEnabled(false);
   setSelectorValue(ui_.type_selector, WayPoint::GPS, false);
   setEditorValue(ui_.tag_editor, 0, false);
+  setToggleValue(ui_.flash_toggle, false, false);
   setDepthEditorRange(false);
   setToggleValue(ui_.altitude_mode, false, false);
 }
@@ -861,6 +885,7 @@ void CougWaypointsPlugin::populateEditors(const WayPoint& waypoint) {
 
   setSelectorValue(ui_.type_selector, waypoint.type, true);
   setEditorValue(ui_.tag_editor, waypoint.tag_id, waypoint.type == WayPoint::ARUCO);
+  setToggleValue(ui_.flash_toggle, waypoint.arrival_flash, waypoint.type == WayPoint::GPS);
   setDepthEditorRange(is_altitude);
   setToggleValue(ui_.altitude_mode, is_altitude, true);
   setEditorsEnabled(true);

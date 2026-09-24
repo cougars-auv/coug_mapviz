@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <mapviz/map_canvas.h>
 #include <qcolor.h>
 #include <qnamespace.h>
 #include <qobject.h>
@@ -26,6 +25,7 @@
 #include <QVector>
 #include <coug_mapviz/utils/waypoint_renderer.hpp>
 #include <cstddef>
+#include <mapviz/map_canvas.hpp>
 #include <vector>
 
 #include "coug_interfaces/msg/way_point.hpp"

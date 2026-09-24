@@ -14,14 +14,12 @@
 
 #pragma once
 
-#include <mapviz/map_canvas.h>
-#include <mapviz/mapviz_plugin.h>
 #include <swri_transform_util/transform.h>
 #include <ui_coug_waypoints.h>
 
-#include <QGLWidget>
 #include <QMouseEvent>
 #include <QObject>
+#include <QOpenGLWidget>
 #include <QPainter>
 #include <QWidget>
 #include <coug_mapviz/coug_waypoints_parameters.hpp>
@@ -29,6 +27,8 @@
 #include <coug_mapviz/utils/waypoint_renderer.hpp>
 #include <geometry_msgs/msg/point.hpp>
 #include <map>
+#include <mapviz/map_canvas.hpp>
+#include <mapviz/mapviz_plugin.hpp>
 #include <memory>
 #include <rclcpp/rclcpp.hpp>
 #include <string>
@@ -49,10 +49,19 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   CougWaypointsPlugin(CougWaypointsPlugin&&) = delete;
   auto operator=(CougWaypointsPlugin&&) -> CougWaypointsPlugin& = delete;
 
-  auto Initialize(QGLWidget* canvas) -> bool override;
+  auto Initialize(QOpenGLWidget* canvas) -> bool override;
 
   void Shutdown() override {}
 
+  auto GetConfigWidget(QWidget* parent) -> QWidget* override {
+    config_widget_->setParent(parent);
+    return config_widget_;
+  }
+
+  auto SupportsPainting() -> bool override { return true; }
+
+ protected:
+  // --- Customization Hooks ---
   void Draw(double /*x*/, double /*y*/, double /*scale*/) override {}
 
   void Paint(QPainter* painter, double /*x*/, double /*y*/, double /*scale*/) override;
@@ -63,14 +72,6 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
 
   void SaveConfig(YAML::Emitter& /*emitter*/, const std::string& /*path*/) override {}
 
-  auto GetConfigWidget(QWidget* parent) -> QWidget* override {
-    config_widget_->setParent(parent);
-    return config_widget_;
-  }
-
-  auto SupportsPainting() -> bool override { return true; }
-
- protected:
   // --- Logging ---
   void PrintError(const std::string& message) override;
 
@@ -104,6 +105,8 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   void TypeChanged(int index);
 
   void TagChanged(int value);
+
+  void FlashChanged(bool checked);
 
   void AltitudeModeChanged(bool checked);
 

@@ -191,7 +191,24 @@
         </widget>
       </item>
 
-      <item row="5" column="0">
+      <item row="5" column="1" colspan="3">
+        <widget class="QCheckBox" name="flash_toggle">
+          <property name="font">
+            <font>
+              <family>Sans Serif</family>
+              <pointsize>8</pointsize>
+            </font>
+          </property>
+          <property name="text">
+            <string>Flash LED on arrival</string>
+          </property>
+          <property name="enabled">
+            <bool>false</bool>
+          </property>
+        </widget>
+      </item>
+
+      <item row="6" column="0">
         <widget class="QLabel" name="depth_label">
           <property name="font">
             <font>
@@ -204,7 +221,7 @@
           </property>
         </widget>
       </item>
-      <item row="5" column="1" colspan="3">
+      <item row="6" column="1" colspan="3">
         <widget class="QDoubleSpinBox" name="depth_editor">
           <property name="enabled">
             <bool>false</bool>
@@ -224,7 +241,7 @@
         </widget>
       </item>
 
-      <item row="6" column="1" colspan="3">
+      <item row="7" column="1" colspan="3">
         <widget class="QCheckBox" name="altitude_mode">
           <property name="font">
             <font>
@@ -241,7 +258,7 @@
         </widget>
       </item>
 
-      <item row="7" column="0">
+      <item row="8" column="0">
         <widget class="QLabel" name="speed_label">
           <property name="font">
             <font>
@@ -254,7 +271,7 @@
           </property>
         </widget>
       </item>
-      <item row="7" column="1" colspan="3">
+      <item row="8" column="1" colspan="3">
         <widget class="QDoubleSpinBox" name="speed_editor">
           <property name="enabled">
             <bool>false</bool>
@@ -277,7 +294,7 @@
         </widget>
       </item>
 
-      <item row="8" column="0">
+      <item row="9" column="0">
         <widget class="QLabel" name="capture_radius_label">
           <property name="font">
             <font>
@@ -290,7 +307,7 @@
           </property>
         </widget>
       </item>
-      <item row="8" column="1" colspan="3">
+      <item row="9" column="1" colspan="3">
         <widget class="QDoubleSpinBox" name="capture_radius_editor">
           <property name="enabled">
             <bool>false</bool>
@@ -313,7 +330,7 @@
         </widget>
       </item>
 
-      <item row="9" column="0">
+      <item row="10" column="0">
         <widget class="QLabel" name="capture_radius_z_label">
           <property name="font">
             <font>
@@ -326,7 +343,7 @@
           </property>
         </widget>
       </item>
-      <item row="9" column="1" colspan="3">
+      <item row="10" column="1" colspan="3">
         <widget class="QDoubleSpinBox" name="capture_radius_z_editor">
           <property name="enabled">
             <bool>false</bool>
@@ -349,7 +366,7 @@
         </widget>
       </item>
 
-      <item row="10" column="0">
+      <item row="11" column="0">
         <widget class="QLabel" name="slip_radius_label">
           <property name="font">
             <font>
@@ -362,7 +379,7 @@
           </property>
         </widget>
       </item>
-      <item row="10" column="1" colspan="3">
+      <item row="11" column="1" colspan="3">
         <widget class="QDoubleSpinBox" name="slip_radius_editor">
           <property name="enabled">
             <bool>false</bool>
@@ -385,7 +402,7 @@
         </widget>
       </item>
 
-      <item row="11" column="0">
+      <item row="12" column="0">
         <widget class="QLabel" name="slip_radius_z_label">
           <property name="font">
             <font>
@@ -398,7 +415,7 @@
           </property>
         </widget>
       </item>
-      <item row="11" column="1" colspan="3">
+      <item row="12" column="1" colspan="3">
         <widget class="QDoubleSpinBox" name="slip_radius_z_editor">
           <property name="enabled">
             <bool>false</bool>
@@ -421,7 +438,7 @@
         </widget>
       </item>
 
-      <item row="12" column="1" colspan="3">
+      <item row="13" column="1" colspan="3">
         <widget class="QFrame" name="separator_top">
           <property name="frameShape">
             <enum>QFrame::HLine</enum>
@@ -432,7 +449,7 @@
         </widget>
       </item>
 
-      <item row="13" column="1" colspan="3">
+      <item row="14" column="1" colspan="3">
         <layout class="QHBoxLayout" name="horizontalLayout_pub_clear">
           <item>
             <widget class="QPushButton" name="publish">
@@ -451,7 +468,7 @@
         </layout>
       </item>
 
-      <item row="14" column="1" colspan="3">
+      <item row="15" column="1" colspan="3">
         <layout class="QHBoxLayout" name="horizontalLayout_load_save">
           <item>
             <widget class="QPushButton" name="load">
@@ -470,7 +487,7 @@
         </layout>
       </item>
 
-      <item row="15" column="1" colspan="3">
+      <item row="16" column="1" colspan="3">
         <widget class="QFrame" name="separator">
           <property name="frameShape">
             <enum>QFrame::HLine</enum>
@@ -481,7 +498,7 @@
         </widget>
       </item>
 
-      <item row="16" column="1" colspan="3">
+      <item row="17" column="1" colspan="3">
         <layout class="QHBoxLayout" name="horizontalLayout_start_stop">
           <item>
             <widget class="QPushButton" name="start">
@@ -500,7 +517,7 @@
         </layout>
       </item>
 
-      <item row="17" column="1" colspan="3">
+      <item row="18" column="1" colspan="3">
         <layout class="QHBoxLayout" name="horizontalLayout_home_surface">
           <item>
             <widget class="QPushButton" name="home">
@@ -519,7 +536,7 @@
         </layout>
       </item>
 
-      <item row="18" column="1" colspan="3">
+      <item row="19" column="1" colspan="3">
         <widget class="QCheckBox" name="apply_all">
           <property name="font">
             <font>
@@ -536,7 +553,7 @@
         </widget>
       </item>
 
-      <item row="19" column="0">
+      <item row="20" column="0">
         <widget class="QLabel" name="status_label">
           <property name="font">
             <font>
@@ -552,7 +569,7 @@
           </property>
         </widget>
       </item>
-      <item row="19" column="1" colspan="3">
+      <item row="20" column="1" colspan="3">
         <widget class="QLabel" name="status">
           <property name="sizePolicy">
             <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
