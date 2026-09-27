@@ -23,7 +23,6 @@
 #include <QObject>
 #include <QOpenGLWidget>
 #include <QPainter>
-#include <QPointer>
 #include <QWidget>
 #include <coug_mapviz/coug_waypoints_parameters.hpp>
 #include <coug_mapviz/utils/fleet_interface.hpp>
@@ -208,7 +207,7 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   Ui::coug_waypoints ui_;
   QWidget* config_widget_;
   Ui::coug_waypoint_editor editor_ui_;
-  QPointer<QDialog> editor_window_;
+  QDialog* editor_window_;
   bool editor_positioned_{false};
   mapviz::MapCanvas* map_canvas_{nullptr};
 

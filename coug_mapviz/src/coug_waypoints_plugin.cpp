@@ -132,7 +132,10 @@ auto toMapPoint(const swri_transform_util::Transform& map_T_wgs84, double latitu
 }  // namespace
 
 CougWaypointsPlugin::CougWaypointsPlugin()
-    : ui_(), config_widget_(new QWidget()), editor_ui_(), editor_window_(new QDialog()) {
+    : ui_(),
+      config_widget_(new QWidget()),
+      editor_ui_(),
+      editor_window_(new QDialog(config_widget_)) {
   ui_.setupUi(config_widget_);
   editor_ui_.setupUi(editor_window_);
 
@@ -194,7 +197,6 @@ CougWaypointsPlugin::~CougWaypointsPlugin() {
   if (map_canvas_ != nullptr) {
     map_canvas_->removeEventFilter(this);
   }
-  delete editor_window_;
 }
 
 auto CougWaypointsPlugin::Initialize(QOpenGLWidget* canvas) -> bool {
@@ -1027,7 +1029,6 @@ void CougWaypointsPlugin::showEditor() {
   updateEditorTitle();
 
   if (!editor_positioned_ && map_canvas_ != nullptr) {
-    editor_window_->setParent(map_canvas_->window(), editor_window_->windowFlags());
     editor_window_->adjustSize();
     editor_window_->move(map_canvas_->mapToGlobal(QPoint(kEditorOffsetPx, kEditorOffsetPx)));
     editor_positioned_ = true;
