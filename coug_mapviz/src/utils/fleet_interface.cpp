@@ -55,9 +55,9 @@ void FleetInterface::initialize(const std::shared_ptr<rclcpp::Node>& node,
   for (const auto& agent_name : params_.agent_list) {
     AgentEntry agent;
     agent.waypoint_pub = node_->create_publisher<WayPointList>(
-        build_name(agent_name, params_.waypoint_topic), rclcpp::SystemDefaultsQoS());
+        build_name(agent_name, params_.waypoints_topic), rclcpp::SystemDefaultsQoS());
     agent.waypoint_viz_pub = node_->create_publisher<geometry_msgs::msg::PoseArray>(
-        build_name(agent_name, params_.waypoint_viz_topic), rclcpp::SystemDefaultsQoS());
+        build_name(agent_name, params_.waypoints_viz_topic), rclcpp::SystemDefaultsQoS());
     for (size_t i = 0; i < agent.service_clients.size(); ++i) {
       const auto service = static_cast<Service>(i);
       agent.service_clients[i] = node_->create_client<std_srvs::srv::Trigger>(

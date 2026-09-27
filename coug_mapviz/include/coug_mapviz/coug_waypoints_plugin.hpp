@@ -15,12 +15,15 @@
 #pragma once
 
 #include <swri_transform_util/transform.h>
+#include <ui_coug_waypoint_editor.h>
 #include <ui_coug_waypoints.h>
 
+#include <QDialog>
 #include <QMouseEvent>
 #include <QObject>
 #include <QOpenGLWidget>
 #include <QPainter>
+#include <QPointer>
 #include <QWidget>
 #include <coug_mapviz/coug_waypoints_parameters.hpp>
 #include <coug_mapviz/utils/fleet_interface.hpp>
@@ -90,6 +93,8 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
 
   auto handleMouseMove(QMouseEvent* event) -> bool;
 
+  auto handleKeyPress(QKeyEvent* event) -> bool;
+
  Q_SIGNALS:
   void StatusUpdateRequested(int level, const QString& message);
 
@@ -100,6 +105,8 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   // --- UI Callbacks ---
   void AgentChanged(const QString& text);
 
+  void WaypointListChanged(int row);
+
   void EditorChanged(double value);
 
   void TypeChanged(int index);
@@ -109,6 +116,10 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   void FlashChanged(bool checked);
 
   void AltitudeModeChanged(bool checked);
+
+  void RegenerateSearchPattern();
+
+  void EditorClosed();
 
   void PublishWaypoints();
 
@@ -153,9 +164,25 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
 
   static void moveWaypoint(coug_interfaces::msg::WayPoint& waypoint, const QPointF& map_point);
 
+  void selectWaypoint(int waypoint_idx);
+
   void clearWaypointSelection();
 
-  void setEditorsEnabled(bool enabled);
+  void updateSelectionStatus();
+
+  void waypointsChanged();
+
+  void refreshWaypointList();
+
+  void syncWaypointListSelection();
+
+  void applyWaypointListOrder();
+
+  void updateWaypointListHeight();
+
+  void showEditor();
+
+  void updateEditorTitle();
 
   void setDepthEditorRange(bool altitude_mode);
 
@@ -180,10 +207,14 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
   // --- State ---
   Ui::coug_waypoints ui_;
   QWidget* config_widget_;
+  Ui::coug_waypoint_editor editor_ui_;
+  QPointer<QDialog> editor_window_;
+  bool editor_positioned_{false};
   mapviz::MapCanvas* map_canvas_{nullptr};
 
   std::map<std::string, std::vector<coug_interfaces::msg::WayPoint>> waypoints_;
   std::string current_agent_;
+  coug_interfaces::msg::WayPoint default_waypoint_;
 
   int selected_waypoint_idx_{-1};
   WaypointHit dragged_hit_;

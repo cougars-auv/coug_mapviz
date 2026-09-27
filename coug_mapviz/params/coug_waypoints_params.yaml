@@ -27,23 +27,27 @@ coug_waypoints:
     default_value: 4.0
     validation:
       gt<>: [0.0]
-  default_search_radii:
-    type: double_array
-    default_value: [9.0, 15.588]
-    validation:
-      not_empty<>: []
-      lower_element_bounds<>: [0.0]
   default_search_points:
     type: int
     default_value: 6
     validation:
       gt_eq<>: [3]
-  waypoint_topic:
+  default_search_rings:
+    type: int
+    default_value: 2
+    validation:
+      gt_eq<>: [1]
+  default_search_view_width:
+    type: double
+    default_value: 10.0
+    validation:
+      gt<>: [0.0]
+  waypoints_topic:
     type: string
     default_value: "waypoints"
     validation:
       not_empty<>: []
-  waypoint_viz_topic:
+  waypoints_viz_topic:
     type: string
     default_value: "waypoints_viz"
     validation:

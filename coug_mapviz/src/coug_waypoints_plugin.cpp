@@ -17,6 +17,7 @@
 #include <qcombobox.h>
 #include <qcoreevent.h>
 #include <qdatetime.h>
+#include <qdialog.h>
 #include <qdir.h>
 #include <qevent.h>
 #include <qfiledevice.h>
@@ -26,6 +27,7 @@
 #include <qiodevice.h>
 #include <qjsonarray.h>
 #include <qjsonobject.h>
+#include <qlistwidget.h>
 #include <qnamespace.h>
 #include <qobject.h>
 #include <qobjectdefs.h>
@@ -47,11 +49,14 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QKeyEvent>
+#include <QListWidget>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QSignalBlocker>
 #include <QTimer>
 #include <QtGlobal>
+#include <algorithm>
 #include <cmath>
 #include <coug_mapviz/coug_waypoints_plugin.hpp>
 #include <cstddef>
@@ -85,6 +90,8 @@ constexpr double kHitRadiusPx = 15.0;
 constexpr double kClickMaxDistPx = 5.0;
 constexpr qint64 kClickMaxDurationMs = 500;
 constexpr double kDepthEditorLimit = 9999.99;
+constexpr int kMinWaypointListRows = 3;
+constexpr int kEditorOffsetPx = 12;
 
 const QColor kConfigBackgroundColor(Qt::white);
 const QColor kStatusTextColor(Qt::darkGreen);
@@ -100,16 +107,14 @@ void setEditorValue(QSpinBox* editor, int value, bool enabled) {
   editor->setEnabled(enabled);
 }
 
-void setSelectorValue(QComboBox* selector, int index, bool enabled) {
+void setSelectorValue(QComboBox* selector, int index) {
   const QSignalBlocker blocker(selector);
   selector->setCurrentIndex(index);
-  selector->setEnabled(enabled);
 }
 
-void setToggleValue(QCheckBox* toggle, bool checked, bool enabled) {
+void setToggleValue(QCheckBox* toggle, bool checked) {
   const QSignalBlocker blocker(toggle);
   toggle->setChecked(checked);
-  toggle->setEnabled(enabled);
 }
 
 auto toLatLon(const swri_transform_util::Transform& wgs84_T_map, const QPointF& map_point)
@@ -126,8 +131,10 @@ auto toMapPoint(const swri_transform_util::Transform& map_T_wgs84, double latitu
 
 }  // namespace
 
-CougWaypointsPlugin::CougWaypointsPlugin() : ui_(), config_widget_(new QWidget()) {
+CougWaypointsPlugin::CougWaypointsPlugin()
+    : ui_(), config_widget_(new QWidget()), editor_ui_(), editor_window_(new QDialog()) {
   ui_.setupUi(config_widget_);
+  editor_ui_.setupUi(editor_window_);
 
   QPalette config_palette(config_widget_->palette());
   config_palette.setColor(QPalette::Window, kConfigBackgroundColor);
@@ -137,31 +144,39 @@ CougWaypointsPlugin::CougWaypointsPlugin() : ui_(), config_widget_(new QWidget()
   ui_.status->setPalette(status_palette);
   ui_.status->installEventFilter(this);
   config_widget_->installEventFilter(this);
+  ui_.waypoint_list->viewport()->installEventFilter(this);
+  updateWaypointListHeight();
 
   connect(ui_.agent_selector, &QComboBox::currentTextChanged, this,
           &CougWaypointsPlugin::AgentChanged);
-  connect(ui_.lat_editor, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
+  connect(ui_.waypoint_list, &QListWidget::currentRowChanged, this,
+          &CougWaypointsPlugin::WaypointListChanged);
+  connect(editor_ui_.lat_editor, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
           &CougWaypointsPlugin::EditorChanged);
-  connect(ui_.lon_editor, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
+  connect(editor_ui_.lon_editor, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
           &CougWaypointsPlugin::EditorChanged);
-  connect(ui_.type_selector, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
+  connect(editor_ui_.type_selector, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
           &CougWaypointsPlugin::TypeChanged);
-  connect(ui_.tag_editor, QOverload<int>::of(&QSpinBox::valueChanged), this,
+  connect(editor_ui_.tag_editor, QOverload<int>::of(&QSpinBox::valueChanged), this,
           &CougWaypointsPlugin::TagChanged);
-  connect(ui_.flash_toggle, &QCheckBox::toggled, this, &CougWaypointsPlugin::FlashChanged);
-  connect(ui_.depth_editor, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
+  connect(editor_ui_.flash_toggle, &QCheckBox::toggled, this, &CougWaypointsPlugin::FlashChanged);
+  connect(editor_ui_.depth_editor, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
           &CougWaypointsPlugin::EditorChanged);
-  connect(ui_.altitude_mode, &QCheckBox::toggled, this, &CougWaypointsPlugin::AltitudeModeChanged);
-  connect(ui_.speed_editor, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
+  connect(editor_ui_.altitude_mode, &QCheckBox::toggled, this,
+          &CougWaypointsPlugin::AltitudeModeChanged);
+  connect(editor_ui_.speed_editor, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
           &CougWaypointsPlugin::EditorChanged);
-  connect(ui_.capture_radius_editor, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
+  connect(editor_ui_.capture_radius_editor, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+          this, &CougWaypointsPlugin::EditorChanged);
+  connect(editor_ui_.capture_radius_z_editor, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+          this, &CougWaypointsPlugin::EditorChanged);
+  connect(editor_ui_.slip_radius_editor, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
           &CougWaypointsPlugin::EditorChanged);
-  connect(ui_.capture_radius_z_editor, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
-          &CougWaypointsPlugin::EditorChanged);
-  connect(ui_.slip_radius_editor, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
-          &CougWaypointsPlugin::EditorChanged);
-  connect(ui_.slip_radius_z_editor, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this,
-          &CougWaypointsPlugin::EditorChanged);
+  connect(editor_ui_.slip_radius_z_editor, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+          this, &CougWaypointsPlugin::EditorChanged);
+  connect(editor_ui_.regenerate, &QPushButton::clicked, this,
+          &CougWaypointsPlugin::RegenerateSearchPattern);
+  connect(editor_window_, &QDialog::rejected, this, &CougWaypointsPlugin::EditorClosed);
   connect(ui_.publish, &QPushButton::clicked, this, &CougWaypointsPlugin::PublishWaypoints);
   connect(ui_.clear, &QPushButton::clicked, this, &CougWaypointsPlugin::ClearWaypoints);
   connect(ui_.load, &QPushButton::clicked, this, &CougWaypointsPlugin::LoadWaypoints);
@@ -179,6 +194,7 @@ CougWaypointsPlugin::~CougWaypointsPlugin() {
   if (map_canvas_ != nullptr) {
     map_canvas_->removeEventFilter(this);
   }
+  delete editor_window_;
 }
 
 auto CougWaypointsPlugin::Initialize(QOpenGLWidget* canvas) -> bool {
@@ -196,11 +212,17 @@ auto CougWaypointsPlugin::Initialize(QOpenGLWidget* canvas) -> bool {
     ui_.agent_selector->addItem(QString::fromStdString(agent_ns));
   }
 
-  setEditorValue(ui_.speed_editor, params_.default_speed_rpm);
-  setEditorValue(ui_.capture_radius_editor, params_.default_capture_radius);
-  setEditorValue(ui_.capture_radius_z_editor, params_.default_capture_radius_z);
-  setEditorValue(ui_.slip_radius_editor, params_.default_slip_radius);
-  setEditorValue(ui_.slip_radius_z_editor, params_.default_slip_radius_z);
+  default_waypoint_.type = WayPoint::GPS;
+  default_waypoint_.mode = WayPoint::DEPTH;
+  default_waypoint_.speed_rpm = params_.default_speed_rpm;
+  default_waypoint_.capture_radius = params_.default_capture_radius;
+  default_waypoint_.capture_radius_z = params_.default_capture_radius_z;
+  default_waypoint_.slip_radius = params_.default_slip_radius;
+  default_waypoint_.slip_radius_z = params_.default_slip_radius_z;
+
+  editor_ui_.search_points_editor->setValue(static_cast<int>(params_.default_search_points));
+  editor_ui_.search_view_width_editor->setValue(params_.default_search_view_width);
+  editor_ui_.search_rings_editor->setValue(static_cast<int>(params_.default_search_rings));
 
   interface_.initialize(
       NodeUnsafe(), params_, [this](FleetInterface::Status level, const std::string& message) {
@@ -268,6 +290,12 @@ void CougWaypointsPlugin::updateStatusHeight() {
 
 auto CougWaypointsPlugin::eventFilter(QObject* watched, QEvent* event) -> bool {
   MAPVIZ_ASSERT_GUI_THREAD();
+  if (watched == ui_.waypoint_list->viewport()) {
+    if (event->type() == QEvent::Drop) {
+      QTimer::singleShot(0, this, [this] { applyWaypointListOrder(); });
+    }
+    return false;
+  }
   if (watched == ui_.status || watched == config_widget_) {
     if (event->type() == QEvent::Resize) {
       updateStatusHeight();
@@ -287,6 +315,9 @@ auto CougWaypointsPlugin::eventFilter(QObject* watched, QEvent* event) -> bool {
     case QEvent::MouseMove:
       // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
       return handleMouseMove(static_cast<QMouseEvent*>(event));
+    case QEvent::KeyPress:
+      // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+      return handleKeyPress(static_cast<QKeyEvent*>(event));
     default:
       return false;
   }
@@ -309,7 +340,7 @@ auto CougWaypointsPlugin::handleMousePress(QMouseEvent* event) -> bool {
       return true;
     }
   } else if (event->button() == Qt::RightButton && eraseHit(hit)) {
-    map_canvas_->update();
+    waypointsChanged();
     return true;
   }
   return false;
@@ -329,17 +360,14 @@ auto CougWaypointsPlugin::handleMouseRelease(QMouseEvent* event) -> bool {
     const WaypointHit hit = dragged_hit_;
     dragged_hit_ = {};
     if (!is_click || hit.subwaypoint_idx >= 0) {
+      waypointsChanged();
       return true;
     }
 
     if (selected_waypoint_idx_ == hit.waypoint_idx) {
       clearWaypointSelection();
     } else {
-      const auto& waypoints = waypointsForAgent(current_agent_);
-      if (static_cast<size_t>(hit.waypoint_idx) < waypoints.size()) {
-        selected_waypoint_idx_ = hit.waypoint_idx;
-        populateEditors(waypoints[selected_waypoint_idx_]);
-      }
+      selectWaypoint(hit.waypoint_idx);
     }
     map_canvas_->update();
     return true;
@@ -355,26 +383,16 @@ auto CougWaypointsPlugin::handleMouseRelease(QMouseEvent* event) -> bool {
       subwaypoint.y = fixed_point.y();
       selected->subwaypoints.push_back(subwaypoint);
     } else {
-      WayPoint waypoint;
+      WayPoint waypoint = default_waypoint_;
       waypoint.position.x = fixed_point.x();
       waypoint.position.y = fixed_point.y();
-      waypoint.position.z = ui_.depth_editor->value();
-
-      waypoint.speed_rpm = ui_.speed_editor->value();
-      waypoint.capture_radius = ui_.capture_radius_editor->value();
-      waypoint.capture_radius_z = ui_.capture_radius_z_editor->value();
-      waypoint.slip_radius = ui_.slip_radius_editor->value();
-      waypoint.slip_radius_z = ui_.slip_radius_z_editor->value();
-
-      waypoint.mode = ui_.altitude_mode->isChecked() ? WayPoint::ALTITUDE : WayPoint::DEPTH;
-      waypoint.type = WayPoint::GPS;
 
       waypoints_[current_agent_].push_back(waypoint);
       if (selected_waypoint_idx_ != -1) {
         clearWaypointSelection();
       }
     }
-    map_canvas_->update();
+    waypointsChanged();
   }
   return false;
 }
@@ -404,11 +422,20 @@ auto CougWaypointsPlugin::handleMouseMove(QMouseEvent* event) -> bool {
       subwaypoint.y = fixed_point.y();
     }
   } else {
-    if (selected_waypoint_idx_ != -1) {
-      clearWaypointSelection();
-    }
     moveWaypoint(waypoint, fixed_point);
+    if (dragged_hit_.waypoint_idx == selected_waypoint_idx_) {
+      populateEditors(waypoint);
+    }
   }
+  map_canvas_->update();
+  return true;
+}
+
+auto CougWaypointsPlugin::handleKeyPress(QKeyEvent* event) -> bool {
+  if (event->key() != Qt::Key_Escape || selected_waypoint_idx_ == -1) {
+    return false;
+  }
+  clearWaypointSelection();
   map_canvas_->update();
   return true;
 }
@@ -431,13 +458,22 @@ void CougWaypointsPlugin::UpdateStatus(int level, const QString& message) {
 void CougWaypointsPlugin::AgentChanged(const QString& text) {
   current_agent_ = text.toStdString();
   clearWaypointSelection();
+  waypointsChanged();
 
   const auto& waypoints = waypointsForAgent(current_agent_);
-  map_canvas_->update();
   if (waypoints.empty()) {
     PrintInfo("Click to add waypoints.");
   } else {
     PrintInfo("'" + current_agent_ + "' has " + std::to_string(waypoints.size()) + " waypoint(s).");
+  }
+}
+
+void CougWaypointsPlugin::WaypointListChanged(int row) {
+  const auto* item = ui_.waypoint_list->item(row);
+  const int waypoint_idx = item != nullptr ? item->data(Qt::UserRole).toInt() : -1;
+  if (waypoint_idx != selected_waypoint_idx_) {
+    selectWaypoint(waypoint_idx);
+    map_canvas_->update();
   }
 }
 
@@ -448,28 +484,28 @@ void CougWaypointsPlugin::EditorChanged(double value) {
   }
 
   const QObject* editor = sender();
-  if (editor == ui_.lat_editor || editor == ui_.lon_editor) {
+  if (editor == editor_ui_.lat_editor || editor == editor_ui_.lon_editor) {
     QPointF map_point;
-    if (!wgs84ToMap(ui_.lat_editor->value(), ui_.lon_editor->value(), map_point)) {
+    if (!wgs84ToMap(editor_ui_.lat_editor->value(), editor_ui_.lon_editor->value(), map_point)) {
       return;
     }
     moveWaypoint(*waypoint, map_point);
-  } else if (editor == ui_.depth_editor) {
+  } else if (editor == editor_ui_.depth_editor) {
     waypoint->position.z = value;
-  } else if (editor == ui_.speed_editor) {
+  } else if (editor == editor_ui_.speed_editor) {
     waypoint->speed_rpm = value;
-  } else if (editor == ui_.capture_radius_editor) {
+  } else if (editor == editor_ui_.capture_radius_editor) {
     waypoint->capture_radius = value;
-  } else if (editor == ui_.capture_radius_z_editor) {
+  } else if (editor == editor_ui_.capture_radius_z_editor) {
     waypoint->capture_radius_z = value;
-  } else if (editor == ui_.slip_radius_editor) {
+  } else if (editor == editor_ui_.slip_radius_editor) {
     waypoint->slip_radius = value;
-  } else if (editor == ui_.slip_radius_z_editor) {
+  } else if (editor == editor_ui_.slip_radius_z_editor) {
     waypoint->slip_radius_z = value;
   } else {
     return;
   }
-  map_canvas_->update();
+  waypointsChanged();
 }
 
 void CougWaypointsPlugin::TypeChanged(int index) {
@@ -490,9 +526,9 @@ void CougWaypointsPlugin::TypeChanged(int index) {
     waypoint->tag_id = 0;
     waypoint->subwaypoints.clear();
   }
-  setEditorValue(ui_.tag_editor, waypoint->tag_id, waypoint->type == WayPoint::ARUCO);
-  setToggleValue(ui_.flash_toggle, waypoint->arrival_flash, waypoint->type == WayPoint::GPS);
-  map_canvas_->update();
+  populateEditors(*waypoint);
+  updateSelectionStatus();
+  waypointsChanged();
 }
 
 void CougWaypointsPlugin::TagChanged(int value) {
@@ -501,6 +537,7 @@ void CougWaypointsPlugin::TagChanged(int value) {
     return;
   }
   waypoint->tag_id = static_cast<uint16_t>(value);
+  waypointsChanged();
 }
 
 void CougWaypointsPlugin::FlashChanged(bool checked) {
@@ -509,7 +546,7 @@ void CougWaypointsPlugin::FlashChanged(bool checked) {
     return;
   }
   waypoint->arrival_flash = checked;
-  map_canvas_->update();
+  waypointsChanged();
 }
 
 void CougWaypointsPlugin::AltitudeModeChanged(bool checked) {
@@ -524,7 +561,21 @@ void CougWaypointsPlugin::AltitudeModeChanged(bool checked) {
   waypoint->position.z = new_altitude;
 
   setDepthEditorRange(checked);
-  setEditorValue(ui_.depth_editor, new_altitude);
+  setEditorValue(editor_ui_.depth_editor, new_altitude);
+  waypointsChanged();
+}
+
+void CougWaypointsPlugin::RegenerateSearchPattern() {
+  auto* waypoint = selectedWaypoint();
+  if (waypoint == nullptr || waypoint->type != WayPoint::ARUCO) {
+    return;
+  }
+  waypoint->subwaypoints = buildSearchPattern(*waypoint);
+  waypointsChanged();
+}
+
+void CougWaypointsPlugin::EditorClosed() {
+  clearWaypointSelection();
   map_canvas_->update();
 }
 
@@ -555,12 +606,9 @@ void CougWaypointsPlugin::ClearWaypoints() {
     waypoints_[agent].clear();
   }
 
-  setEditorValue(ui_.lat_editor, 0.0);
-  setEditorValue(ui_.lon_editor, 0.0);
-  setEditorValue(ui_.depth_editor, 0.0);
   dragged_hit_ = {};
   clearWaypointSelection();
-  map_canvas_->update();
+  waypointsChanged();
   PrintInfo("Cleared " + std::to_string(waypoint_count) + " waypoint(s) from " +
             std::to_string(agents.size()) + " agent(s).");
 }
@@ -641,8 +689,7 @@ void CougWaypointsPlugin::LoadWaypoints() {
         waypoint.subwaypoints.push_back(subwaypoint);
       }
       waypoint.tag_id = static_cast<uint16_t>(serialized_waypoint["tag_id"].toInt());
-      waypoint.arrival_flash = serialized_waypoint["arrival_flash"].toBool() ||
-                               serialized_waypoint["type"].toInt() == WayPoint::ARUCO;
+      waypoint.arrival_flash = serialized_waypoint["arrival_flash"].toBool();
 
       waypoint.type = static_cast<uint8_t>(serialized_waypoint["type"].toInt());
 
@@ -825,25 +872,31 @@ auto CougWaypointsPlugin::eraseHit(const WaypointHit& hit) -> bool {
     clearWaypointSelection();
   } else if (selected_waypoint_idx_ > hit.waypoint_idx) {
     --selected_waypoint_idx_;
+    updateEditorTitle();
+    updateSelectionStatus();
   }
   return true;
 }
 
 auto CougWaypointsPlugin::buildSearchPattern(const WayPoint& waypoint) const
     -> std::vector<geometry_msgs::msg::Point> {
-  const auto point_count = static_cast<int>(params_.default_search_points);
-  const auto& radii = params_.default_search_radii;
+  const int point_count = editor_ui_.search_points_editor->value();
+  const int ring_count = editor_ui_.search_rings_editor->value();
   const double angle_step = 2.0 * M_PI / point_count;
+  const double view_width = editor_ui_.search_view_width_editor->value();
+  const double edge_scale = std::cos(angle_step / 2.0);
+  const double inner_radius = view_width / (2.0 * edge_scale);
+  const double ring_spacing = view_width * (1.0 + edge_scale) / (2.0 * edge_scale);
 
   std::vector<geometry_msgs::msg::Point> pattern;
-  pattern.reserve(radii.size() * static_cast<size_t>(point_count));
-  for (size_t ring = 0; ring < radii.size(); ++ring) {
-    const double offset = (ring % 2 == 0) ? 0.0 : 0.5 * angle_step;
+  pattern.reserve(static_cast<size_t>(ring_count) * static_cast<size_t>(point_count));
+  for (int ring = 0; ring < ring_count; ++ring) {
+    const double radius = inner_radius + (ring_spacing * ring);
     for (int i = 0; i < point_count; ++i) {
-      const double angle = (angle_step * i) + offset;
+      const double angle = angle_step * i;
       geometry_msgs::msg::Point subwaypoint;
-      subwaypoint.x = waypoint.position.x + radii[ring] * std::cos(angle);
-      subwaypoint.y = waypoint.position.y + radii[ring] * std::sin(angle);
+      subwaypoint.x = waypoint.position.x + radius * std::cos(angle);
+      subwaypoint.y = waypoint.position.y + radius * std::sin(angle);
       pattern.push_back(subwaypoint);
     }
   }
@@ -862,54 +915,168 @@ void CougWaypointsPlugin::moveWaypoint(WayPoint& waypoint, const QPointF& map_po
   }
 }
 
-void CougWaypointsPlugin::clearWaypointSelection() {
-  selected_waypoint_idx_ = -1;
-
-  setEditorsEnabled(false);
-  setSelectorValue(ui_.type_selector, WayPoint::GPS, false);
-  setEditorValue(ui_.tag_editor, 0, false);
-  setToggleValue(ui_.flash_toggle, false, false);
+void CougWaypointsPlugin::selectWaypoint(int waypoint_idx) {
+  const auto& waypoints = waypointsForAgent(current_agent_);
+  if (waypoint_idx < 0 || static_cast<size_t>(waypoint_idx) >= waypoints.size()) {
+    return;
+  }
+  selected_waypoint_idx_ = waypoint_idx;
+  populateEditors(waypoints[waypoint_idx]);
+  showEditor();
+  updateSelectionStatus();
+  syncWaypointListSelection();
 }
 
-void CougWaypointsPlugin::setEditorsEnabled(bool enabled) {
-  ui_.lat_editor->setEnabled(enabled);
-  ui_.lon_editor->setEnabled(enabled);
-  ui_.depth_editor->setEnabled(enabled);
-  ui_.altitude_mode->setEnabled(enabled);
-  ui_.speed_editor->setEnabled(enabled);
-  ui_.capture_radius_editor->setEnabled(enabled);
-  ui_.capture_radius_z_editor->setEnabled(enabled);
-  ui_.slip_radius_editor->setEnabled(enabled);
-  ui_.slip_radius_z_editor->setEnabled(enabled);
+void CougWaypointsPlugin::clearWaypointSelection() {
+  selected_waypoint_idx_ = -1;
+  editor_window_->hide();
+  syncWaypointListSelection();
+  updateSelectionStatus();
+}
+
+void CougWaypointsPlugin::updateSelectionStatus() {
+  const auto* waypoint = selectedWaypoint();
+  if (waypoint == nullptr) {
+    PrintInfo("Click to add waypoints.");
+  } else if (waypoint->type == WayPoint::ARUCO) {
+    PrintInfo("Click to add search points.");
+  } else {
+    PrintInfo("Waypoint " + std::to_string(selected_waypoint_idx_ + 1) + " selected.");
+  }
+}
+
+void CougWaypointsPlugin::waypointsChanged() {
+  refreshWaypointList();
+  map_canvas_->update();
+}
+
+void CougWaypointsPlugin::refreshWaypointList() {
+  const QSignalBlocker blocker(ui_.waypoint_list);
+  ui_.waypoint_list->clear();
+  const auto& waypoints = waypointsForAgent(current_agent_);
+  for (size_t i = 0; i < waypoints.size(); ++i) {
+    const QString label = QString("%1. %2  (%3, %4)")
+                              .arg(i + 1)
+                              .arg(waypoints[i].type == WayPoint::ARUCO ? "ArUco" : "GPS")
+                              .arg(waypoints[i].position.x, 0, 'f', 1)
+                              .arg(waypoints[i].position.y, 0, 'f', 1);
+    ui_.waypoint_list->addItem(label);
+    ui_.waypoint_list->item(static_cast<int>(i))->setData(Qt::UserRole, static_cast<int>(i));
+  }
+  syncWaypointListSelection();
+  updateWaypointListHeight();
+}
+
+void CougWaypointsPlugin::syncWaypointListSelection() {
+  const QSignalBlocker blocker(ui_.waypoint_list);
+  if (selected_waypoint_idx_ >= 0 && selected_waypoint_idx_ < ui_.waypoint_list->count()) {
+    ui_.waypoint_list->setCurrentRow(selected_waypoint_idx_);
+  } else {
+    ui_.waypoint_list->setCurrentRow(-1);
+    ui_.waypoint_list->clearSelection();
+  }
+}
+
+void CougWaypointsPlugin::applyWaypointListOrder() {
+  auto* waypoints = currentWaypoints();
+  if (waypoints == nullptr ||
+      static_cast<size_t>(ui_.waypoint_list->count()) != waypoints->size()) {
+    refreshWaypointList();
+    return;
+  }
+
+  std::vector<WayPoint> reordered;
+  reordered.reserve(waypoints->size());
+  int new_selected_idx = -1;
+  for (int row = 0; row < ui_.waypoint_list->count(); ++row) {
+    const int old_idx = ui_.waypoint_list->item(row)->data(Qt::UserRole).toInt();
+    if (old_idx == selected_waypoint_idx_) {
+      new_selected_idx = row;
+    }
+    reordered.push_back((*waypoints)[old_idx]);
+  }
+  *waypoints = std::move(reordered);
+  if (new_selected_idx != selected_waypoint_idx_) {
+    selected_waypoint_idx_ = new_selected_idx;
+    updateEditorTitle();
+    updateSelectionStatus();
+  }
+  waypointsChanged();
+}
+
+void CougWaypointsPlugin::updateWaypointListHeight() {
+  auto* list = ui_.waypoint_list;
+
+  int row_height = list->sizeHintForRow(0);
+  if (row_height <= 0) {
+    const QSignalBlocker blocker(list);
+    list->addItem(QString());
+    row_height = list->sizeHintForRow(0);
+    list->clear();
+  }
+  const int rows = std::max(list->count(), kMinWaypointListRows);
+  const int height = (rows * row_height) + (2 * list->frameWidth());
+
+  if (height != list->height()) {
+    list->setFixedHeight(height);
+    QTimer::singleShot(0, this, [this] { Q_EMIT SizeChanged(); });
+  }
+}
+
+void CougWaypointsPlugin::showEditor() {
+  updateEditorTitle();
+
+  if (!editor_positioned_ && map_canvas_ != nullptr) {
+    editor_window_->setParent(map_canvas_->window(), editor_window_->windowFlags());
+    editor_window_->adjustSize();
+    editor_window_->move(map_canvas_->mapToGlobal(QPoint(kEditorOffsetPx, kEditorOffsetPx)));
+    editor_positioned_ = true;
+  }
+  editor_window_->show();
+  editor_window_->raise();
+}
+
+void CougWaypointsPlugin::updateEditorTitle() {
+  if (selectedWaypoint() == nullptr) {
+    return;
+  }
+  editor_window_->setWindowTitle(QString("Waypoint %1 (%2)")
+                                     .arg(selected_waypoint_idx_ + 1)
+                                     .arg(QString::fromStdString(current_agent_)));
 }
 
 void CougWaypointsPlugin::setDepthEditorRange(bool altitude_mode) {
-  const QSignalBlocker blocker(ui_.depth_editor);
-  ui_.depth_editor->setRange(altitude_mode ? 0.0 : -kDepthEditorLimit,
-                             altitude_mode ? kDepthEditorLimit : 0.0);
+  const QSignalBlocker blocker(editor_ui_.depth_editor);
+  editor_ui_.depth_editor->setRange(altitude_mode ? 0.0 : -kDepthEditorLimit,
+                                    altitude_mode ? kDepthEditorLimit : 0.0);
+  editor_ui_.depth_label->setText(altitude_mode ? "Altitude (m):" : "Depth (m):");
 }
 
 void CougWaypointsPlugin::populateEditors(const WayPoint& waypoint) {
   const bool is_altitude = waypoint.mode == WayPoint::ALTITUDE;
+  const bool is_aruco = waypoint.type == WayPoint::ARUCO;
 
-  setSelectorValue(ui_.type_selector, waypoint.type, true);
-  setEditorValue(ui_.tag_editor, waypoint.tag_id, waypoint.type == WayPoint::ARUCO);
-  setToggleValue(ui_.flash_toggle, waypoint.arrival_flash, waypoint.type == WayPoint::GPS);
+  setSelectorValue(editor_ui_.type_selector, waypoint.type);
+  setEditorValue(editor_ui_.tag_editor, waypoint.tag_id, is_aruco);
+  setToggleValue(editor_ui_.flash_toggle, waypoint.arrival_flash);
+  editor_ui_.search_points_editor->setEnabled(is_aruco);
+  editor_ui_.search_rings_editor->setEnabled(is_aruco);
+  editor_ui_.search_view_width_editor->setEnabled(is_aruco);
+  editor_ui_.regenerate->setEnabled(is_aruco);
   setDepthEditorRange(is_altitude);
-  setToggleValue(ui_.altitude_mode, is_altitude, true);
-  setEditorsEnabled(true);
+  setToggleValue(editor_ui_.altitude_mode, is_altitude);
 
   QPointF lat_lon;
   if (mapToWgs84(QPointF(waypoint.position.x, waypoint.position.y), lat_lon)) {
-    setEditorValue(ui_.lat_editor, lat_lon.x());
-    setEditorValue(ui_.lon_editor, lat_lon.y());
+    setEditorValue(editor_ui_.lat_editor, lat_lon.x());
+    setEditorValue(editor_ui_.lon_editor, lat_lon.y());
   }
-  setEditorValue(ui_.depth_editor, waypoint.position.z);
-  setEditorValue(ui_.speed_editor, waypoint.speed_rpm);
-  setEditorValue(ui_.capture_radius_editor, waypoint.capture_radius);
-  setEditorValue(ui_.capture_radius_z_editor, waypoint.capture_radius_z);
-  setEditorValue(ui_.slip_radius_editor, waypoint.slip_radius);
-  setEditorValue(ui_.slip_radius_z_editor, waypoint.slip_radius_z);
+  setEditorValue(editor_ui_.depth_editor, waypoint.position.z);
+  setEditorValue(editor_ui_.speed_editor, waypoint.speed_rpm);
+  setEditorValue(editor_ui_.capture_radius_editor, waypoint.capture_radius);
+  setEditorValue(editor_ui_.capture_radius_z_editor, waypoint.capture_radius_z);
+  setEditorValue(editor_ui_.slip_radius_editor, waypoint.slip_radius);
+  setEditorValue(editor_ui_.slip_radius_z_editor, waypoint.slip_radius_z);
 }
 
 auto CougWaypointsPlugin::missionDirectory() -> QString {

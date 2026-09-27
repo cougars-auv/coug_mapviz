@@ -47,6 +47,7 @@ constexpr int kLabelHeightPx = 20;
 constexpr int kLabelOffsetXPx = 50;
 constexpr int kDepthOffsetYPx = 15;
 constexpr int kSpeedOffsetYPx = 33;
+constexpr int kTagOffsetYPx = 51;
 constexpr int kIndexSizePx = 40;
 
 const QColor kSlipCircleColor(30, 144, 255, 166);
@@ -146,6 +147,10 @@ void WaypointRenderer::paintWaypoints(QPainter* painter, const std::vector<WayPo
                       depth);
     painter->drawText(labelRect(points[i], kSpeedOffsetYPx), Qt::AlignHCenter | Qt::AlignTop,
                       QString::number(waypoint.speed_rpm, 'f', 0) + "rpm");
+    if (waypoint.type == WayPoint::ARUCO) {
+      painter->drawText(labelRect(points[i], kTagOffsetYPx), Qt::AlignHCenter | Qt::AlignTop,
+                        "tag " + QString::number(waypoint.tag_id));
+    }
     painter->setPen(QPen(label_color == Qt::white ? Qt::black : label_color));
     const QRectF index_rect(
         QPointF(points[i].x() - kIndexSizePx / 2.0, points[i].y() - kIndexSizePx / 2.0),

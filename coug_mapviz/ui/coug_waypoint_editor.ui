@@ -1,0 +1,505 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+  <class>coug_waypoint_editor</class>
+  <widget class="QDialog" name="coug_waypoint_editor">
+    <property name="geometry">
+      <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>260</width>
+        <height>0</height>
+      </rect>
+    </property>
+
+    <property name="windowTitle">
+      <string>Waypoint</string>
+    </property>
+    <layout class="QGridLayout" name="gridLayout">
+      <property name="sizeConstraint">
+        <enum>QLayout::SetFixedSize</enum>
+      </property>
+      <property name="leftMargin">
+        <number>6</number>
+      </property>
+      <property name="topMargin">
+        <number>6</number>
+      </property>
+      <property name="rightMargin">
+        <number>6</number>
+      </property>
+      <property name="bottomMargin">
+        <number>6</number>
+      </property>
+      <property name="verticalSpacing">
+        <number>6</number>
+      </property>
+
+      <item row="0" column="0">
+        <widget class="QLabel" name="lat_label">
+          <property name="font">
+            <font>
+              <family>Sans Serif</family>
+              <pointsize>8</pointsize>
+            </font>
+          </property>
+          <property name="text">
+            <string>Latitude:</string>
+          </property>
+        </widget>
+      </item>
+      <item row="0" column="1">
+        <widget class="QDoubleSpinBox" name="lat_editor">
+          <property name="decimals">
+            <number>8</number>
+          </property>
+          <property name="minimum">
+            <double>-90.0</double>
+          </property>
+          <property name="maximum">
+            <double>90.0</double>
+          </property>
+          <property name="singleStep">
+            <double>0.00001</double>
+          </property>
+          <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::PlusMinus</enum>
+          </property>
+        </widget>
+      </item>
+
+      <item row="1" column="0">
+        <widget class="QLabel" name="lon_label">
+          <property name="font">
+            <font>
+              <family>Sans Serif</family>
+              <pointsize>8</pointsize>
+            </font>
+          </property>
+          <property name="text">
+            <string>Longitude:</string>
+          </property>
+        </widget>
+      </item>
+      <item row="1" column="1">
+        <widget class="QDoubleSpinBox" name="lon_editor">
+          <property name="decimals">
+            <number>8</number>
+          </property>
+          <property name="minimum">
+            <double>-180.0</double>
+          </property>
+          <property name="maximum">
+            <double>180.0</double>
+          </property>
+          <property name="singleStep">
+            <double>0.00001</double>
+          </property>
+          <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::PlusMinus</enum>
+          </property>
+        </widget>
+      </item>
+
+      <item row="2" column="0">
+        <widget class="QLabel" name="type_label">
+          <property name="font">
+            <font>
+              <family>Sans Serif</family>
+              <pointsize>8</pointsize>
+            </font>
+          </property>
+          <property name="text">
+            <string>Type:</string>
+          </property>
+        </widget>
+      </item>
+      <item row="2" column="1">
+        <widget class="QComboBox" name="type_selector">
+          <property name="editable">
+            <bool>false</bool>
+          </property>
+          <item>
+            <property name="text">
+              <string>GPS</string>
+            </property>
+          </item>
+          <item>
+            <property name="text">
+              <string>ArUco</string>
+            </property>
+          </item>
+        </widget>
+      </item>
+
+      <item row="3" column="1">
+        <widget class="QCheckBox" name="flash_toggle">
+          <property name="font">
+            <font>
+              <family>Sans Serif</family>
+              <pointsize>8</pointsize>
+            </font>
+          </property>
+          <property name="text">
+            <string>Flash LED on arrival</string>
+          </property>
+        </widget>
+      </item>
+
+      <item row="4" column="0">
+        <widget class="QLabel" name="tag_label">
+          <property name="font">
+            <font>
+              <family>Sans Serif</family>
+              <pointsize>8</pointsize>
+            </font>
+          </property>
+          <property name="text">
+            <string>Tag ID:</string>
+          </property>
+        </widget>
+      </item>
+      <item row="4" column="1">
+        <widget class="QSpinBox" name="tag_editor">
+          <property name="minimum">
+            <number>0</number>
+          </property>
+          <property name="maximum">
+            <number>65535</number>
+          </property>
+          <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::PlusMinus</enum>
+          </property>
+        </widget>
+      </item>
+
+      <item row="5" column="0" colspan="2">
+        <widget class="QFrame" name="separator_search_top">
+          <property name="frameShape">
+            <enum>QFrame::HLine</enum>
+          </property>
+          <property name="frameShadow">
+            <enum>QFrame::Sunken</enum>
+          </property>
+        </widget>
+      </item>
+
+      <item row="6" column="0">
+        <widget class="QLabel" name="search_points_label">
+          <property name="font">
+            <font>
+              <family>Sans Serif</family>
+              <pointsize>8</pointsize>
+            </font>
+          </property>
+          <property name="text">
+            <string>Search Points:</string>
+          </property>
+        </widget>
+      </item>
+      <item row="6" column="1">
+        <widget class="QSpinBox" name="search_points_editor">
+          <property name="minimum">
+            <number>3</number>
+          </property>
+          <property name="maximum">
+            <number>49</number>
+          </property>
+          <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::PlusMinus</enum>
+          </property>
+        </widget>
+      </item>
+
+      <item row="7" column="0">
+        <widget class="QLabel" name="search_rings_label">
+          <property name="font">
+            <font>
+              <family>Sans Serif</family>
+              <pointsize>8</pointsize>
+            </font>
+          </property>
+          <property name="text">
+            <string>Search Rings:</string>
+          </property>
+        </widget>
+      </item>
+      <item row="7" column="1">
+        <widget class="QSpinBox" name="search_rings_editor">
+          <property name="minimum">
+            <number>1</number>
+          </property>
+          <property name="maximum">
+            <number>10</number>
+          </property>
+          <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::PlusMinus</enum>
+          </property>
+        </widget>
+      </item>
+
+      <item row="8" column="0">
+        <widget class="QLabel" name="search_view_width_label">
+          <property name="font">
+            <font>
+              <family>Sans Serif</family>
+              <pointsize>8</pointsize>
+            </font>
+          </property>
+          <property name="text">
+            <string>View Width (m):</string>
+          </property>
+        </widget>
+      </item>
+      <item row="8" column="1">
+        <widget class="QDoubleSpinBox" name="search_view_width_editor">
+          <property name="decimals">
+            <number>1</number>
+          </property>
+          <property name="minimum">
+            <double>0.1</double>
+          </property>
+          <property name="maximum">
+            <double>9999.990000000000009</double>
+          </property>
+          <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::PlusMinus</enum>
+          </property>
+        </widget>
+      </item>
+
+      <item row="9" column="1">
+        <widget class="QPushButton" name="regenerate">
+          <property name="text">
+            <string>Regenerate</string>
+          </property>
+          <property name="autoDefault">
+            <bool>false</bool>
+          </property>
+        </widget>
+      </item>
+
+      <item row="10" column="0" colspan="2">
+        <widget class="QFrame" name="separator_search_bottom">
+          <property name="frameShape">
+            <enum>QFrame::HLine</enum>
+          </property>
+          <property name="frameShadow">
+            <enum>QFrame::Sunken</enum>
+          </property>
+        </widget>
+      </item>
+
+      <item row="11" column="0">
+        <widget class="QLabel" name="depth_label">
+          <property name="font">
+            <font>
+              <family>Sans Serif</family>
+              <pointsize>8</pointsize>
+            </font>
+          </property>
+          <property name="text">
+            <string>Depth (m):</string>
+          </property>
+        </widget>
+      </item>
+      <item row="11" column="1">
+        <widget class="QDoubleSpinBox" name="depth_editor">
+          <property name="decimals">
+            <number>2</number>
+          </property>
+          <property name="minimum">
+            <double>-9999.990000000000009</double>
+          </property>
+          <property name="maximum">
+            <double>0.0</double>
+          </property>
+          <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::PlusMinus</enum>
+          </property>
+        </widget>
+      </item>
+
+      <item row="12" column="1">
+        <widget class="QCheckBox" name="altitude_mode">
+          <property name="font">
+            <font>
+              <family>Sans Serif</family>
+              <pointsize>8</pointsize>
+            </font>
+          </property>
+          <property name="text">
+            <string>Altitude control (ALT)</string>
+          </property>
+        </widget>
+      </item>
+
+      <item row="13" column="0">
+        <widget class="QLabel" name="speed_label">
+          <property name="font">
+            <font>
+              <family>Sans Serif</family>
+              <pointsize>8</pointsize>
+            </font>
+          </property>
+          <property name="text">
+            <string>Speed (RPM):</string>
+          </property>
+        </widget>
+      </item>
+      <item row="13" column="1">
+        <widget class="QDoubleSpinBox" name="speed_editor">
+          <property name="decimals">
+            <number>1</number>
+          </property>
+          <property name="minimum">
+            <double>0.0</double>
+          </property>
+          <property name="maximum">
+            <double>1525.0</double>
+          </property>
+          <property name="value">
+            <double>1500.0</double>
+          </property>
+          <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::PlusMinus</enum>
+          </property>
+        </widget>
+      </item>
+
+      <item row="14" column="0">
+        <widget class="QLabel" name="capture_radius_label">
+          <property name="font">
+            <font>
+              <family>Sans Serif</family>
+              <pointsize>8</pointsize>
+            </font>
+          </property>
+          <property name="text">
+            <string>Capture XY (m):</string>
+          </property>
+        </widget>
+      </item>
+      <item row="14" column="1">
+        <widget class="QDoubleSpinBox" name="capture_radius_editor">
+          <property name="decimals">
+            <number>1</number>
+          </property>
+          <property name="minimum">
+            <double>0.1</double>
+          </property>
+          <property name="maximum">
+            <double>9999.990000000000009</double>
+          </property>
+          <property name="value">
+            <double>25.0</double>
+          </property>
+          <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::PlusMinus</enum>
+          </property>
+        </widget>
+      </item>
+
+      <item row="15" column="0">
+        <widget class="QLabel" name="capture_radius_z_label">
+          <property name="font">
+            <font>
+              <family>Sans Serif</family>
+              <pointsize>8</pointsize>
+            </font>
+          </property>
+          <property name="text">
+            <string>Capture Z (m):</string>
+          </property>
+        </widget>
+      </item>
+      <item row="15" column="1">
+        <widget class="QDoubleSpinBox" name="capture_radius_z_editor">
+          <property name="decimals">
+            <number>1</number>
+          </property>
+          <property name="minimum">
+            <double>0.1</double>
+          </property>
+          <property name="maximum">
+            <double>9999.990000000000009</double>
+          </property>
+          <property name="value">
+            <double>2.0</double>
+          </property>
+          <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::PlusMinus</enum>
+          </property>
+        </widget>
+      </item>
+
+      <item row="16" column="0">
+        <widget class="QLabel" name="slip_radius_label">
+          <property name="font">
+            <font>
+              <family>Sans Serif</family>
+              <pointsize>8</pointsize>
+            </font>
+          </property>
+          <property name="text">
+            <string>Slip XY (m):</string>
+          </property>
+        </widget>
+      </item>
+      <item row="16" column="1">
+        <widget class="QDoubleSpinBox" name="slip_radius_editor">
+          <property name="decimals">
+            <number>1</number>
+          </property>
+          <property name="minimum">
+            <double>0.1</double>
+          </property>
+          <property name="maximum">
+            <double>9999.990000000000009</double>
+          </property>
+          <property name="value">
+            <double>50.0</double>
+          </property>
+          <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::PlusMinus</enum>
+          </property>
+        </widget>
+      </item>
+
+      <item row="17" column="0">
+        <widget class="QLabel" name="slip_radius_z_label">
+          <property name="font">
+            <font>
+              <family>Sans Serif</family>
+              <pointsize>8</pointsize>
+            </font>
+          </property>
+          <property name="text">
+            <string>Slip Z (m):</string>
+          </property>
+        </widget>
+      </item>
+      <item row="17" column="1">
+        <widget class="QDoubleSpinBox" name="slip_radius_z_editor">
+          <property name="decimals">
+            <number>1</number>
+          </property>
+          <property name="minimum">
+            <double>0.1</double>
+          </property>
+          <property name="maximum">
+            <double>9999.990000000000009</double>
+          </property>
+          <property name="value">
+            <double>4.0</double>
+          </property>
+          <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::PlusMinus</enum>
+          </property>
+        </widget>
+      </item>
+    </layout>
+  </widget>
+
+  <resources />
+  <connections />
+</ui>

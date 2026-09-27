@@ -47,409 +47,96 @@
           </property>
         </widget>
       </item>
-      <item row="0" column="1" colspan="3">
-        <widget class="QComboBox" name="agent_selector">
-          <property name="editable">
-            <bool>false</bool>
-          </property>
-        </widget>
-      </item>
-
-      <item row="1" column="0">
-        <widget class="QLabel" name="lat_label">
-          <property name="font">
-            <font>
-              <family>Sans Serif</family>
-              <pointsize>8</pointsize>
-            </font>
-          </property>
-          <property name="text">
-            <string>Latitude:</string>
-          </property>
-        </widget>
-      </item>
-      <item row="1" column="1" colspan="3">
-        <widget class="QDoubleSpinBox" name="lat_editor">
-          <property name="enabled">
-            <bool>false</bool>
-          </property>
-          <property name="decimals">
-            <number>8</number>
-          </property>
-          <property name="minimum">
-            <double>-90.0</double>
-          </property>
-          <property name="maximum">
-            <double>90.0</double>
-          </property>
-          <property name="singleStep">
-            <double>0.00001</double>
-          </property>
-          <property name="buttonSymbols">
-            <enum>QAbstractSpinBox::PlusMinus</enum>
-          </property>
-        </widget>
-      </item>
-
-      <item row="2" column="0">
-        <widget class="QLabel" name="lon_label">
-          <property name="font">
-            <font>
-              <family>Sans Serif</family>
-              <pointsize>8</pointsize>
-            </font>
-          </property>
-          <property name="text">
-            <string>Longitude:</string>
-          </property>
-        </widget>
-      </item>
-      <item row="2" column="1" colspan="3">
-        <widget class="QDoubleSpinBox" name="lon_editor">
-          <property name="enabled">
-            <bool>false</bool>
-          </property>
-          <property name="decimals">
-            <number>8</number>
-          </property>
-          <property name="minimum">
-            <double>-180.0</double>
-          </property>
-          <property name="maximum">
-            <double>180.0</double>
-          </property>
-          <property name="singleStep">
-            <double>0.00001</double>
-          </property>
-          <property name="buttonSymbols">
-            <enum>QAbstractSpinBox::PlusMinus</enum>
-          </property>
-        </widget>
-      </item>
-
-      <item row="3" column="0">
-        <widget class="QLabel" name="type_label">
-          <property name="font">
-            <font>
-              <family>Sans Serif</family>
-              <pointsize>8</pointsize>
-            </font>
-          </property>
-          <property name="text">
-            <string>Type:</string>
-          </property>
-        </widget>
-      </item>
-      <item row="3" column="1" colspan="3">
-        <widget class="QComboBox" name="type_selector">
-          <property name="enabled">
-            <bool>false</bool>
-          </property>
-          <property name="editable">
-            <bool>false</bool>
-          </property>
+      <item row="0" column="1">
+        <layout class="QHBoxLayout" name="horizontalLayout_agent">
           <item>
-            <property name="text">
-              <string>GPS</string>
-            </property>
+            <widget class="QComboBox" name="agent_selector">
+              <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>1</horstretch>
+                  <verstretch>0</verstretch>
+                </sizepolicy>
+              </property>
+              <property name="editable">
+                <bool>false</bool>
+              </property>
+            </widget>
           </item>
           <item>
-            <property name="text">
-              <string>ArUco</string>
-            </property>
+            <widget class="QCheckBox" name="apply_all">
+              <property name="font">
+                <font>
+                  <family>Sans Serif</family>
+                  <pointsize>8</pointsize>
+                </font>
+              </property>
+              <property name="text">
+                <string>Apply to all</string>
+              </property>
+              <property name="checked">
+                <bool>true</bool>
+              </property>
+            </widget>
           </item>
-        </widget>
+        </layout>
       </item>
 
-      <item row="4" column="0">
-        <widget class="QLabel" name="tag_label">
+      <item row="1" column="1">
+        <widget class="QListWidget" name="waypoint_list">
           <property name="font">
             <font>
               <family>Sans Serif</family>
               <pointsize>8</pointsize>
             </font>
           </property>
-          <property name="text">
-            <string>Tag ID:</string>
+          <property name="verticalScrollBarPolicy">
+            <enum>Qt::ScrollBarAlwaysOff</enum>
           </property>
-        </widget>
-      </item>
-      <item row="4" column="1" colspan="3">
-        <widget class="QSpinBox" name="tag_editor">
-          <property name="enabled">
-            <bool>false</bool>
+          <property name="styleSheet">
+            <string notr="true">QListWidget::item { padding: 2px 4px; }</string>
           </property>
-          <property name="minimum">
-            <number>0</number>
+          <property name="alternatingRowColors">
+            <bool>true</bool>
           </property>
-          <property name="maximum">
-            <number>65535</number>
+          <property name="dragDropMode">
+            <enum>QAbstractItemView::InternalMove</enum>
           </property>
-          <property name="buttonSymbols">
-            <enum>QAbstractSpinBox::PlusMinus</enum>
+          <property name="defaultDropAction">
+            <enum>Qt::MoveAction</enum>
+          </property>
+          <property name="selectionMode">
+            <enum>QAbstractItemView::SingleSelection</enum>
           </property>
         </widget>
       </item>
 
-      <item row="5" column="1" colspan="3">
-        <widget class="QCheckBox" name="flash_toggle">
+      <item row="2" column="1">
+        <widget class="QLabel" name="hint">
+          <property name="sizePolicy">
+            <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+            </sizepolicy>
+          </property>
           <property name="font">
             <font>
               <family>Sans Serif</family>
-              <pointsize>8</pointsize>
+              <pointsize>7</pointsize>
             </font>
           </property>
-          <property name="text">
-            <string>Flash LED on arrival</string>
-          </property>
-          <property name="enabled">
-            <bool>false</bool>
-          </property>
-        </widget>
-      </item>
-
-      <item row="6" column="0">
-        <widget class="QLabel" name="depth_label">
-          <property name="font">
-            <font>
-              <family>Sans Serif</family>
-              <pointsize>8</pointsize>
-            </font>
+          <property name="styleSheet">
+            <string notr="true">color: gray;</string>
           </property>
           <property name="text">
-            <string>Depth (m):</string>
+            <string>Click: add / edit · Drag: move · Right-click: delete</string>
           </property>
-        </widget>
-      </item>
-      <item row="6" column="1" colspan="3">
-        <widget class="QDoubleSpinBox" name="depth_editor">
-          <property name="enabled">
-            <bool>false</bool>
-          </property>
-          <property name="decimals">
-            <number>2</number>
-          </property>
-          <property name="minimum">
-            <double>-9999.990000000000009</double>
-          </property>
-          <property name="maximum">
-            <double>0.0</double>
-          </property>
-          <property name="buttonSymbols">
-            <enum>QAbstractSpinBox::PlusMinus</enum>
+          <property name="wordWrap">
+            <bool>true</bool>
           </property>
         </widget>
       </item>
 
-      <item row="7" column="1" colspan="3">
-        <widget class="QCheckBox" name="altitude_mode">
-          <property name="font">
-            <font>
-              <family>Sans Serif</family>
-              <pointsize>8</pointsize>
-            </font>
-          </property>
-          <property name="text">
-            <string>Altitude control (ALT)</string>
-          </property>
-          <property name="enabled">
-            <bool>false</bool>
-          </property>
-        </widget>
-      </item>
-
-      <item row="8" column="0">
-        <widget class="QLabel" name="speed_label">
-          <property name="font">
-            <font>
-              <family>Sans Serif</family>
-              <pointsize>8</pointsize>
-            </font>
-          </property>
-          <property name="text">
-            <string>Speed (RPM):</string>
-          </property>
-        </widget>
-      </item>
-      <item row="8" column="1" colspan="3">
-        <widget class="QDoubleSpinBox" name="speed_editor">
-          <property name="enabled">
-            <bool>false</bool>
-          </property>
-          <property name="decimals">
-            <number>1</number>
-          </property>
-          <property name="minimum">
-            <double>0.0</double>
-          </property>
-          <property name="maximum">
-            <double>1525.0</double>
-          </property>
-          <property name="value">
-            <double>1500.0</double>
-          </property>
-          <property name="buttonSymbols">
-            <enum>QAbstractSpinBox::PlusMinus</enum>
-          </property>
-        </widget>
-      </item>
-
-      <item row="9" column="0">
-        <widget class="QLabel" name="capture_radius_label">
-          <property name="font">
-            <font>
-              <family>Sans Serif</family>
-              <pointsize>8</pointsize>
-            </font>
-          </property>
-          <property name="text">
-            <string>Capture XY (m):</string>
-          </property>
-        </widget>
-      </item>
-      <item row="9" column="1" colspan="3">
-        <widget class="QDoubleSpinBox" name="capture_radius_editor">
-          <property name="enabled">
-            <bool>false</bool>
-          </property>
-          <property name="decimals">
-            <number>1</number>
-          </property>
-          <property name="minimum">
-            <double>0.1</double>
-          </property>
-          <property name="maximum">
-            <double>9999.990000000000009</double>
-          </property>
-          <property name="value">
-            <double>25.0</double>
-          </property>
-          <property name="buttonSymbols">
-            <enum>QAbstractSpinBox::PlusMinus</enum>
-          </property>
-        </widget>
-      </item>
-
-      <item row="10" column="0">
-        <widget class="QLabel" name="capture_radius_z_label">
-          <property name="font">
-            <font>
-              <family>Sans Serif</family>
-              <pointsize>8</pointsize>
-            </font>
-          </property>
-          <property name="text">
-            <string>Capture Z (m):</string>
-          </property>
-        </widget>
-      </item>
-      <item row="10" column="1" colspan="3">
-        <widget class="QDoubleSpinBox" name="capture_radius_z_editor">
-          <property name="enabled">
-            <bool>false</bool>
-          </property>
-          <property name="decimals">
-            <number>1</number>
-          </property>
-          <property name="minimum">
-            <double>0.1</double>
-          </property>
-          <property name="maximum">
-            <double>9999.990000000000009</double>
-          </property>
-          <property name="value">
-            <double>2.0</double>
-          </property>
-          <property name="buttonSymbols">
-            <enum>QAbstractSpinBox::PlusMinus</enum>
-          </property>
-        </widget>
-      </item>
-
-      <item row="11" column="0">
-        <widget class="QLabel" name="slip_radius_label">
-          <property name="font">
-            <font>
-              <family>Sans Serif</family>
-              <pointsize>8</pointsize>
-            </font>
-          </property>
-          <property name="text">
-            <string>Slip XY (m):</string>
-          </property>
-        </widget>
-      </item>
-      <item row="11" column="1" colspan="3">
-        <widget class="QDoubleSpinBox" name="slip_radius_editor">
-          <property name="enabled">
-            <bool>false</bool>
-          </property>
-          <property name="decimals">
-            <number>1</number>
-          </property>
-          <property name="minimum">
-            <double>0.1</double>
-          </property>
-          <property name="maximum">
-            <double>9999.990000000000009</double>
-          </property>
-          <property name="value">
-            <double>50.0</double>
-          </property>
-          <property name="buttonSymbols">
-            <enum>QAbstractSpinBox::PlusMinus</enum>
-          </property>
-        </widget>
-      </item>
-
-      <item row="12" column="0">
-        <widget class="QLabel" name="slip_radius_z_label">
-          <property name="font">
-            <font>
-              <family>Sans Serif</family>
-              <pointsize>8</pointsize>
-            </font>
-          </property>
-          <property name="text">
-            <string>Slip Z (m):</string>
-          </property>
-        </widget>
-      </item>
-      <item row="12" column="1" colspan="3">
-        <widget class="QDoubleSpinBox" name="slip_radius_z_editor">
-          <property name="enabled">
-            <bool>false</bool>
-          </property>
-          <property name="decimals">
-            <number>1</number>
-          </property>
-          <property name="minimum">
-            <double>0.1</double>
-          </property>
-          <property name="maximum">
-            <double>9999.990000000000009</double>
-          </property>
-          <property name="value">
-            <double>4.0</double>
-          </property>
-          <property name="buttonSymbols">
-            <enum>QAbstractSpinBox::PlusMinus</enum>
-          </property>
-        </widget>
-      </item>
-
-      <item row="13" column="1" colspan="3">
-        <widget class="QFrame" name="separator_top">
-          <property name="frameShape">
-            <enum>QFrame::HLine</enum>
-          </property>
-          <property name="frameShadow">
-            <enum>QFrame::Sunken</enum>
-          </property>
-        </widget>
-      </item>
-
-      <item row="14" column="1" colspan="3">
+      <item row="3" column="1">
         <layout class="QHBoxLayout" name="horizontalLayout_pub_clear">
           <item>
             <widget class="QPushButton" name="publish">
@@ -468,7 +155,7 @@
         </layout>
       </item>
 
-      <item row="15" column="1" colspan="3">
+      <item row="4" column="1">
         <layout class="QHBoxLayout" name="horizontalLayout_load_save">
           <item>
             <widget class="QPushButton" name="load">
@@ -487,7 +174,7 @@
         </layout>
       </item>
 
-      <item row="16" column="1" colspan="3">
+      <item row="5" column="1">
         <widget class="QFrame" name="separator">
           <property name="frameShape">
             <enum>QFrame::HLine</enum>
@@ -498,7 +185,7 @@
         </widget>
       </item>
 
-      <item row="17" column="1" colspan="3">
+      <item row="6" column="1">
         <layout class="QHBoxLayout" name="horizontalLayout_start_stop">
           <item>
             <widget class="QPushButton" name="start">
@@ -517,7 +204,7 @@
         </layout>
       </item>
 
-      <item row="18" column="1" colspan="3">
+      <item row="7" column="1">
         <layout class="QHBoxLayout" name="horizontalLayout_home_surface">
           <item>
             <widget class="QPushButton" name="home">
@@ -536,24 +223,7 @@
         </layout>
       </item>
 
-      <item row="19" column="1" colspan="3">
-        <widget class="QCheckBox" name="apply_all">
-          <property name="font">
-            <font>
-              <family>Sans Serif</family>
-              <pointsize>8</pointsize>
-            </font>
-          </property>
-          <property name="text">
-            <string>Apply to all agents</string>
-          </property>
-          <property name="checked">
-            <bool>true</bool>
-          </property>
-        </widget>
-      </item>
-
-      <item row="20" column="0">
+      <item row="8" column="0">
         <widget class="QLabel" name="status_label">
           <property name="font">
             <font>
@@ -569,7 +239,7 @@
           </property>
         </widget>
       </item>
-      <item row="20" column="1" colspan="3">
+      <item row="8" column="1">
         <widget class="QLabel" name="status">
           <property name="sizePolicy">
             <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
