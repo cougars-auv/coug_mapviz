@@ -133,7 +133,7 @@ void FleetInterface::callAgentService(const std::string& agent_name, Service ser
         const std::string failed =
             "Failed to call '" + build_name(agent_name, serviceName(service)) + "'";
         try {
-          const auto response = future.get();
+          const auto& response = future.get();
           if (!response) {
             recordResult(state, false, agent_name, failed + ".");
             return;
