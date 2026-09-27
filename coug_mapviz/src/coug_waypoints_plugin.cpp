@@ -22,7 +22,6 @@
 #include <qfiledevice.h>
 #include <qfiledialog.h>
 #include <qfileinfo.h>
-#include <qgl.h>
 #include <qglobal.h>
 #include <qiodevice.h>
 #include <qjsonarray.h>
@@ -30,6 +29,7 @@
 #include <qnamespace.h>
 #include <qobject.h>
 #include <qobjectdefs.h>
+#include <qopenglwidget.h>
 #include <qpainter.h>
 #include <qpalette.h>
 #include <qpushbutton.h>
@@ -231,18 +231,24 @@ void CougWaypointsPlugin::Paint(QPainter* painter, double /*x*/, double /*y*/, d
   painter->restore();
 }
 
-void CougWaypointsPlugin::PrintError(const std::string& message) {
+void CougWaypointsPlugin::PrintError([[maybe_unused]] const std::string& message) {
+#ifndef __clang_analyzer__
   PrintErrorHelper(ui_.status, message);
+#endif
   updateStatusHeight();
 }
 
-void CougWaypointsPlugin::PrintInfo(const std::string& message) {
+void CougWaypointsPlugin::PrintInfo([[maybe_unused]] const std::string& message) {
+#ifndef __clang_analyzer__
   PrintInfoHelper(ui_.status, message);
+#endif
   updateStatusHeight();
 }
 
-void CougWaypointsPlugin::PrintWarning(const std::string& message) {
+void CougWaypointsPlugin::PrintWarning([[maybe_unused]] const std::string& message) {
+#ifndef __clang_analyzer__
   PrintWarningHelper(ui_.status, message);
+#endif
   updateStatusHeight();
 }
 
