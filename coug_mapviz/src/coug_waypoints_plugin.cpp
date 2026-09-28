@@ -887,13 +887,12 @@ auto CougWaypointsPlugin::buildSearchPattern(const WayPoint& waypoint) const
   const double angle_step = 2.0 * M_PI / point_count;
   const double view_width = editor_ui_.search_view_width_editor->value();
   const double edge_scale = std::cos(angle_step / 2.0);
-  const double inner_radius = view_width / (2.0 * edge_scale);
   const double ring_spacing = view_width * (1.0 + edge_scale) / (2.0 * edge_scale);
 
   std::vector<geometry_msgs::msg::Point> pattern;
   pattern.reserve(static_cast<size_t>(ring_count) * static_cast<size_t>(point_count));
   for (int ring = 0; ring < ring_count; ++ring) {
-    const double radius = inner_radius + (ring_spacing * ring);
+    const double radius = ring_spacing * (ring + 1);
     for (int i = 0; i < point_count; ++i) {
       const double angle = angle_step * i;
       geometry_msgs::msg::Point subwaypoint;
