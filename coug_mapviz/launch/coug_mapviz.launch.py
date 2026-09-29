@@ -70,21 +70,6 @@ def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Acti
 
     return [
         Node(
-            package="mapviz",
-            executable="mapviz",
-            name="mapviz",
-            parameters=[
-                fleet_param_file,
-                scenario_param_file,
-                {
-                    "use_sim_time": use_sim_time,
-                    "config": mapviz_config_file,
-                    "map_frame": "map",
-                    "agent_list": agent_list,
-                },
-            ],
-        ),
-        Node(
             package="swri_transform_util",
             executable="initialize_origin.py",
             name="initialize_origin",
@@ -109,6 +94,21 @@ def launch_setup(context: LaunchContext, *args: Any, **kwargs: Any) -> list[Acti
                 "origin",
             ],
             parameters=[{"use_sim_time": use_sim_time}],
+        ),
+        Node(
+            package="mapviz",
+            executable="mapviz",
+            name="mapviz",
+            parameters=[
+                fleet_param_file,
+                scenario_param_file,
+                {
+                    "use_sim_time": use_sim_time,
+                    "config": mapviz_config_file,
+                    "map_frame": "map",
+                    "agent_list": agent_list,
+                },
+            ],
         ),
     ]
 
