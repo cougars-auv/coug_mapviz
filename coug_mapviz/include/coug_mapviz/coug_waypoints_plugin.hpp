@@ -154,7 +154,7 @@ class CougWaypointsPlugin : public mapviz::MapvizPlugin {
 
   auto selectedWaypoint() -> coug_interfaces::msg::WayPoint*;
 
-  auto findHitAt(const QPointF& point) -> WaypointHit;
+  [[nodiscard]] auto findHitAt(const QPointF& point) const -> WaypointHit;
 
   auto eraseHit(const WaypointHit& hit) -> bool;
 

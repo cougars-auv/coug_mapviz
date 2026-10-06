@@ -829,7 +829,7 @@ auto CougWaypointsPlugin::selectedWaypoint() -> WayPoint* {
   return &(*waypoints)[selected_waypoint_idx_];
 }
 
-auto CougWaypointsPlugin::findHitAt(const QPointF& point) -> WaypointHit {
+auto CougWaypointsPlugin::findHitAt(const QPointF& point) const -> WaypointHit {
   WaypointHit closest;
   double closest_distance = kHitRadiusPx;
   const auto& waypoints = waypointsForAgent(current_agent_);
