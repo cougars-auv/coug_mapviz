@@ -28,8 +28,7 @@ endif()
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
-find_package(Qt5 REQUIRED COMPONENTS Core Gui OpenGL Widgets)
-find_package(OpenGL REQUIRED)
+find_package(Qt5 REQUIRED COMPONENTS Widgets)
 
 generate_parameter_library(
   coug_waypoints_parameters
@@ -40,33 +39,20 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOUIC_SEARCH_PATHS "${CMAKE_CURRENT_SOURCE_DIR}/ui")
 
-ament_auto_add_library(coug_mapviz_plugins SHARED NO_TARGET_LINK_LIBRARIES
+ament_auto_add_library(coug_mapviz_plugins SHARED
   include/coug_mapviz/coug_waypoints_plugin.hpp
   src/coug_waypoints_plugin.cpp
   src/utils/fleet_interface.cpp
   src/utils/waypoint_renderer.cpp
 )
 
-target_compile_features(coug_mapviz_plugins PUBLIC cxx_std_17)
-
-target_compile_definitions(
-  coug_mapviz_plugins
-  PUBLIC "PLUGINLIB__DISABLE_BOOST_FUNCTIONS" "WFlags=WindowFlags"
-)
-
 target_link_libraries(
   coug_mapviz_plugins
   coug_waypoints_parameters
-  Qt5::Core
-  Qt5::Gui
-  Qt5::OpenGL
   Qt5::Widgets
-  OpenGL::GL
 )
 
 pluginlib_export_plugin_description_file(mapviz mapviz_plugins.xml)
-
-ament_export_dependencies(Qt5)
 
 ament_auto_package(
   INSTALL_TO_SHARE
