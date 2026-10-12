@@ -1,0 +1,224 @@
+// Copyright 2026 BYU FROST Lab
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#pragma once
+
+#include <swri_transform_util/transform.h>
+#include <ui_coug_waypoint_editor.h>
+#include <ui_coug_waypoints.h>
+
+#include <QDialog>
+#include <QMouseEvent>
+#include <QObject>
+#include <QOpenGLWidget>
+#include <QPainter>
+#include <QWidget>
+#include <coug_mapviz/coug_waypoints_parameters.hpp>
+#include <coug_mapviz/utils/fleet_interface.hpp>
+#include <coug_mapviz/utils/waypoint_renderer.hpp>
+#include <geometry_msgs/msg/point.hpp>
+#include <map>
+#include <mapviz/map_canvas.hpp>
+#include <mapviz/mapviz_plugin.hpp>
+#include <memory>
+#include <rclcpp/rclcpp.hpp>
+#include <string>
+#include <vector>
+
+namespace coug_mapviz {
+
+class CougWaypointsPlugin : public mapviz::MapvizPlugin {
+  Q_OBJECT
+
+ public:
+  // --- Plugin Lifecycle ---
+  CougWaypointsPlugin();
+  ~CougWaypointsPlugin() override;
+
+  CougWaypointsPlugin(const CougWaypointsPlugin&) = delete;
+  auto operator=(const CougWaypointsPlugin&) -> CougWaypointsPlugin& = delete;
+  CougWaypointsPlugin(CougWaypointsPlugin&&) = delete;
+  auto operator=(CougWaypointsPlugin&&) -> CougWaypointsPlugin& = delete;
+
+  auto Initialize(QOpenGLWidget* canvas) -> bool override;
+
+  void Shutdown() override {}
+
+  auto GetConfigWidget(QWidget* parent) -> QWidget* override {
+    config_widget_->setParent(parent);
+    return config_widget_;
+  }
+
+  auto SupportsPainting() -> bool override { return true; }
+
+ protected:
+  // --- Customization Hooks ---
+  void Draw(double /*x*/, double /*y*/, double /*scale*/) override {}
+
+  void Paint(QPainter* painter, double /*x*/, double /*y*/, double /*scale*/) override;
+
+  void Transform() override {}
+
+  void LoadConfig(const YAML::Node& /*node*/, const std::string& /*path*/) override {}
+
+  void SaveConfig(YAML::Emitter& /*emitter*/, const std::string& /*path*/) override {}
+
+  // --- Logging ---
+  void PrintError(const std::string& message) override;
+
+  void PrintInfo(const std::string& message) override;
+
+  void PrintWarning(const std::string& message) override;
+
+  void updateStatusHeight();
+
+  // --- Event Handling ---
+  auto eventFilter(QObject* watched, QEvent* event) -> bool override;
+
+  auto handleMousePress(QMouseEvent* event) -> bool;
+
+  auto handleMouseRelease(QMouseEvent* event) -> bool;
+
+  auto handleMouseMove(QMouseEvent* event) -> bool;
+
+  auto handleKeyPress(QKeyEvent* event) -> bool;
+
+ Q_SIGNALS:
+  void StatusUpdateRequested(int level, const QString& message);
+
+ public Q_SLOTS:
+  void UpdateStatus(int level, const QString& message);
+
+ protected Q_SLOTS:
+  // --- UI Callbacks ---
+  void AgentChanged(const QString& text);
+
+  void WaypointListChanged(int row);
+
+  void EditorChanged(double value);
+
+  void TypeChanged(int index);
+
+  void TagChanged(int value);
+
+  void FlashChanged(bool checked);
+
+  void AltitudeModeChanged(bool checked);
+
+  void RegenerateSearchPattern();
+
+  void EditorClosed();
+
+  void PublishWaypoints();
+
+  void ClearWaypoints();
+
+  void LoadWaypoints();
+
+  void SaveWaypoints();
+
+  void Start() { callFleetService(utils::FleetInterface::Service::kStart); }
+
+  void Stop() { callFleetService(utils::FleetInterface::Service::kStop); }
+
+  void Home() { callFleetService(utils::FleetInterface::Service::kHome); }
+
+  void Surface() { callFleetService(utils::FleetInterface::Service::kSurface); }
+
+ private:
+  // --- Helpers ---
+  struct WaypointHit {
+    int waypoint_idx{-1};
+    int subwaypoint_idx{-1};
+
+    [[nodiscard]] auto valid() const -> bool { return waypoint_idx >= 0; }
+  };
+
+  [[nodiscard]] auto waypointsForAgent(const std::string& agent) const
+      -> const std::vector<coug_interfaces::msg::WayPoint>&;
+
+  auto targetAgents() -> std::vector<std::string>;
+
+  auto currentWaypoints() -> std::vector<coug_interfaces::msg::WayPoint>*;
+
+  auto selectedWaypoint() -> coug_interfaces::msg::WayPoint*;
+
+  [[nodiscard]] auto findHitAt(const QPointF& point) const -> WaypointHit;
+
+  auto eraseHit(const WaypointHit& hit) -> bool;
+
+  [[nodiscard]] auto buildSearchPattern(const coug_interfaces::msg::WayPoint& waypoint) const
+      -> std::vector<geometry_msgs::msg::Point>;
+
+  static void moveWaypoint(coug_interfaces::msg::WayPoint& waypoint, const QPointF& map_point);
+
+  void selectWaypoint(int waypoint_idx);
+
+  void clearWaypointSelection();
+
+  void updateSelectionStatus();
+
+  void waypointsChanged();
+
+  void refreshWaypointList();
+
+  void syncWaypointListSelection();
+
+  void applyWaypointListOrder();
+
+  void updateWaypointListHeight();
+
+  void showEditor();
+
+  void updateEditorTitle();
+
+  void setDepthEditorRange(bool altitude_mode);
+
+  void populateEditors(const coug_interfaces::msg::WayPoint& waypoint);
+
+  static auto missionDirectory() -> QString;
+
+  auto wgs84ToMap(double latitude, double longitude, QPointF& map_point) const -> bool;
+
+  auto mapToWgs84(const QPointF& map_point, QPointF& lat_lon) const -> bool;
+
+  void callFleetService(utils::FleetInterface::Service service);
+
+  // --- ROS Interfaces ---
+  utils::FleetInterface interface_;
+  std::unique_ptr<utils::WaypointRenderer> renderer_;
+
+  // --- Parameters ---
+  std::shared_ptr<coug_waypoints::ParamListener> param_listener_;
+  coug_waypoints::Params params_;
+
+  // --- State ---
+  Ui::coug_waypoints ui_;
+  QWidget* config_widget_;
+  Ui::coug_waypoint_editor editor_ui_;
+  QDialog* editor_window_;
+  bool editor_positioned_{false};
+  mapviz::MapCanvas* map_canvas_{nullptr};
+
+  std::map<std::string, std::vector<coug_interfaces::msg::WayPoint>> waypoints_;
+  std::string current_agent_;
+  coug_interfaces::msg::WayPoint default_waypoint_;
+
+  int selected_waypoint_idx_{-1};
+  WaypointHit dragged_hit_;
+  QPointF mouse_down_pos_;
+  qint64 mouse_down_time_{0};
+};
+
+}  // namespace coug_mapviz

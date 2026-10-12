@@ -1,0 +1,62 @@
+# Copyright 2026 BYU FROST Lab
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+cmake_minimum_required(VERSION 3.22)
+project(coug_mapviz)
+
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 17)
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
+  set(CMAKE_CXX_EXTENSIONS OFF)
+endif()
+
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
+
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
+
+find_package(Qt5 REQUIRED COMPONENTS Widgets)
+
+generate_parameter_library(
+  coug_waypoints_parameters
+  "params/coug_waypoints_params.yaml"
+)
+
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTOUIC_SEARCH_PATHS "${CMAKE_CURRENT_SOURCE_DIR}/ui")
+
+ament_auto_add_library(coug_mapviz_plugins SHARED
+  include/coug_mapviz/coug_waypoints_plugin.hpp
+  src/coug_waypoints_plugin.cpp
+  src/utils/fleet_interface.cpp
+  src/utils/waypoint_renderer.cpp
+)
+
+target_link_libraries(
+  coug_mapviz_plugins
+  coug_waypoints_parameters
+  Qt5::Widgets
+)
+
+pluginlib_export_plugin_description_file(mapviz mapviz_plugins.xml)
+
+ament_auto_package(
+  INSTALL_TO_SHARE
+  config
+  launch
+  USE_SCOPED_HEADER_INSTALL_DIR
+)

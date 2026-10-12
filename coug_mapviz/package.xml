@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>coug_mapviz</name>
+  <version>0.0.0</version>
+  <description>MapViz plugins for multi-agent waypoint planning.</description>
+  <maintainer email="snelsond@byu.edu">Nelson Durrant</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_cmake_auto</buildtool_depend>
+  <buildtool_depend>generate_parameter_library</buildtool_depend>
+
+  <depend>coug_interfaces</depend>
+  <depend>geometry_msgs</depend>
+  <depend>libqt5-core</depend>
+  <depend>libqt5-gui</depend>
+  <depend>libqt5-widgets</depend>
+  <depend>mapviz</depend>
+  <depend>pluginlib</depend>
+  <depend>rclcpp</depend>
+  <depend>std_srvs</depend>
+  <depend>swri_transform_util</depend>
+  <depend>tf2</depend>
+
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>mapviz_plugins</exec_depend>
+  <exec_depend>python3-yaml</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>tile_map</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+    <mapviz plugin="${prefix}/mapviz_plugins.xml" />
+  </export>
+
+</package>

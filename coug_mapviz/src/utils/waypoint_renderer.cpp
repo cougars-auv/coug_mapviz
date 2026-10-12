@@ -1,0 +1,162 @@
+// Copyright 2026 BYU FROST Lab
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#include <qcolor.h>
+#include <qnamespace.h>
+#include <qobject.h>
+#include <qpaintdevice.h>
+#include <qpoint.h>
+#include <qvector.h>
+
+#include <QBrush>
+#include <QPainter>
+#include <QPen>
+#include <QVector>
+#include <coug_mapviz/utils/waypoint_renderer.hpp>
+#include <cstddef>
+#include <mapviz/map_canvas.hpp>
+#include <vector>
+
+#include "coug_interfaces/msg/way_point.hpp"
+
+namespace coug_mapviz::utils {
+
+using coug_interfaces::msg::WayPoint;
+
+namespace {
+
+constexpr float kMarkerSizePx = 20.0F;
+constexpr float kSubMarkerSizePx = 10.0F;
+constexpr double kFlashRingRadiusPx = 17.0;
+constexpr float kFlashRingWidthPx = 2.5F;
+constexpr int kPathWidthPx = 2;
+
+constexpr int kLabelWidthPx = 100;
+constexpr int kLabelHeightPx = 20;
+constexpr int kLabelOffsetXPx = 50;
+constexpr int kDepthOffsetYPx = 15;
+constexpr int kSpeedOffsetYPx = 33;
+constexpr int kTagOffsetYPx = 51;
+constexpr int kIndexSizePx = 40;
+
+const QColor kSlipCircleColor(30, 144, 255, 166);
+const QColor kSlipCircleFillColor(30, 144, 255, 30);
+const QColor kCaptureCircleColor(255, 140, 0, 191);
+const QColor kCaptureCircleFillColor(255, 140, 0, 46);
+const QColor kActivePath(Qt::blue);
+const QColor kActiveLabel(Qt::white);
+const QColor kInactivePath(200, 200, 200, 191);
+const QColor kInactiveLabel(255, 255, 255, 191);
+const QColor kActiveMarker(Qt::cyan);
+const QColor kInactiveMarker(Qt::gray);
+const QColor kSelectedMarker(Qt::yellow);
+const QColor kActiveSubMarker(Qt::yellow);
+const QColor kInactiveSubMarker(128, 128, 128, 191);
+const QColor kFlashRing(0, 255, 0);
+
+auto labelRect(const QPointF& point, int y_offset) -> QRectF {
+  return {QPointF(point.x() - kLabelOffsetXPx, point.y() + y_offset),
+          QSizeF(kLabelWidthPx, kLabelHeightPx)};
+}
+
+}  // namespace
+
+WaypointRenderer::WaypointRenderer(mapviz::MapCanvas* map_canvas) : map_canvas_(map_canvas) {}
+
+auto WaypointRenderer::fixedToGl(const QPointF& fixed_point) const -> QPointF {
+  return map_canvas_->FixedFrameToMapGlCoord(fixed_point);
+}
+
+void WaypointRenderer::paintWaypoints(QPainter* painter, const std::vector<WayPoint>& waypoints,
+                                      bool active, int selected_waypoint_idx) const {
+  const QColor& path_color = active ? kActivePath : kInactivePath;
+  const QColor& label_color = active ? kActiveLabel : kInactiveLabel;
+
+  QVector<QPointF> points;
+  QVector<QPointF> path_points;
+  for (const auto& waypoint : waypoints) {
+    const QPointF point = fixedToGl(QPointF(waypoint.position.x, waypoint.position.y));
+    points.push_back(point);
+    path_points.push_back(point);
+    for (const auto& subwaypoint : waypoint.subwaypoints) {
+      path_points.push_back(fixedToGl(QPointF(subwaypoint.x, subwaypoint.y)));
+    }
+  }
+  painter->setPen(QPen(path_color, kPathWidthPx));
+  painter->drawPolyline(path_points);
+
+  if (active) {
+    for (int i = 0; i < points.size(); ++i) {
+      const auto& waypoint = waypoints[static_cast<size_t>(i)];
+      const QPointF center(waypoint.position.x, waypoint.position.y);
+      const auto radius = [&](double meters) {
+        return QLineF(points[i], fixedToGl(QPointF(center.x() + meters, center.y()))).length();
+      };
+      painter->setPen(QPen(kSlipCircleColor, 1.5));
+      painter->setBrush(QBrush(kSlipCircleFillColor));
+      painter->drawEllipse(points[i], radius(waypoint.slip_radius), radius(waypoint.slip_radius));
+      painter->setPen(QPen(kCaptureCircleColor, 1.5));
+      painter->setBrush(QBrush(kCaptureCircleFillColor));
+      painter->drawEllipse(points[i], radius(waypoint.capture_radius),
+                           radius(waypoint.capture_radius));
+    }
+  }
+
+  painter->setPen(QPen(active ? kActiveSubMarker : kInactiveSubMarker, kSubMarkerSizePx,
+                       Qt::SolidLine, Qt::RoundCap));
+  for (const auto& waypoint : waypoints) {
+    for (const auto& subwaypoint : waypoint.subwaypoints) {
+      painter->drawPoint(fixedToGl(QPointF(subwaypoint.x, subwaypoint.y)));
+    }
+  }
+
+  for (int i = 0; i < points.size(); ++i) {
+    const auto& waypoint = waypoints[static_cast<size_t>(i)];
+    QColor marker = kInactiveMarker;
+    if (i == selected_waypoint_idx) {
+      marker = kSelectedMarker;
+    } else if (active) {
+      marker = kActiveMarker;
+    }
+    if (active && waypoint.arrival_flash) {
+      painter->setPen(QPen(kFlashRing, kFlashRingWidthPx));
+      painter->setBrush(Qt::NoBrush);
+      painter->drawEllipse(points[i], kFlashRingRadiusPx, kFlashRingRadiusPx);
+    }
+
+    const Qt::PenCapStyle cap = waypoint.type == WayPoint::ARUCO ? Qt::SquareCap : Qt::RoundCap;
+    painter->setPen(QPen(marker, kMarkerSizePx, Qt::SolidLine, cap));
+    painter->drawPoint(points[i]);
+
+    painter->setPen(QPen(label_color));
+    const QString depth = waypoint.mode == WayPoint::ALTITUDE
+                              ? "ALT " + QString::number(waypoint.position.z, 'f', 1) + "m"
+                              : QString::number(waypoint.position.z, 'f', 1) + "m";
+    painter->drawText(labelRect(points[i], kDepthOffsetYPx), Qt::AlignHCenter | Qt::AlignTop,
+                      depth);
+    painter->drawText(labelRect(points[i], kSpeedOffsetYPx), Qt::AlignHCenter | Qt::AlignTop,
+                      QString::number(waypoint.speed_rpm, 'f', 0) + "rpm");
+    if (waypoint.type == WayPoint::ARUCO) {
+      painter->drawText(labelRect(points[i], kTagOffsetYPx), Qt::AlignHCenter | Qt::AlignTop,
+                        "tag " + QString::number(waypoint.tag_id));
+    }
+    painter->setPen(QPen(label_color == Qt::white ? Qt::black : label_color));
+    const QRectF index_rect(
+        QPointF(points[i].x() - kIndexSizePx / 2.0, points[i].y() - kIndexSizePx / 2.0),
+        QSizeF(kIndexSizePx, kIndexSizePx));
+    const QString index_text = (i == 0) ? "H" : QString::number(i + 1);
+    painter->drawText(index_rect, Qt::AlignHCenter | Qt::AlignVCenter, index_text);
+  }
+}
+}  // namespace coug_mapviz::utils
