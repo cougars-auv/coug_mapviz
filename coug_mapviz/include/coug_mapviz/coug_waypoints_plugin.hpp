@@ -14,9 +14,20 @@
 
 #pragma once
 
-#include <swri_transform_util/transform.h>
+#include <qcoreevent.h>
+#include <qdialog.h>
+#include <qevent.h>
+#include <qglobal.h>
+#include <qhashfunctions.h>
+#include <qobject.h>
+#include <qobjectdefs.h>
+#include <qopenglwidget.h>
+#include <qpoint.h>
+#include <qwidget.h>
 #include <ui_coug_waypoint_editor.h>
 #include <ui_coug_waypoints.h>
+#include <yaml-cpp/emitter.h>
+#include <yaml-cpp/node/node.h>
 
 #include <QDialog>
 #include <QMouseEvent>
@@ -32,9 +43,10 @@
 #include <mapviz/map_canvas.hpp>
 #include <mapviz/mapviz_plugin.hpp>
 #include <memory>
-#include <rclcpp/rclcpp.hpp>
 #include <string>
 #include <vector>
+
+#include "coug_interfaces/msg/way_point.hpp"
 
 namespace coug_mapviz {
 

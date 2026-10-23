@@ -25,7 +25,9 @@
 #include <map>
 #include <memory>
 #include <mutex>
-#include <rclcpp/rclcpp.hpp>
+#include <rclcpp/client.hpp>
+#include <rclcpp/node.hpp>
+#include <rclcpp/publisher.hpp>
 #include <std_srvs/srv/trigger.hpp>
 #include <string>
 #include <vector>

@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <qpoint.h>
+
 #include <QPointF>
 #include <coug_interfaces/msg/way_point.hpp>
 #include <vector>
